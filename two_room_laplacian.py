@@ -57,8 +57,7 @@ def laplacian_eigenvectors(eign_num):
     sort_inds = lam.argsort()
     lam = lam[sort_inds]
     v = v[:,sort_inds]
-
-def plot_function_on_graph():
+    
     fig = plt.figure()
     #ax = fig.add_subplot(111, projection='3d')
     ax = Axes3D(fig)
