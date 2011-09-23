@@ -14,6 +14,9 @@ def diffusion_operator(W):
     D_invsqrt = np.sqrt(np.linalg.inv(D))
 
     return np.dot(np.dot(D_invsqrt,W),D_invsqrt) # normalized operator, or...
+    
+def tic_tac_adjacency():
+    
 
 def room_adjacency(n = 20):
     adjacents = np.array([[-1,0],[1,0],[0,-1],[0,1]])
