@@ -15,7 +15,7 @@ def diffusion_operator(W):
 
     return np.dot(np.dot(D_invsqrt,W),D_invsqrt) # normalized operator, or...
     
-def room_adjacency(n = 20):
+def room_adjacency(n = 20,self_loops = True):
     adjacents = np.array([[-1,0],[1,0],[0,-1],[0,1]])
     adjacent_indxs = [-1,1,-n,n]
 
@@ -38,7 +38,7 @@ def room_adjacency(n = 20):
     # remove unvisitable states
     W = W[d>0,:]
     W = W[:,d>0]
-    W = W+np.eye(W.shape[0]) # add self-transitions - makes not periodic?
+    if self_loops: W = W+np.eye(W.shape[0]) # add self-transitions - makes not periodic?
 
     return W
 
