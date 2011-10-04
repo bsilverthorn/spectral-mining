@@ -1,0 +1,57 @@
+\documentclass{article}
+\usepackage{natbib}
+\usepackage{parskip}
+
+\title{State Space Graph Mining}
+\author{Bryan Silverthorn\\
+\texttt{bsilvert@cs.utexas.edu}
+\and Craig Corcoran\\
+\texttt{ccor@cs.utexas.edu}}
+
+\begin{document}
+\maketitle
+
+%
+% document body
+%
+
+\section*{Project Proposal}
+
+The engineering of an appropriate state space representation is one of the
+essential prerequisites to applying reinforcement learning (RL) in a new
+domain. The choice of representation is often critical to the success of an RL
+agent, just as feature engineering is often critical to the success of a
+supervised learning method. This representation must be constructed by hand,
+and requires an understanding of the peculariaties of a given RL method.
+
+Many domains, however, are naturally represented as a discrete state space
+graph: the game of Tic-Tac-Toe, for example, is easily described as a set of
+boards (3x3 grids), with the possible moves linking boards with directed edges.
+This type of representation is verbose, and not directly amenable to
+well-studied standard RL methods, but may serve as a useful starting point---an
+initial representation, to which data mining tools can be applied to extract
+useful lower-dimensionality state descriptions.
+
+Recent work \citep{Wang2009Multiscale,Mahadevan2006Value} has begun to examine
+the use of graph analysis methods in this framework, focusing on diffusion
+wavelets and the eigenvectors of the graph Laplacian, but important questions
+remain: how can this approach be scaled to large state spaces? Can it be made
+to work given only sampled walks through the state space (e.g., data from human
+gameplay)? Which methods generate state descriptions suitable for which RL
+algorithms?
+
+Our project will tackle these questions in applying data mining tools to
+automatically derive state representations for two complex, large-scale
+domains: the board game of Go, using state trajectories extracted from expert
+human games; and the operation of a modern satisfiability (SAT) solver,
+\texttt{MiniSat}, on standard benchmark collections.
+
+%
+% references
+%
+
+\bibliographystyle{abbrvnat}
+\bibliography{references}
+
+\end{document}
+
