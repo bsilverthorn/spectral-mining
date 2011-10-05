@@ -33,31 +33,30 @@ def room_walk(W,pos,v,g,eps=0.1,tmax=300):
 	    pos = choice(np.nonzero(W[:,pos])[0]) # random step 
         else:
 	    pos = np.argmax(v[np.nonzero(W[:,pos])[0]]) # greedy step
-	R.append(-1)
+	R.append(-0.01)
 	S.append(pos)
 	t += 1
     return S, R, [t]
 
-def policy_iteration(k = 20, num_iters = 3 ,num_eps = 300, wall_size=20):
+def policy_iteration(k = 300, num_iters = 3 ,num_eps = 600, wall_size=20):
    
     print "building adjacency matrix"
-    W = spectral.room_adjacency(wall_size) 
+    W = spectral.room_adjacency(wall_size, False) 
     n = W.shape[0] # number of states
     
-    #L = spectral.laplacian_operator(W)
+    L = spectral.laplacian_operator(spectral.room_adjacency(wall_size))
     #spL = scipy.sparse.csr_matrix(L)
     #(lam, v) = scipy.sparse.linalg.eigen_symmetric(splaplacian_NN, k = 8, which = "SM")
-    #print "solving for the eigenvectors"
-    #[eig_lam,eig_vec] = np.linalg.eigh(L)
-    #sort_inds = eig_lam.argsort()
-    #eig_lam = eig_lam[sort_inds]
-    #phi = eig_vec[:,sort_inds]
-    #phi = phi[:,:k]
+    print "solving for the eigenvectors"
+    [eig_lam,eig_vec] = np.linalg.eigh(L)
+    sort_inds = eig_lam.argsort()
+    eig_lam = eig_lam[sort_inds]
+    phi = eig_vec[:,sort_inds]
+    phi = phi[:,:k]
 
-    print "building diffusion operator and basis"
-    T = spectral.diffusion_operator(W)
-    phi = spectral.build_diffusion_basis(T,k)
-    print phi.shape    
+    #print "building diffusion operator and basis"
+    #T = spectral.diffusion_operator(W)
+    #phi = spectral.build_diffusion_basis(T,k)
 
     print "performing policy iteration"
     beta = np.random.random((k,1)) # initialize feature weights
