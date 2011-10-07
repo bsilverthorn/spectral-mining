@@ -1,4 +1,3 @@
-import copy
 from random import choice
 import numpy as np
 import scipy.sparse
@@ -23,11 +22,12 @@ def lstd_solve(A,b):
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
 
-def td_lambda(S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.01):
+def td_lambda(S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.001):
     k = phi.shape[1]
     if beta == None:
         beta = np.zeros((k,1))
     z = phi[S[0],:]
+    
     for t in xrange(len(R)):
         curr_phi = phi[S[t],:] 
         delta = z[:,None]*(R[t]+np.dot((gamma*phi[S[t+1],:]-curr_phi)[None,:],beta))
@@ -63,15 +63,17 @@ def room_walk(W,pos,v,g,eps=0.1,tmax=300):
     while (pos != g) & (t < tmax):
         # choose next state
         if np.random.rand() < eps:
-            pos = choice(np.nonzero(W[:,pos])[0]) # random step 
+            pos = choice(np.nonzero(W[:,pos])[0]) # random step
+            #print 'pos - random', pos
         else:
             neighbors = np.nonzero(W[:,pos])[0]
-            pos = neighbors[np.argmax(v[neighbors])] # greedy step
+            max_value = np.max(v[neighbors])
+            best = v[:, 0][neighbors] == max_value
+            pos = choice(neighbors[best]) # greedy step
+            #print 'neighbors: ', neighbors
+            #print 'pos - greedy', pos
 
-        if pos == g:
-            R.append(100.)
-        else:
-            R.append(-0.1)
+        R.append(-0.1)
         S.append(pos)
         t += 1
 
@@ -126,7 +128,7 @@ def td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g):
     weights = np.zeros((k,1))
     v = np.dot(phi,weights) # set value according to current weights, features
 
-    init_pos = n-1
+    #init_pos = n-1
     for i in xrange(num_iters):
         print "iteration: ", i
         print 'epsilon: ' , epsilons[i] 
@@ -134,24 +136,25 @@ def td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g):
         h = np.zeros((n,1)) 
         t = 0
         ep = 0
-        while ep < num_eps:
-        #for e in xrange(num_eps):
-            #init_pos = np.round(np.random.random()*(n-1)) # start from random position
+        #while ep < num_eps:
+        for e in xrange(num_eps):
+            init_pos = np.round(np.random.random()*(n-1)) # start from random position
             S,R,_t = room_walk(W,init_pos,v,g,epsilons[i]) # collect state transitions with eps-greedy walk
             if S[-1] == g:
-                print ep
-                ep += 1
-                h += heat_map(S,n)  
-                t += _t              
-                #weights = td_lambda(S,R,phi,beta = weights)
-                weights = q_lambda(W,S,R,phi,beta = weights)
+                print 'made to goal'
+             #   print ep
+             #   ep += 1
+            h += heat_map(S,n)  
+            t += _t              
+            #weights = td_lambda(S,R,phi,beta = weights)
+            weights = q_lambda(W,S,R,phi,beta = weights)
 
         print 'average time steps: ', t/float(num_eps)
         v = np.dot(phi,weights)  
 
     return weights, h, init_pos
 
-def policy_iteration(k = 100, num_iters = 1 ,num_eps = 10, wall_size=20):
+def policy_iteration(k = 100, num_iters = 8,num_eps = 300, wall_size=20):
    
     print "building adjacency matrix"
     W = spectral.room_adjacency(wall_size, False) 
@@ -174,17 +177,15 @@ def policy_iteration(k = 100, num_iters = 1 ,num_eps = 10, wall_size=20):
 
     
     g = 2*wall_size + 1 # goal is a position near the corner, not on a wall
-    epsilons = [0.2]*num_eps
-    #epsilons = 0.5*np.exp(-np.array(range(num_iters))/(num_iters/2.)) 
+    epsilons = 0.1 * np.ones(num_eps); epsilons[0:4] = 1
+    #epsilons = 1*np.exp(-np.array(range(num_iters))/(num_iters/2.)) 
     #beta,h,init_pos = lstd_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g)
     beta,h,init_pos = td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g)   
 
     v = np.dot(phi,beta)
     I = np.zeros((n,1)); I[init_pos] = 1 
     G = np.zeros((n,1)); G[g] = 1
-    print 'show plots'
     spectral.plot_functions_on_room(wall_size,np.hstack((G,h,v)))
-    print 'show plots again'
     
     #spectral.plot_functions_on_room(wall_size,v)
 
