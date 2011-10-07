@@ -36,7 +36,7 @@ def td_lambda(S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.01):
 
     return beta
 
-def q_lambda(W,S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.01):
+def q_lambda(W,S,R,phi,lam=0, gamma = 1, beta = None, alpha = 0.01):
     k = phi.shape[1]
     if beta == None:
         beta = np.zeros((k,1))
@@ -151,7 +151,7 @@ def td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g):
 
     return weights, h, init_pos
 
-def policy_iteration(k = 100, num_iters = 5 ,num_eps = 20, wall_size=20):
+def policy_iteration(k = 100, num_iters = 1 ,num_eps = 10, wall_size=20):
    
     print "building adjacency matrix"
     W = spectral.room_adjacency(wall_size, False) 
@@ -174,7 +174,7 @@ def policy_iteration(k = 100, num_iters = 5 ,num_eps = 20, wall_size=20):
 
     
     g = 2*wall_size + 1 # goal is a position near the corner, not on a wall
-    epsilons = [1]*num_eps
+    epsilons = [0.2]*num_eps
     #epsilons = 0.5*np.exp(-np.array(range(num_iters))/(num_iters/2.)) 
     #beta,h,init_pos = lstd_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g)
     beta,h,init_pos = td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g)   
@@ -182,7 +182,10 @@ def policy_iteration(k = 100, num_iters = 5 ,num_eps = 20, wall_size=20):
     v = np.dot(phi,beta)
     I = np.zeros((n,1)); I[init_pos] = 1 
     G = np.zeros((n,1)); G[g] = 1
+    print 'show plots'
     spectral.plot_functions_on_room(wall_size,np.hstack((G,h,v)))
+    print 'show plots again'
+    
     #spectral.plot_functions_on_room(wall_size,v)
 
 def main():
