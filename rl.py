@@ -29,11 +29,31 @@ def td_lambda(S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.01):
         beta = np.zeros((k,1))
     z = phi[S[0],:]
     for t in xrange(len(R)):
-        delta = z[:,None]*(R[t]+np.dot((gamma*phi[S[t+1],:]-phi[S[t],:])[None,:],beta))
+        curr_phi = phi[S[t],:] 
+        delta = z[:,None]*(R[t]+np.dot((gamma*phi[S[t+1],:]-curr_phi)[None,:],beta))
         z = lam*z+phi[S[t+1],:]
-        beta += alpha*delta
+        beta += delta*alpha/np.linalg.norm(curr_phi,1)
 
     return beta
+
+def q_lambda(W,S,R,phi,lam=0.9, gamma = 1, beta = None, alpha = 0.01):
+    k = phi.shape[1]
+    if beta == None:
+        beta = np.zeros((k,1))
+    z = phi[S[0],:]
+    v = np.dot(phi,beta)
+
+    for t in xrange(len(R)):
+        neighbors = np.nonzero(W[:,S[t]])[0]
+        best_state = neighbors[np.argmax(v[neighbors])]
+        curr_phi = phi[S[t],:] 
+        delta = z[:,None]*(R[t]+np.dot((gamma*phi[best_state,:]-curr_phi)[None,:],beta))
+        z = gamma*lam*z+phi[S[t+1],:]
+        beta += delta*alpha/np.linalg.norm(curr_phi,1)
+        v = np.dot(phi,beta)
+
+    return beta
+
 
 def room_walk(W,pos,v,g,eps=0.1,tmax=300):
     
@@ -48,7 +68,10 @@ def room_walk(W,pos,v,g,eps=0.1,tmax=300):
             neighbors = np.nonzero(W[:,pos])[0]
             pos = neighbors[np.argmax(v[neighbors])] # greedy step
 
-        R.append(-0.1)
+        if pos == g:
+            R.append(100.)
+        else:
+            R.append(-0.1)
         S.append(pos)
         t += 1
 
@@ -120,7 +143,8 @@ def td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g):
                 ep += 1
                 h += heat_map(S,n)  
                 t += _t              
-                weights = td_lambda(S,R,phi,beta = weights)
+                #weights = td_lambda(S,R,phi,beta = weights)
+                weights = q_lambda(W,S,R,phi,beta = weights)
 
         print 'average time steps: ', t/float(num_eps)
         v = np.dot(phi,weights)  
