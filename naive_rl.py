@@ -58,7 +58,6 @@ def main():
                 max_next_value = next_value
 
         # update our table
-
         q_values[x, y, a] = q_values[x, y, a] + alpha * (rewards[next_x, next_y] + lambda_ * max_next_value - q_values[x, y, a])
 
     numpy.set_printoptions(precision = 2)
