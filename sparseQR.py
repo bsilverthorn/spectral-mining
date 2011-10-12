@@ -1,4 +1,3 @@
-import math
 import numpy as np
 
 def remove_rounding_error(Q, vec):
@@ -13,6 +12,9 @@ def sparseQR(T,eps,lam,p):
     n = T.shape[0] # dimension of the col vectors
     
     Phi = T # working set of remaining col vectors
+    if (Phi == np.zeros(Phi.shape)).all():
+        print 'sparseQR asked to factorize zeros operator'
+        return None
     
     while True: # until return condition below is met
         num_cols = Phi.shape[1]

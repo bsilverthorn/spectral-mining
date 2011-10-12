@@ -17,39 +17,60 @@ def diffusion_operator(W):
     return np.dot(np.dot(D_invsqrt,W),D_invsqrt)
 
 def dw_tree(T,J,lam,p,eps_scal):
-    Q_dict = {}
+    phi_dict = {} # scaling functions
+    psi_dict = {} # wavelet functions
     print 'building diffusion wavelet tree'
     for j in range(J):
         print 'level j = ', j
-        eps = np.sum(np.sum(T))/len(T[T>0])*eps_scal # heuristic for setting epsilon, from Bo Liu paper
+        # heuristic for setting epsilon, from Bo Liu paper:
+        eps = np.sum(np.sum(T))/len(T[T>0])*eps_scal
         print 'epsilon: ', eps
-        Q = sparseQR(T,eps,lam,p)
-        print 'size of new basis: ',Q.shape
-        Q_dict[j] = Q
-        T = np.dot(np.dot(np.dot(Q.T,T),T),Q) # T^2 in k-space (kxk)
-
-    return Q_dict
-
-def expand_wavelets(Q_dict, k, n):
-    J = len(Q_dict)
-    Q_coarse = np.eye(n)
-    for j in xrange(J):
-        Q_coarse = np.dot(Q_coarse,Q_dict[j])
-        if j == 0: 
-            phi = Q_coarse
-        # put the new (more coarse) column vectors on the left
+        phi = sparseQR(T,eps,lam,p)
+        psi = sparseQR(np.eye(T.shape[0])-np.dot(phi,phi.T),eps,lam,p)
+        print 'size of scaling function basis: ', phi.shape
+        if psi != None:
+            print 'size of wavelet function basis: ', psi.shape
         else:
-            phi = np.hstack((Q_coarse,phi))
+            print 'no wavelets this level'
+        phi_dict[j] = phi
+        psi_dict[j] = psi
+        T = np.dot(np.dot(np.dot(phi.T,T),T),phi) # T^2 in k-space (kxk)
+
+    return phi_dict, psi_dict
+
+def expand_wavelets(phi_dict, psi_dict, k, n):
+    J = len(phi_dict)
+    phi_coarse = np.eye(n)
+    psi_coarse = np.eye(n)
+    for j in xrange(J):
+        phi_coarse = np.dot(phi_coarse,phi_dict[j])
+        # if the wavelet functions exist, add them to the left
+        if psi_dict[j] != None:
+            psi_coarse = np.dot(psi_coarse,phi_dict[j])
+            if j == 0:
+                basis = psi_coarse
+            elif j < J-1: 
+                basis = np.hstack((psi_coarse,basis))
+            # on the last iteration, add the scaling functions
+            else:
+                basis = np.hstack((phi_coarse,basis))
+        # if the wavelet functions don't exist, use the scaling functions
+        # the scaling functions in this case span the whole space (no 
+        # complementary space for the wavelets to pick up)
+        else:
+            if j == 0: 
+                basis = phi_coarse
+            else:
+                basis = np.hstack((phi_coarse,basis))
 
     # add the constant vector and return 
-    return np.hstack((np.ones((n,1))/float(n),phi[:,:k-1]))
+    return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
 def build_diffusion_basis(T,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     n = T.shape[0] # number of states in complete space
-    Q_dict = dw_tree(T,J,lam,p,eps_scal)
+    phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 
-    return expand_wavelets(Q_dict,k,n)
-    
+    return expand_wavelets(phi_dict, psi_dict, k, n)    
     
 def room_adjacency(n = 20,self_loops = True):
     adjacents = np.array([[-1,0],[1,0],[0,-1],[0,1]])
