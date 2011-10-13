@@ -4,7 +4,7 @@ import scipy.sparse
 import scipy.sparse.linalg
 import spectral
 
-# TODO add gamma
+# TODO add gamma and l2 norm
 def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
 
     k = phi.shape[1] # number of features
@@ -40,7 +40,7 @@ def td_episode(S, R, phi, lam=0.9, gamma=1, beta = None, alpha = 0.001):
     return beta
 
 
-def vi_episode(W, S, R, phi, lam=0, gamma=1, beta=None, alpha=0.01):
+def vi_episode(W, S, R, phi, lam=0, gamma=1, beta=None, alpha=0.001):
     ''' not sure if its legal/accepted to use lambda (eligibility traces) here
     with value iteration; makes it policy dependent.'''
     k = phi.shape[1]
@@ -93,6 +93,7 @@ def room_walk(W,pos,v,g,eps=0.1,stop_prob=0.005):
 
     return S, R, t
 
+
 def heat_map(S,n):
     
     h = np.zeros((n,1))
@@ -101,71 +102,45 @@ def heat_map(S,n):
 
     return h # /float(len(S))
 
-def tworoom_PI(W,phi,epsilons,num_iters,num_eps,n,g):
-    
-    print "performing policy iteration"
-    k = phi.shape[1]
-    beta = np.zeros((k,1))
-    v = np.dot(phi,beta) # set value according to current weights, features
-    A = np.zeros((k,k))
-    b = np.zeros((k,1))
-    h = np.zeros((n,1)) 
-    init_pos = n-1
-    for i in xrange(num_iters):
-        print "iteration: ", i
-        print 'epsilon: ' , epsilons[i] 
-        # collect num_eps episodes of data with current policy
-        #A = np.zeros((k,k))
-        #b = np.zeros((k,1))
-        #h = np.zeros((n,1)) 
-        t = 0
-        ep = 0
-        while ep < num_eps: #for e in xrange(num_eps):  
-            #init_pos = np.round(np.random.random()*(n-1)) # start from random position
-            S,R,_t = room_walk(W,init_pos,v,g,epsilons[i]) # collect state transitions with eps-greedy walk
-            if S[-1] == g:
-                print ep
-                ep += 1
-                h += heat_map(S,n)
-                _A,_b = lstd_episode(S,R,phi)
-                A += _A; b += _b; t += _t
 
-        print 'average time steps: ', t/float(ep)
-        beta = lstd_solve(A,b)
-        v = np.dot(phi,beta)
-    
-    return beta,h, init_pos 
-
-def td_room_policy_iter(W,phi,epsilons,num_iters,num_eps,n,g):
-    k = phi.shape[1]
+def tworoom_PI(W, phi, g, num_pols=10, num_eps=300, epsilons=0.1*np.ones(10), use_lstd=False):
+     
+    (n,k) = phi.shape
     weights = np.zeros((k,1))
     v = np.dot(phi,weights) # set value according to current weights, features
 
-    #init_pos = n-1
-    for i in xrange(num_iters):
-        print "iteration: ", i
-        print 'epsilon: ' , epsilons[i] 
+    for p in xrange(num_pols):
+        print "policy: ", p
+        print 'epsilon: ' , epsilons[p] 
         # collect num_eps episodes of data with current policy
+
+        if use_lstd:
+            A = np.zeros((k,k))
+            b = np.zeros((k,1))
+
         h = np.zeros((n,1)) 
         t = 0
-        ep = 0
-        #while ep < num_eps:
-        for e in xrange(num_eps):
+        for e in xrange(num_eps):  
             init_pos = np.round(np.random.random()*(n-1)) # start from random position
-            S,R,_t = room_walk(W,init_pos,v,g,epsilons[i]) # collect state transitions with eps-greedy walk
-            if S[-1] == g:
-                print 'made to goal'
-             #   print ep
-             #   ep += 1
-            h += heat_map(S,n)  
-            t += _t              
-            weights = td_episode(S,R,phi,beta = weights)
-            #weights = q_lambda(W,S,R,phi,beta = weights)
+            S,R,_t = room_walk(W,init_pos,v,g,epsilons[p]) # collect state transitions with eps-greedy walk
+
+            h += heat_map(S,n)
+            t += _t
+
+            if use_lstd:
+                _A,_b = lstd_episode(S, R, phi)
+                A += _A; b += _b;
+            else: # use regular td
+                weights = td_episode(S, R, phi, beta=weights)
 
         print 'average time steps: ', t/float(num_eps)
-        v = np.dot(phi,weights)  
 
-    return weights, h, init_pos
+        if use_lstd:
+            weights = lstd_solve(A,b)
+
+        v = np.dot(phi, weights)
+    
+    return weights, h
 
 def tworoom_VI(W, phi, g, num_pols=1, num_eps=500, epsilons=np.ones(500)):
 
@@ -183,8 +158,6 @@ def tworoom_VI(W, phi, g, num_pols=1, num_eps=500, epsilons=np.ones(500)):
             init_pos = np.round(np.random.random()*(n-1)) 
             # collect state transitions with eps-greedy walk
             S,R,_t = room_walk(W,init_pos,v,g,epsilons[i])
-            S.reverse()
-            R.reverse()
             #if S[-1] == g:
             #    print 'made it to goal'
             h += heat_map(S,n)  
@@ -195,7 +168,6 @@ def tworoom_VI(W, phi, g, num_pols=1, num_eps=500, epsilons=np.ones(500)):
         v = np.dot(phi,weights)  
 
     return weights, h
-
 
 
 def build_rep_laplacian(W, k=100, sparse=False):
@@ -220,9 +192,10 @@ def build_rep_diffusion(W,k = 100):
     T = spectral.diffusion_operator(W)
     return spectral.build_diffusion_basis(T,k)
 
+def build_rep_tabular(W):
+    return np.eye(W.shape[0])
 
-
-def main(wall_size=20, k=30, use_VI=True, rand_walk=True, use_laplacian=True):
+def main(wall_size=20, k=100, use_VI=False, rand_walk=False, use_laplacian=True):
     print "building adjacency matrix"
     W = spectral.room_adjacency(wall_size, self_loops=False) 
     # use adjacency matrix with self-loops to form basis functions
@@ -231,6 +204,7 @@ def main(wall_size=20, k=30, use_VI=True, rand_walk=True, use_laplacian=True):
     n = W.shape[0] # number of states
     if use_laplacian:
         phi = build_rep_laplacian(W_smooth, k)
+        #phi = build_rep_tabular(W)
     else: # use diffusion wavelets
         phi = build_rep_diffusion(W_smooth,k)
 
@@ -238,14 +212,14 @@ def main(wall_size=20, k=30, use_VI=True, rand_walk=True, use_laplacian=True):
 
     if rand_walk:
         num_pols = 1 # only one policy being evaluated/used
-        num_eps = 5000 # number of episodes 
+        num_eps = 1000 # number of episodes 
         epsilons = np.ones(num_eps)
         print 'using random walk, one policy ', num_eps,' episodes per policy'
     else:
-        num_pols = 10 
-        num_eps = 300 #number of episodes per policy eval/sampling according to pol
-        epsilons = 0.1 * np.ones(num_eps); epsilons[0:4] = 1
-        #epsilons = 1*np.exp(-np.array(range(num_iters))/(num_iters/2.)) 
+        num_pols = 150 
+        num_eps = 500 #number of episodes per policy eval/sampling according to pol
+        #epsilons = 0.1 * np.ones(num_eps); epsilons[0] = 1
+        epsilons = 1*np.exp(-np.array(range(num_pols))/(num_pols/3.)) 
         print 'using ',num_pols,' policies with ',num_eps,' episodes per policy'
         
     if use_VI: 
@@ -253,8 +227,8 @@ def main(wall_size=20, k=30, use_VI=True, rand_walk=True, use_laplacian=True):
         beta, h = tworoom_VI(W, phi, g, num_pols, num_eps, epsilons)
     else: 
         print 'performing policy iteration'
-        #beta,h = lstd_room_policy_iter(W,phi,epsilons,num_pols,num_eps,g) # TODO merge PI
-        beta,h = td_room_policy_iter(W,phi,epsilons,num_pols,num_eps,g)   
+
+        beta, h = tworoom_PI(W, phi, g, num_pols, num_eps, epsilons, use_lstd=False)
 
     v = np.dot(phi,beta) # final value function
     G = np.zeros((n,1)); G[g] = 1 # goal position
