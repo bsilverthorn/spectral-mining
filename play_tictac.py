@@ -1,6 +1,13 @@
-from random import choice
-import json
 import plac
+import play_tictac
+
+if __name__ == "__main__":
+    plac.call(play_tictac.main)
+
+from random import choice
+import gzip
+import cPickle as pickle
+import contextlib
 import numpy
 import tictac
 
@@ -60,8 +67,8 @@ def ttt_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
 
     return max_value
 
-def ttt_optimal_move(board, player):
-    """Compute the optimal move (max node)."""
+def ttt_optimal_move(board, player = 1):
+    """Compute the optimal move in a given state."""
 
     max_i = None
     max_j = None
@@ -182,15 +189,32 @@ def train_rl_ttt_agent(k=50,num_games=10):
     with open("ttt_beta_k="+str(k)+".pickle", "w") as pickle_file:
         pickle.dump(beta, pickle_file)
 
-        
-
-@plac.annotations(
+plac.annotations(
     k = ("number of features", "option", "k", int),
     num_games = ("number of games", "option", "n", int),
     )
 def main(k=50,num_games=10):
     train_rl_ttt_agent(k,num_games)
 
-if __name__ == "__main__":
-    plac.call(main)
+plac.annotations(
+    out_path = ("path to write policy pickle",),
+    states_path = ("path to TTT states pickle",),
+    )
+def make_optimal_policy(out_path, states_path = "ttt_states.pickle.gz"):
+    """Generate the optimal TTT policy."""
+
+    with contextlib.closing(gzip.GzipFile(states_path)) as pickle_file:
+        states = pickle.load(pickle_file)
+
+    policy = {}
+
+    for (i, state) in enumerate(states):
+        move = ttt_optimal_move(state)
+
+        policy[state] = move
+
+        print "optimal move in state #{0}: {1}".format(i, move[:2])
+
+    with contextlib.closing(gzip.GzipFile(out_path, "w")) as pickle_file:
+        pickle.dump(policy, pickle_file)
 
