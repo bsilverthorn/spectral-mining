@@ -177,6 +177,7 @@ def train_rl_ttt_agent(k=50,num_games=10):
     v = numpy.dot(phi,beta)
     
     for i in xrange(num_games):
+        print 'game: ', i
         # play against epsilon-optimal player 
         S,R = play_opponent(v,index)
         print 'length of game: ', len(S)

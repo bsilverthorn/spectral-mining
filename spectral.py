@@ -1,14 +1,24 @@
 import numpy as np
+import scipy.sparse
+import scipy.sparse.linalg
 #import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
 #from matplotlib import cm
 from sparseQR import sparseQR
 
 def laplacian_operator(W):
-    D = np.diag(np.sum(W,1))
-    D_invsqrt = np.sqrt(np.linalg.inv(D))
-
-    return np.dot(np.dot(D_invsqrt,(D-W)),D_invsqrt)
+    n = W.shape[0]
+    
+    if not scipy.sparse.issparse(W):
+        W = scipy.sparse.csr_matrix(W)
+    print 'calc row sum'
+    W_row_sum = W.sum(1).T
+    print 'create diagonal matrix'
+    D = scipy.sparse.spdiags(W_row_sum,0,n,n)
+    print 'take inv sqrt'
+    D_invsqrt = scipy.sparse.spdiags(1./np.sqrt(W_row_sum),0,n,n)
+    print 'calculate laplacian'
+    return D_invsqrt*(D-W)*D_invsqrt
 
 def diffusion_operator(W):
     D = np.diag(np.sum(W,1))
