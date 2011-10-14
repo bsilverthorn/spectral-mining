@@ -1,3 +1,9 @@
+import plac
+import tictac
+
+if __name__ == '__main__':
+    plac.call(tictac.main_write_states_pickle)
+
 import csv
 import gzip
 import cPickle as pickle
@@ -153,15 +159,20 @@ def get_ttt_laplacian_basis(k=100):
     
     return phi, index
 
-    
-def main():
+@plac.annotations(
+    out_path = ("path to write states pickle (gzipped)",)
+    )
+def main_write_states_pickle(out_path):
+    """Generate and write the TTT board adjacency map."""
+
     states = construct_adjacency()
 
-    with open("states.pickle", "w") as pickle_file:
+    with contextlib.closing(gzip.GzipFile(out_path, "w")) as pickle_file:
         pickle.dump(states, pickle_file)
 
-    #with gzip.GzipFile("states.pickle.gz") as pickle_file:
-    #    states = pickle.load(pickle_file)
+def main_visualize():
+    with gzip.GzipFile("states.pickle.gz") as pickle_file:
+        states = pickle.load(pickle_file)
 
     index = dict(zip(states, xrange(len(states))))
     rindex = sorted(states, key = lambda s: index[s])
@@ -224,7 +235,4 @@ def main():
 
             #for e in xrange(4):
                 #csv_writer.writerow([e, n, v[index[board], e]])
-
-if __name__ == '__main__':
-    main()
 
