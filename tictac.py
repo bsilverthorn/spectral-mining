@@ -1,6 +1,7 @@
 import csv
 import gzip
 import cPickle as pickle
+import contextlib
 import numpy
 import scipy.sparse
 import scipy.sparse.linalg
@@ -124,7 +125,7 @@ def get_ttt_laplacian_basis(k=100):
 
     #states = construct_adjacency()
 
-    with gzip.GzipFile("states.pickle.gz") as pickle_file:
+    with contextlib.closing(gzip.GzipFile("states.pickle.gz")) as pickle_file:
         states = pickle.load(pickle_file)
     
     index = dict(zip(states, xrange(len(states))))
@@ -154,13 +155,13 @@ def get_ttt_laplacian_basis(k=100):
 
     
 def main():
-    #states = construct_adjacency()
+    states = construct_adjacency()
 
-    #with open("states.pickle", "w") as pickle_file:
-        #pickle.dump(states, pickle_file)
+    with open("states.pickle", "w") as pickle_file:
+        pickle.dump(states, pickle_file)
 
-    with gzip.GzipFile("states.pickle.gz") as pickle_file:
-        states = pickle.load(pickle_file)
+    #with gzip.GzipFile("states.pickle.gz") as pickle_file:
+    #    states = pickle.load(pickle_file)
 
     index = dict(zip(states, xrange(len(states))))
     rindex = sorted(states, key = lambda s: index[s])
