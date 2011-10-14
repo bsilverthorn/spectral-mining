@@ -102,63 +102,94 @@ def test_ttt_minimax():
     assert ttt_optimal_move(boards[2], -1) == (2, 0, 1)
     assert ttt_value_max(boards[3], -1) == 1
 
-def rl_agent_choose_move(board,player,index,v):
+def rl_agent_choose_move(board,index,v):
     '''returns the next move chosen according to the value function v
     along with the corresponding board state index'''
 
     valid_moves = numpy.array(board._grid.nonzero())
     next_move_indxs = []
+    moves = []
     for m in xrange(valid_moves.shape[1]):
-        after_state = board.make_move(player,valid_moves[0,m],valid_moves[1,m])
+        # always plays player 1's move - invert board for player -1
+        after_state = board.make_move(1,valid_moves[0,m],valid_moves[1,m])
         next_move_indxs.append(index[after_state])
+        moves.append((valid_moves[0,m],valid_moves[1,m]))
 
     # choose randomly among the moves of highest value
     max_value = numpy.max(v[next_move_indxs])
     best_moves = next_move_indxs[v[next_move_indxs] == max_value]
-    return choice(best_moves)
+    move_indx = choice(best_moves)
+    move = move[next_move_indxs == move_indx]
+    return move, move_indx
 
-def play_against_optimal(v, index, rindex):
+
+def play_opponent(v, index, self_play=False):
     S = [] # list of board state indices
-    R = [] # list of rewards len(R) = (len(S)-1)
     board = tictac.BoardState(numpy.zeros(3,3));
     S.append(index[board])
     
     # choose first player randomly
     player = numpy.round(numpy.random.rand)*2-1 
 
-    while board.get_winner() == None:
+    winner = None
+    while winner == None:
         # rl agent is always player 1
         if player == 1:
-            move_indx = rl_agent_choose_move(board,player,index,v)
-            move = rindex[move_indx]
+            move, next_indx = rl_agent_choose_move(board,index,v)
             board = board.make_move(player,move[0],move[1])
-            R.append(0)
-            S.append(move_indx)
                     
         else:
-            move = ttt_optimal_move(board,player)
-            board = board.make_move(player,move[0],move[1])
-
-            
-            
+            if self_play:
+                inverse_board = tictac.BoardState(-board._grid)
+                move, null = rl_agent_choose_move(inverse_board,index,v)
+                board = board.make_move(player,move[0],move[1])
+                next_indx = index[board]
+            else:
+                move = ttt_optimal_move(board,player)
+                board = board.make_move(player,move[0],move[1])
+                next_indx = index[board]
         
+        S.append(next_indx)
+        winner = board.get_winner()
+       
+    R = [0]*(len(S)-1); R[-1] = winner
     
-    
-    
+    return S,R
+
+def invert_episode(S,R,index,rindex):
+    # TODO incomplete
+    for s in S:
+        board = rindex[s]
+        inv_board = tictac.BoardState(-board._grid)
+             
 
 def train_rl_ttt_agent(k=50,num_games=10):
     phi, index = tictac.get_ttt_laplacian_basis(k)
-     
+    n = phi.shape[0] # number of states
+    beta = numpy.zeros(n)
+    v = numpy.dot(phi,beta)
+    
+    for i in xrange(num_games):
+        # play against epsilon-optimal player 
+        S,R = play_opponent(v,index)
+        print 'length of game: ', len(S)
+        beta = td_episode(S, R, phi, beta) # lam=0.9, gamma=1, alpha = 0.001
+        # update the policy after each game (may want to change to 
+        # get better policy estimate before updating)
+        v = numpy.dot(phi,beta)
 
+    # save the learned weight values
+    with open("ttt_beta_k="+str(k)+".pickle", "w") as pickle_file:
+        pickle.dump(beta, pickle_file)
+
+        
 
 @plac.annotations(
-    board = ("board state (JSON)", "positional", None, json.loads),
-    player = ("player (-1 or 1)", "option", "p", int),
+    k = ("number of features", "option", "k", int),
+    num_games = ("number of games", "option", "n", int),
     )
-def main(board, player = 1):
-    """Print the optimal Tic-Tac-Toe move in a given state."""
-
-    print ttt_optimal_move(tictac.BoardState(numpy.array(board)), player)
+def main(k=50,num_games=10):
+    train_rl_ttt_agent(k,num_games)
 
 if __name__ == "__main__":
     plac.call(main)

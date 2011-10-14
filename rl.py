@@ -25,11 +25,11 @@ def lstd_solve(A,b):
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
 
-def td_episode(S, R, phi, lam=0.9, gamma=1, beta = None, alpha = 0.001):
+def td_episode(S, R, phi, beta = None, lam=0.9, gamma=1, alpha = 0.001):
     k = phi.shape[1]
     if beta == None:
-        beta = np.zeros((k,1))
-    z = phi[S[0],:]
+        beta = np.zeros(k)
+    z = phi[S[0],:] # TODO make z 1-dim
     
     for t in xrange(len(R)):
         curr_phi = phi[S[t],:] 
@@ -40,13 +40,13 @@ def td_episode(S, R, phi, lam=0.9, gamma=1, beta = None, alpha = 0.001):
     return beta
 
 
-def vi_episode(W, S, R, phi, lam=0, gamma=1, beta=None, alpha=0.001):
+def vi_episode(W, S, R, phi, beta=None, lam=0, gamma=1, alpha=0.001):
     ''' not sure if its legal/accepted to use lambda (eligibility traces) here
     with value iteration; makes it policy dependent.'''
     k = phi.shape[1]
     if beta == None:
-        beta = np.zeros((k,1))
-    z = phi[S[0],:]
+        beta = np.zeros(k)
+    z = phi[S[0],:] # TODO make z 1-dim
     v = np.dot(phi,beta)
 
     for t in xrange(len(R)):
@@ -131,7 +131,7 @@ def tworoom_PI(W, phi, g, num_pols=10, num_eps=300, epsilons=0.1*np.ones(10), us
                 _A,_b = lstd_episode(S, R, phi)
                 A += _A; b += _b;
             else: # use regular td
-                weights = td_episode(S, R, phi, beta=weights)
+                weights = td_episode(S, R, phi, weights)
 
         print 'average time steps: ', t/float(num_eps)
 
@@ -162,7 +162,7 @@ def tworoom_VI(W, phi, g, num_pols=1, num_eps=500, epsilons=np.ones(500)):
             #    print 'made it to goal'
             h += heat_map(S,n)  
             t += _t              
-            weights = vi_episode(W, S, R, phi, beta=weights)
+            weights = vi_episode(W, S, R, phi, weights)
 
         print 'average time steps: ', t/float(num_eps)
         v = np.dot(phi,weights)  
