@@ -11,13 +11,9 @@ def laplacian_operator(W):
     
     if not scipy.sparse.issparse(W):
         W = scipy.sparse.csr_matrix(W)
-    print 'calc row sum'
     W_row_sum = W.sum(1).T
-    print 'create diagonal matrix'
     D = scipy.sparse.spdiags(W_row_sum,0,n,n)
-    print 'take inv sqrt'
     D_invsqrt = scipy.sparse.spdiags(1./np.sqrt(W_row_sum),0,n,n)
-    print 'calculate laplacian'
     return D_invsqrt*(D-W)*D_invsqrt
 
 def diffusion_operator(W):
