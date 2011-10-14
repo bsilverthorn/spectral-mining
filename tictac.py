@@ -115,6 +115,42 @@ def construct_adjacency():
     board_recurs(1, None, init_board)
     
     return states
+
+def get_ttt_laplacian_basis(k=100): 
+    ''' calculate the first k eigenvectors of the ttt graph laplacian and 
+    return them as columns of the matrix phi along with the dictionary of 
+    state indices'''
+
+    #states = construct_adjacency()
+
+    with open("states.pickle") as pickle_file:
+        states = pickle.load(pickle_file)
+    
+    index = dict(zip(states, xrange(len(states))))
+    N = len(index)
+
+    adjacency_NN = numpy.zeros((N, N))
+
+    for state in index:
+        n = index[state]
+
+        for parent in states[state]:
+            adjacency_NN[index[parent], n] = 1
+            adjacency_NN[n, index[parent]] = 1
+
+    laplacian_NN = spectral.laplacian_operator(adjacency_NN)
+
+    print "finding eigenvalues"
+
+    splaplacian_NN = scipy.sparse.csr_matrix(laplacian_NN)
+    (lam, phi) = scipy.sparse.linalg.eigen_symmetric(splaplacian_NN, k, which = "SM")
+    sort_inds = lam.argsort()
+    lam = lam[sort_inds]
+    phi = phi[:, sort_inds]
+    print 'is resulting basis sparse?: ',scipy.sparse.issparse(phi)
+    
+    return phi, index
+
     
 def main():
     #states = construct_adjacency()

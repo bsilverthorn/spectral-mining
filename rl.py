@@ -4,7 +4,7 @@ import scipy.sparse
 import scipy.sparse.linalg
 import spectral
 
-# TODO add gamma and l2 norm
+# TODO add gamma and l2 regularization
 def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
 
     k = phi.shape[1] # number of features

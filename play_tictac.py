@@ -1,3 +1,4 @@
+from random import choice
 import json
 import plac
 import numpy
@@ -100,6 +101,55 @@ def test_ttt_minimax():
     assert ttt_optimal_move(boards[2], 1) == (2, 1, 1)
     assert ttt_optimal_move(boards[2], -1) == (2, 0, 1)
     assert ttt_value_max(boards[3], -1) == 1
+
+def rl_agent_choose_move(board,player,index,v):
+    '''returns the next move chosen according to the value function v
+    along with the corresponding board state index'''
+
+    valid_moves = numpy.array(board._grid.nonzero())
+    next_move_indxs = []
+    for m in xrange(valid_moves.shape[1]):
+        after_state = board.make_move(player,valid_moves[0,m],valid_moves[1,m])
+        next_move_indxs.append(index[after_state])
+
+    # choose randomly among the moves of highest value
+    max_value = numpy.max(v[next_move_indxs])
+    best_moves = next_move_indxs[v[next_move_indxs] == max_value]
+    return choice(best_moves)
+
+def play_against_optimal(v, index, rindex):
+    S = [] # list of board state indices
+    R = [] # list of rewards len(R) = (len(S)-1)
+    board = tictac.BoardState(numpy.zeros(3,3));
+    S.append(index[board])
+    
+    # choose first player randomly
+    player = numpy.round(numpy.random.rand)*2-1 
+
+    while board.get_winner() == None:
+        # rl agent is always player 1
+        if player == 1:
+            move_indx = rl_agent_choose_move(board,player,index,v)
+            move = rindex[move_indx]
+            board = board.make_move(player,move[0],move[1])
+            R.append(0)
+            S.append(move_indx)
+                    
+        else:
+            move = ttt_optimal_move(board,player)
+            board = board.make_move(player,move[0],move[1])
+
+            
+            
+        
+    
+    
+    
+
+def train_rl_ttt_agent(k=50,num_games=10):
+    phi, index = tictac.get_ttt_laplacian_basis(k)
+     
+
 
 @plac.annotations(
     board = ("board state (JSON)", "positional", None, json.loads),
