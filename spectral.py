@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
-#import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
-#from matplotlib import cm
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 from sparseQR import sparseQR
 
 def laplacian_operator(W):

@@ -29,11 +29,10 @@ def td_episode(S, R, phi, beta = None, lam=0.9, gamma=1, alpha = 0.001):
     k = phi.shape[1]
     if beta == None:
         beta = np.zeros(k)
-    z = phi[S[0],:] # TODO make z 1-dim
-    
+    z = phi[S[0],:]     
     for t in xrange(len(R)):
         curr_phi = phi[S[t],:] 
-        delta = z[:,None]*(R[t]+np.dot((gamma*phi[S[t+1],:]-curr_phi)[None,:],beta))
+        delta = z*(R[t]+np.dot((gamma*phi[S[t+1],:]-curr_phi),beta))
         z = lam*z+phi[S[t+1],:]
         beta += delta*alpha/np.linalg.norm(curr_phi,1)
 
@@ -46,7 +45,7 @@ def vi_episode(W, S, R, phi, beta=None, lam=0, gamma=1, alpha=0.001):
     k = phi.shape[1]
     if beta == None:
         beta = np.zeros(k)
-    z = phi[S[0],:] # TODO make z 1-dim
+    z = phi[S[0],:] 
     v = np.dot(phi,beta)
 
     for t in xrange(len(R)):
@@ -57,7 +56,7 @@ def vi_episode(W, S, R, phi, beta=None, lam=0, gamma=1, alpha=0.001):
         best_next_state = choice(neighbors[best]) 
 
         curr_phi = phi[S[t],:] 
-        delta = z[:,None]*(R[t]+np.dot((gamma*phi[best_next_state,:]-curr_phi)[None,:],beta))
+        delta = z*(R[t]+np.dot((gamma*phi[best_next_state,:]-curr_phi),beta))
         z = gamma*lam*z+phi[S[t+1],:]
         beta += delta*alpha/np.linalg.norm(curr_phi,1)
 

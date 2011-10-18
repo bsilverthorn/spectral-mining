@@ -154,12 +154,10 @@ def get_ttt_laplacian_basis(k=100):
     print "finding eigenvalues"
 
     splaplacian_NN = scipy.sparse.csr_matrix(laplacian_NN)
-    #TODO did they change the scipy.sparse eigensolver again?
     (lam, phi) = scipy.sparse.linalg.eigen_symmetric(splaplacian_NN, k, which = "SM")
     sort_inds = lam.argsort()
     lam = lam[sort_inds]
     phi = phi[:, sort_inds]
-    print 'is resulting basis sparse?: ',scipy.sparse.issparse(phi)
     
     return phi, index
 
