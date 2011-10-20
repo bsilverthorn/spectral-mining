@@ -30,7 +30,7 @@ class QFunctionPolicy(object):
         self._domain = domain
         self._q_values = q_values
 
-def learn_q_policy(domain, rate = 1e-1, discount = 9e-1, iterations = 1000):
+def learn_q_values(domain, rate = 1e-1, discount = 9e-1, iterations = 1000):
     q_values = {}
 
     for state in domain.states:
@@ -49,6 +49,11 @@ def learn_q_policy(domain, rate = 1e-1, discount = 9e-1, iterations = 1000):
                 error = domain.reward_in(next_state) + discount * max_next_value - value
 
                 q_values[(state, action)] = value + rate * error
+
+    return q_values
+
+def learn_q_policy(domain, **options):
+    q_values = learn_q_values(domain, **options)
 
     return QFunctionPolicy(domain, q_values)
 
