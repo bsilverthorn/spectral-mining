@@ -27,6 +27,12 @@ class BoardState(object):
     def __eq__(self, other):
         return self._string == other._string
 
+    def __str__(self):
+        return self._string
+
+    def __repr__(self):
+        return repr(self._grid)
+
     def make_move(self, player, i, j):
         assert self._grid[i, j] == 0
 
@@ -76,6 +82,10 @@ class BoardState(object):
         """Is this board state an end state?"""
 
         return self.get_winner() != None
+
+    @property
+    def grid(self):
+        return self._grid
 
 def test_board_state():
     configurations = [
