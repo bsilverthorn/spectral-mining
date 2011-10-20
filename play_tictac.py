@@ -4,7 +4,6 @@ import play_tictac
 if __name__ == "__main__":
     plac.call(play_tictac.main)
 
-from random import choice
 import gzip
 import cPickle as pickle
 import contextlib
