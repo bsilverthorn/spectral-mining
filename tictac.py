@@ -78,6 +78,14 @@ class BoardState(object):
         # no win, game still in progress
         return None
 
+    def get_player(self):
+        """Return the player to act on the board."""
+
+        if numpy.sum(numpy.abs(self._grid)) % 2 == 0:
+            return 1
+        else:
+            return -1
+
     def check_end(self):
         """Is this board state an end state?"""
 

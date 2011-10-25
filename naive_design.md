@@ -1,14 +1,14 @@
 Design of a Naïve RL Framework
 ==============================
 
-Domains provide:
+Domains provide methods:
 
 - `states -> [state]`
 - `outcome_of(state, action) -> state`
 - `actions_in(state) -> [action]`
 - `reward_in(state) -> scalar`
 
-Learning methods are of the form:
+Learning functions are of the form:
 
 `learn(domain) -> policy`
 
