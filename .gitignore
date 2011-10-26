@@ -5,3 +5,5 @@
 *.bbl
 *.blg
 *.log
+*.o
+*.a
