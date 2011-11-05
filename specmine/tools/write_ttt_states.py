@@ -10,7 +10,7 @@ import numpy
 import tictac
 
 @plac.annotations(
-    out_path = ("path to write states pickle (gzipped)",),
+    out_path = ("path to write states pickle",),
     start = ("start state", "option", None, json.loads),
     cutoff = ("move limit", "option", None, int),
     )
