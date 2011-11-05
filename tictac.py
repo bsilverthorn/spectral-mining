@@ -17,7 +17,10 @@ class BoardState(object):
     # XXX use a simple bitstring board representation?
     # XXX an efficient end-state check could be made against a mask set
 
-    def __init__(self, grid):
+    def __init__(self, grid = None):
+        if grid is None:
+            grid = numpy.zeros((3, 3))
+
         self._string = str(grid)
         self._grid = grid
 

@@ -4,9 +4,7 @@ Design of a Naïve RL Framework
 General Notes
 -------------
 
-State space scheme:
-
-
+State space pickle scheme: `{state: [state]}`
 
 RL Scheme
 ---------
