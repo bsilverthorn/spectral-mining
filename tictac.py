@@ -118,13 +118,19 @@ def test_board_state():
     assert boards[3].get_winner() == -1
     assert boards[4].get_winner() == 0
 
-def construct_adjacency():
+def construct_adjacency(init_board = None, cutoff = None):
     
     states = {}
-    init_board = BoardState(numpy.zeros((3,3)))
+
+    if init_board is None:
+        init_board = BoardState()
     
-    def board_recurs(player, parent, board):
+    def board_recurs(player, parent, board, depth = 0):
         print len(states)
+
+        if cutoff is not None and depth == cutoff:
+            return
+
         adjacent = states.get(board)
         
         if adjacent is None:
@@ -139,7 +145,7 @@ def construct_adjacency():
         for i in xrange(3):
             for j in xrange(3):
                 if board._grid[i,j] == 0:
-                    board_recurs(-1 * player, board, board.make_move(player, i, j))
+                    board_recurs(-1 * player, board, board.make_move(player, i, j), depth + 1)
     
     board_recurs(1, None, init_board)
     
