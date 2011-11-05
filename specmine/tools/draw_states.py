@@ -17,7 +17,8 @@ def write_dot_file(out_file, states, directed = False, coloring = None):
     if coloring is None:
         coloring = dict((s, 0) for s in states)
 
-    hues = numpy.r_[0.0:1.0:len(set(coloring.values())) * 1j]
+    unique = len(set(coloring.values()))
+    hues = numpy.r_[0.0:1.0 - 1.0 / unique:unique * 1j]
 
     # write general configuration
     if directed:
@@ -33,11 +34,15 @@ def write_dot_file(out_file, states, directed = False, coloring = None):
     out_file.write("edge [color=\"#00000022\"];\n")
     out_file.write("splines=true;\n")
 
+    #import tictac
+    #out_file.write("root={0};\n".format(names[tictac.BoardState()]))
+
     # write the nodes
     for (i, state) in enumerate(states):
-        (rgb_r, rgb_g, rgb_g) = colorsys.hsv_to_rgb(hues[coloring[state]], 0.75, 1.0)
+        values = colorsys.hsv_to_rgb(hues[coloring[state]], 0.85, 0.85)
+        string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
 
-        out_file.write("{0} [color=\"{1} 1.0 1.0\"];\n".format(names[state], hue))
+        out_file.write("{0} [color=\"{1}\"];\n".format(names[state], string))
 
     # write the edges
     for (state, next_states) in states.iteritems():
@@ -64,13 +69,13 @@ def render_dot_file(out_path, dot_path, tool_name):
 @plac.annotations(
     out_path = ("path to write graphviz dot file",),
     states_path = ("path to state space pickle",),
-    coloring_path = ("path to vertex-color map", "option", "c"),
     render_with = ("graphviz rendering tool", "option", "r"),
+    coloring_path = ("path to vertex-color map", "option", "c"),
     )
-def main(out_path, states_path, coloring_path = None, render_with = None):
+def main(out_path, states_path, render_with = None, coloring_path = None):
     """Visualize a state space graph."""
 
-    with specmine.util.openz("ttt_states.pickle.gz") as pickle_file:
+    with specmine.util.openz(states_path) as pickle_file:
         boards = pickle.load(pickle_file)
 
     print "writing {1}-vertex graph to {0}".format(out_path, len(boards))
@@ -81,12 +86,14 @@ def main(out_path, states_path, coloring_path = None, render_with = None):
         with specmine.util.openz(coloring_path) as pickle_file:
             coloring = pickle.load(pickle_file)
 
+        assert len(coloring) == len(boards)
+
     if render_with is None:
         with open(out_path, "wb") as out_file:
             write_dot_file(out_file, boards, coloring = coloring)
     else:
         with tempfile.NamedTemporaryFile(suffix = ".dot") as dot_file:
-            write_dot_file(dot_file, boards)
+            write_dot_file(dot_file, boards, coloring = coloring)
 
             dot_file.flush()
 
