@@ -188,9 +188,8 @@ def play_opponent(v, index, opt_strat, eps_opt, eps_greedy, self_play=False):
 
     S = [] # list of board state indices
     board = tictac.BoardState(numpy.zeros((3,3)));
-    S.append(index[board])
-    
-    # player = numpy.round(numpy.random.random())*2-1 
+    S.append(index[board]) 
+
     player = 1 # only games starting with player 1 are stored in index
 
     winner = None
@@ -217,7 +216,7 @@ def play_opponent(v, index, opt_strat, eps_opt, eps_greedy, self_play=False):
         winner = board.get_winner()
         #print board._grid
     
-    R = [0]*(len(S)-1); R[-1] = winner
+    R = [0]*(len(S)); R[-1] = winner
     
     return S,R
 
@@ -311,7 +310,7 @@ plac.annotations(
     eps_opt = ("fraction of moves played randomly by opponent rl agent trains \
         against", "option",float)
     )
-def main(k=300,num_games=5000,freq=500, eps_opt=1, eps_greedy=0.3):
+def main(k=200,num_games=5000,freq=500, eps_opt=1, eps_greedy=0.3):
 
     beta, v, win_rate, lose_rate, draw_rate = train_rl_ttt_agent(k,num_games,freq,eps_opt,eps_greedy)
          
@@ -322,7 +321,7 @@ def main(k=300,num_games=5000,freq=500, eps_opt=1, eps_greedy=0.3):
     test_value_function(v,index,states) 
      
     # save the learned weight values
-    with open("ttt_beta_k="+str(k)+".pickle", "w") as pickle_file:
+    with open("ttt_beta_laplacian_k="+str(k)+".pickle", "w") as pickle_file:
         pickle.dump(beta, pickle_file)
 
     x = range(freq,num_games+freq,freq)
@@ -330,11 +329,13 @@ def main(k=300,num_games=5000,freq=500, eps_opt=1, eps_greedy=0.3):
     plt.legend(('win rate', 'lose rate', 'draw rate'),loc=7)
     plt.xlabel('number of games')
     plt.ylabel('win,lose,draw rate - averaged every '+str(freq)+' games')
-    plt.title('RL Agent Playing Against Random Tic Tac Toe Opponent')
+    if eps_opt == 1:
+        plt.title('RL Agent Playing Against Random Tic Tac Toe Opponent')
+    elif eps_opt == 0:
+        plt.title('RL Agent Playing Against Optimal Tic Tac Toe Opponent')
+    else:
+        plt.title('RL Agent Playing Against Semi-Random (eps='+str(eps_opt)+') Tic Tac Toe Opponent')
     plt.show()
-
-def not_main():
-    test_optimal_player()
 
 
 
