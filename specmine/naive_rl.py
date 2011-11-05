@@ -1,7 +1,3 @@
-import gzip
-import cPickle as pickle
-import contextlib
-import numpy
 import plac
 import specmine
 

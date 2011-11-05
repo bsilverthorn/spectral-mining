@@ -1,3 +1,8 @@
+import gzip
+import cPickle as pickle
+import contextlib
+import numpy
+
 class SimpleRoomDomain(object):
     def __init__(self, width = 8):
         self._width = width
