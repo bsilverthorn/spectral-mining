@@ -8,7 +8,7 @@ import gzip
 import cPickle as pickle
 import contextlib
 import numpy
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import tictac
 import rl
 

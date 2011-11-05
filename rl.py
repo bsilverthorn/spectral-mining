@@ -32,6 +32,7 @@ def td_episode(S, R, phi, beta = None, lam=0, gamma=1, alpha = 0.001):
     z = phi[S[0],:]     
     for t in xrange(len(R)):
         curr_phi = phi[S[t],:] 
+        z_old = z
         if t == len(R)-1:
             # terminal state is defined as having value zero
             delta = z*(R[t]-np.dot(curr_phi,beta)) 
@@ -43,8 +44,12 @@ def td_episode(S, R, phi, beta = None, lam=0, gamma=1, alpha = 0.001):
 
         print 'current: ', np.dot(phi[S[t],:],beta)
         print 'delta: ', np.dot(delta,curr_phi.T)/np.linalg.norm(curr_phi,1)
-       
-        beta += delta*alpha/np.linalg.norm(curr_phi,1)
+        
+        print delta.shape
+        print curr_phi.shape
+        print beta.shape
+        beta += (delta[0,:]*alpha/np.dot(curr_phi,curr_phi.T)).shape
+        # beta += delta[0,:]*alpha/np.dot(z,curr_phi.T)
 
     return beta
 
