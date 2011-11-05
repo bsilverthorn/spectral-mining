@@ -1,6 +1,16 @@
 Design of a Naïve RL Framework
 ==============================
 
+General Notes
+-------------
+
+State space scheme:
+
+
+
+RL Scheme
+---------
+
 Domains provide methods:
 
 - `states -> [state]`
