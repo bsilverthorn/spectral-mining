@@ -26,6 +26,9 @@ def write_graph(out_file, adjacency):
     # build a sparse matrix without self edges
     sparse_adjacency = scipy.sparse.lil_matrix(adjacency)
 
+    if sparse_adjacency.dtype.kind not in "iu":
+        raise Exception("edges must have integer weights for clustering")
+
     (M, N) = sparse_adjacency.shape
 
     sparse_adjacency.setdiag(numpy.zeros(N))
@@ -55,21 +58,29 @@ def cluster(adjacency, clusters, extra_options = ()):
             graph_file.flush()
 
             command = [
-                os.path.join(os.path.dirname(__file__), "graclus1.2/graclus"),
-                graph_file.name,
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "../graclus1.2/graclus")),
+                os.path.abspath(graph_file.name),
                 str(clusters),
                 ]
 
-            with open("/dev/null", "w") as null_file:
+            output_path = os.path.join(working_root, "graclus.out")
+
+            with open(output_path, "wb") as output_file:
                 subprocess.check_call(
                     command,
                     cwd = working_root,
-                    stdout = null_file,
-                    stderr = null_file,
+                    stdout = output_file,
+                    stderr = subprocess.STDOUT,
                     )
 
-            with open("{0}.part.{1}".format(graph_path, clusters)) as clustering_file:
-                return numpy.array(map(int, clustering_file.read().split()))
+            clustering_path = "{0}.part.{1}".format(graph_path, clusters)
+
+            if os.path.exists(clustering_path):
+                with open(clustering_path) as clustering_file:
+                    return numpy.array(map(int, clustering_file.read().split()))
+            else:
+                with open(output_path) as output_file:
+                    raise Exception("clustering failed; output follows.\n{0}".format(output_file.read()))
 
 def test_cluster():
     adjacency = [
