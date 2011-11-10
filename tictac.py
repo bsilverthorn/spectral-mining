@@ -158,7 +158,7 @@ def get_ttt_laplacian_basis(k=100):
 
     #states = construct_adjacency()
 
-    with contextlib.closing(gzip.GzipFile("ttt_states.pickle.gz")) as pickle_file:
+    with contextlib.closing(gzip.GzipFile("ttt_states.pickle")) as pickle_file:
         states = pickle.load(pickle_file)
     
     index = dict(zip(states, xrange(len(states))))
@@ -186,6 +186,18 @@ def get_ttt_laplacian_basis(k=100):
     lam = lam[sort_inds]
     phi = phi[:, sort_inds]
     
+    return phi, index
+
+def get_ttt_tabular_basis():
+
+
+    with contextlib.closing(gzip.GzipFile("ttt_states.pickle")) as pickle_file:
+        states = pickle.load(pickle_file)
+
+    index = dict(zip(states, xrange(len(states))))
+    #phi = scipy.sparse.csr_matrix(numpy.eye(len(states)))
+    phi = numpy.eye(len(states))
+
     return phi, index
 
 @plac.annotations(
