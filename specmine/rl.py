@@ -53,7 +53,7 @@ class TabularFeatureMap:
         self.basis = basis_matrix # number of states x number of features
         self.index = index
 
-    def __getitem__(self,state)
+    def __getitem__(self,state):
         return self.basis[index[state],:]
 
 def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
