@@ -1,5 +1,6 @@
 import plac
 from random import choice
+import cPickle as pickle
 import numpy
 import specmine
 
@@ -123,7 +124,7 @@ def main(num_episodes=10,k=10):
             adj_dict = pickle.load(pickle_file)
 
     print 'generating representation'
-    adj_matrix, index = adjacency_dict_to_matrix(adj_dict)
+    adj_matrix, index = specmine.discovery.adjacency_dict_to_matrix(adj_dict)
     print index[specmine.tictac.BoardState()]
     phi = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)
     feature_map = TabularFeatureMap(phi,index)

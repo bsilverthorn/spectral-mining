@@ -36,7 +36,7 @@ class TicTacToeDomain(object):
     def __init__(self, opponent = None):
         # construct opponent
         if opponent is None: 
-            pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
+            pickle_path = specmine.util.static_path("ttt_optimal.pickle.gz")
 
             with specmine.util.openz(pickle_path) as pickle_file:
                 optimal = pickle.load(pickle_file)
@@ -53,12 +53,12 @@ class TicTacToeDomain(object):
         pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
 
         with specmine.util.openz(pickle_path) as pickle_file:
-            boards = pickle.load(pickle_file)
+            states = pickle.load(pickle_file)
 
-        self.states = [(board.get_player(), board) for board in boards]
+        self.states = states
         self.initial_state = (1,specmine.tictac.BoardState())
 
-    def actions_in(self, (player, board)):
+    def actions_in(self, (board, player)):
         if board.get_winner() is None:
             if player == 1:
                 for i in xrange(3):
@@ -68,14 +68,14 @@ class TicTacToeDomain(object):
             else:
                 yield (None, None)
 
-    def reward_in(self, (player, board)):
+    def reward_in(self, (board,player)):
         winner = board.get_winner()
         if winner != None:
             return winner
         else:
             return 0
 
-    def outcome_of(self, (player, board), (i, j)):
+    def outcome_of(self, (board,player), (i, j)):
         if player == 1:
             return (-1, board.make_move(1, i, j))
         else:
@@ -86,5 +86,5 @@ class TicTacToeDomain(object):
 
             return (1, board.make_move(-1, opponent_i, opponent_j))
 
-    def check_end(self, (player,board)):
+    def check_end(self, (board,player)):
         return board.check_end()
