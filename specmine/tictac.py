@@ -126,25 +126,16 @@ def construct_adjacency(init_board = None, cutoff = None):
     
     return states
 
-def adjacency_matrix(init_board = None, cutoff = None):
-    ''' creates a symmetric adjacency matrix enumerating all tictactoe states 
-    starting from init_board and going for cutoff moves'''
-
-    if os.path.isfile("dropbox/ttt_states.pickle.gz"): # TODO add options to file name?
-        with contextlib.closing(gzip.GzipFile("dropbox/ttt_states.pickle.gz")) as pickle_file:
-            states = pickle.load(pickle_file)
-    else:
-        states = construct_adjacency(init_board,cutoff)
-
-    index = dict(zip(states, xrange(len(states))))
-    rindex = sorted(states, key = lambda s: index[s])
+def adjacency_matrix(index,boards):
+    ''' creates a symmetric adjacency matrix enumerating all tictactoe states'''
+    
     N = len(index)
     adjacency = numpy.zeros((N, N))
 
     for state in index:
         n = index[state]
 
-        for parent in states[state]:
+        for parent in boards[state]:
             adjacency[index[parent], n] = 1
             adjacency[n, index[parent]] = 1
 

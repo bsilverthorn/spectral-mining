@@ -4,21 +4,21 @@ import numpy
 import specmine
 
 class StateValueFunctionPolicy:
-    def __init__(self,domain,values,epsilon=0):
-        self._domain = domain
-        self._values = values # split into weights and features?
-        self._epsilon = epsilon
+    def __init__(self,domain,value_function,epsilon=0):
+        self.domain = domain
+        self.values = values_function # split into weights and features?
+        self.epsilon = epsilon
 
     def __getitem__(self,state):
-        if numpy.random.random() < self._epsilon:
+        if numpy.random.random() < self.epsilon:
             moves = list(self._domain.actions_in(state))
             return choice(moves)
         else:
             max_value = None
-            for action in self._domain.actions_in(state):
-                after_state = self._domain.outcome_of(state,action)
-                after_state_index = self._domain._index[after_state]
-                value = self._values[after_state_index]
+            for action in self.domain.actions_in(state):
+                after_state = self.domain.outcome_of(state,action)
+                after_state_index = self.domain.index[after_state]
+                value = self.values[after_state_index]
 
                 if value > max_value:
                     best_moves = [action]
@@ -31,12 +31,30 @@ class StateValueFunctionPolicy:
 
 class RandomPolicy:
     def __init__(self,domain):
-        self._domain = domain
+        self.domain = domain
 
     def __getitem__(self,state):
-        print self._domain.actions_in(state)
-        moves = list(self._domain.actions_in(state))
+        print self.domain.actions_in(state)
+        moves = list(self.domain.actions_in(state))
         return choice(moves)
+
+class LinearValueFunction:
+    def __init__(self,feature_map,weights):
+        self.features = feature_map
+        self.weights = weights
+
+    def __getitem__(self,state):
+        # TODO add interpolation to unseen states
+        phi = self.features(state) # returns a vector of feature values
+        return numpy.dot(phi,weights)
+
+class TabularFeatureMap:
+    def __init__(self, basis_matrix, index):
+        self.basis = basis_matrix # number of states x number of features
+        self.index = index
+
+    def __getitem__(self,state)
+        return self.basis[index[state],:]
 
 def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
 
@@ -98,10 +116,10 @@ def main(num_episodes=10,k=10):
     print 'creating domain and opponent'
     rand_policy = RandomPolicy(None)
     ttt = specmine.domains.TicTacToeDomain(rand_policy)
-    rand_policy._domain = ttt
+    rand_policy.domain = ttt
     
     print 'generating representation'
-    adj = specmine.tictac.adjacency_matrix()
+    adj = specmine.tictac.adjacency_matrix(ttt)
     phi = specmine.spectral.laplacian_basis(adj,k, sparse=True)
     beta = numpy.zeros(k)
     print phi.shape
