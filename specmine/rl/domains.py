@@ -1,9 +1,6 @@
-import gzip
 import cPickle as pickle
-import contextlib
 import numpy
 import specmine
-
 
 class SimpleRoomDomain(object):
     def __init__(self, width = 8):

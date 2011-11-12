@@ -88,30 +88,26 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
     adict = {}
 
     def board_recurse(player, parent, board, depth = 0):
+        state = (board, player)
+        adjacent = adict.get(state)
+
+        if adjacent is None:
+            adjacent = adict[state] = set()
+
         if cutoff is not None and depth == cutoff:
             return
 
         if board.check_end():
             return
 
-        state = (board, player)
-
         for i in xrange(3):
             for j in xrange(3):
                 if board._grid[i,j] == 0:
-                    # move
                     next_player = -1 * player
                     next_board = board.make_move(player, i, j)
 
-                    # update the dict
-                    adjacent = adict.get(state)
-
-                    if adjacent is None:
-                        adjacent = adict[state] = set()
-
                     adjacent.add((next_board, next_player))
 
-                    # recurse
                     board_recurse(next_player, board, next_board, depth + 1)
 
     if init_board is None:
@@ -120,4 +116,79 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
     board_recurse(1, None, init_board)
 
     return adict
+
+def ttt_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
+    """Compute the state value (min node) with alpha-beta pruning."""
+
+    # terminal state?
+    winner = board.get_winner()
+
+    if winner is not None:
+        return -1 * player * winner
+
+    # no; recurse
+    min_value = numpy.inf
+
+    for i in xrange(3):
+        for j in xrange(3):
+            if board._grid[i, j] == 0:
+                value = ttt_value_max(board.make_move(player, i, j), -1 * player, alpha, beta)
+
+                if value <= alpha:
+                    return value
+
+                if min_value > value:
+                    min_value = value
+
+                    if beta > value:
+                        beta = value
+
+    return min_value
+
+def ttt_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
+    """Compute the state value (max node) with alpha-beta pruning."""
+
+    # terminal state?
+    winner = board.get_winner()
+
+    if winner is not None:
+        return player * winner
+
+    # no; recurse
+    max_value = -numpy.inf
+
+    for i in xrange(3):
+        for j in xrange(3):
+            if board._grid[i, j] == 0:
+                value = ttt_value_min(board.make_move(player, i, j), -1 * player, alpha, beta)
+
+                if value >= beta:
+                    return value
+
+                if max_value < value:
+                    max_value = value
+
+                    if alpha < value:
+                        alpha = value
+
+    return max_value
+
+def ttt_optimal_move(board, player = 1):
+    """Compute the optimal move in a given state."""
+
+    max_i = None
+    max_j = None
+    max_value = -numpy.inf
+
+    for i in xrange(3):
+        for j in xrange(3):
+            if board._grid[i, j] == 0:
+                value = ttt_value_min(board.make_move(player, i, j), -1 * player)
+
+                if max_value < value:
+                    max_i = i
+                    max_j = j
+                    max_value = value
+
+    return (max_i, max_j, max_value)
 

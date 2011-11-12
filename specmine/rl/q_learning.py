@@ -1,17 +1,4 @@
-import plac
 import specmine
-
-class QFunctionPolicy(object):
-    def __init__(self, domain, q_values):
-        self._domain = domain
-        self._q_values = q_values
-
-    def __getitem__(self, state):
-        return \
-            max(
-                self._domain.actions_in(state),
-                key = lambda a: self._q_values[(state, a)],
-                )
 
 def learn_q_values(domain, rate = 1e-1, discount = 9e-1, iterations = 128):
     q_values = {}
@@ -50,13 +37,5 @@ def learn_q_values(domain, rate = 1e-1, discount = 9e-1, iterations = 128):
 def learn_q_policy(domain, **options):
     q_values = learn_q_values(domain, **options)
 
-    return QFunctionPolicy(domain, q_values)
-
-def main():
-    # build the state space
-    domain = specmine.domains.TicTacToeDomain()
-    policy = learn_q_policy(domain)
-
-if __name__ == "__main__":
-    plac.call(main)
+    return specmine.rl.QFunctionPolicy(domain, q_values)
 
