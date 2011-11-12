@@ -12,10 +12,20 @@ class QFunctionPolicy(object):
                 key = lambda a: self._q_values[(state, a)],
                 )
 
+class LinearValueFunction:
+    def __init__(self,feature_map,weights):
+        self.features = feature_map
+        self.weights = weights
+
+    def __getitem__(self,state):
+        # TODO add interpolation to unseen states
+        phi = self.features[state] # returns a vector of feature values
+        return numpy.dot(phi,weights)
+
 class StateValueFunctionPolicy:
     def __init__(self,domain,value_function,epsilon=0):
         self.domain = domain
-        self.values = values_function # split into weights and features?
+        self.values = value_function 
         self.epsilon = epsilon
 
     def __getitem__(self,state):
@@ -26,8 +36,7 @@ class StateValueFunctionPolicy:
             max_value = None
             for action in self.domain.actions_in(state):
                 after_state = self.domain.outcome_of(state,action)
-                after_state_index = self.domain.index[after_state]
-                value = self.values[after_state_index]
+                value = self.values[after_state]
 
                 if value > max_value:
                     best_moves = [action]

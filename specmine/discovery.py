@@ -6,7 +6,7 @@ class TabularFeatureMap:
         self.index = index
 
     def __getitem__(self,state):
-        return self.basis[index[state],:]
+        return self.basis[self.index[state],:]
 
 def adjacency_dict_to_matrix(adict):
     """Create a symmetric adjacency matrix from a state -> [state] dict."""
@@ -25,3 +25,4 @@ def adjacency_dict_to_matrix(adict):
             amatrix[m, n] = 1
 
     return (amatrix.tocsr(), index)
+
