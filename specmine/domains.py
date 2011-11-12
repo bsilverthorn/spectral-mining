@@ -56,7 +56,7 @@ class TicTacToeDomain(object):
             states = pickle.load(pickle_file)
 
         self.states = states
-        self.initial_state = (1,specmine.tictac.BoardState())
+        self.initial_state = (specmine.tictac.BoardState(),1)
 
     def actions_in(self, (board, player)):
         if board.get_winner() is None:
@@ -77,14 +77,14 @@ class TicTacToeDomain(object):
 
     def outcome_of(self, (board,player), (i, j)):
         if player == 1:
-            return (-1, board.make_move(1, i, j))
+            return (board.make_move(1, i, j), -1)
         else:
             assert player == -1
             assert i is None and j is None
 
             (opponent_i, opponent_j) = self._opponent[board]
 
-            return (1, board.make_move(-1, opponent_i, opponent_j))
+            return (board.make_move(-1, opponent_i, opponent_j), 1)
 
     def check_end(self, (board,player)):
         return board.check_end()

@@ -17,4 +17,3 @@ def adjacency_dict_to_matrix(adict):
             amatrix[n, m] = 1
 
     return (amatrix.tocsr(), index)
-
