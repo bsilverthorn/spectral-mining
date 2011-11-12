@@ -1,11 +1,6 @@
-import plac
-import tictac
-
-if __name__ == '__main__':
-    plac.call(tictac.main_write_states_pickle)
-
-import csv
+import os.path
 import gzip
+import csv
 import cPickle as pickle
 import contextlib
 import numpy
@@ -151,117 +146,26 @@ def construct_adjacency(init_board = None, cutoff = None):
     
     return states
 
-def get_ttt_laplacian_basis(k=100): 
-    ''' calculate the first k eigenvectors of the ttt graph laplacian and 
-    return them as columns of the matrix phi along with the dictionary of 
-    state indices'''
+def adjacency_matrix(init_board = None, cutoff = None):
+    ''' creates a symmetric adjacency matrix enumerating all tictactoe states 
+    starting from init_board and going for cutoff moves'''
 
-    #states = construct_adjacency()
-
-    with contextlib.closing(gzip.GzipFile("ttt_states.pickle.gz")) as pickle_file:
-        states = pickle.load(pickle_file)
-    
-    index = dict(zip(states, xrange(len(states))))
-    N = len(index)
-
-    adjacency_NN = numpy.zeros((N, N))
-    print 'building adjacency matrix'
-    for state in index:
-        n = index[state]
-
-        for parent in states[state]:
-            adjacency_NN[index[parent], n] = 1
-            adjacency_NN[n, index[parent]] = 1
-    
-    print 'building laplacian operator'
-    
-    adjacency_NN = scipy.sparse.csr_matrix(adjacency_NN)
-    laplacian_NN = spectral.laplacian_operator(adjacency_NN)
-
-    print "finding eigenvalues"
-
-    splaplacian_NN = scipy.sparse.csr_matrix(laplacian_NN)
-    (lam, phi) = scipy.sparse.linalg.eigen_symmetric(splaplacian_NN, k, which = "SM")
-    sort_inds = lam.argsort()
-    lam = lam[sort_inds]
-    phi = phi[:, sort_inds]
-    
-    return phi, index
-
-@plac.annotations(
-    out_path = ("path to write states pickle (gzipped)",)
-    )
-def main_write_states_pickle(out_path):
-    """Generate and write the TTT board adjacency map."""
-
-    states = construct_adjacency()
-
-    with contextlib.closing(gzip.GzipFile(out_path, "w")) as pickle_file:
-        pickle.dump(states, pickle_file)
-
-def main_visualize():
-    with gzip.GzipFile("states.pickle.gz") as pickle_file:
-        states = pickle.load(pickle_file)
+    if os.path.isfile("dropbox/ttt_states.pickle.gz"): # TODO add options to file name?
+        with contextlib.closing(gzip.GzipFile("dropbox/ttt_states.pickle.gz")) as pickle_file:
+            states = pickle.load(pickle_file)
+    else:
+        states = construct_adjacency(init_board,cutoff)
 
     index = dict(zip(states, xrange(len(states))))
     rindex = sorted(states, key = lambda s: index[s])
     N = len(index)
-
-    adjacency_NN = numpy.zeros((N, N))
+    adjacency = numpy.zeros((N, N))
 
     for state in index:
         n = index[state]
 
         for parent in states[state]:
-            adjacency_NN[index[parent], n] = 1
-            adjacency_NN[n, index[parent]] = 1
+            adjacency[index[parent], n] = 1
+            adjacency[n, index[parent]] = 1
 
-    laplacian_NN = spectral.laplacian_operator(adjacency_NN)
-
-    print "finding eigenvalues"
-
-    splaplacian_NN = scipy.sparse.csr_matrix(laplacian_NN)
-
-    (lam, v) = scipy.sparse.linalg.eigen_symmetric(splaplacian_NN, k = 8, which = "SM")
-    sort_inds = lam.argsort()
-    lam = lam[sort_inds]
-    v = v[:, sort_inds]
-
-    print "visualizing eigenvectors"
-
-    with open("spectrum.csv", "w") as csv_file:
-        csv_writer = csv.writer(csv_file)
-
-        ## first visualization
-        #init_board = BoardState(numpy.zeros((3,3)))
-
-        #csv_writer.writerow(["i","j","eigen_index","value"])
-
-        #for i in xrange(3):
-            #for j in xrange(3):
-                #next_board = init_board.make_move(1, i, j)
-
-                #for k in xrange(9):
-                    #csv_writer.writerow([i, j, k, v[index[next_board], k]])
-
-        # second visualization
-        csv_writer.writerow(["index", "i","j","piece"])
-
-        largest = v[:, 3].argsort()
-        for k in xrange(16):
-            board = rindex[largest[-(k + 1)]]
-
-            for i in xrange(3):
-                for j in xrange(3):
-                    csv_writer.writerow([k, i, j, board._grid[i, j]])
-
-        ## third visualization
-        #csv_writer.writerow(["eigen_index", "board", "value"])
-
-        #largest = v[:, 1].argsort()
-        #for n in xrange(N):
-            #board = rindex[largest[n]]
-
-            #for e in xrange(4):
-                #csv_writer.writerow([e, n, v[index[board], e]])
-
+    return adjacency

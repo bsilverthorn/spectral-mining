@@ -1,0 +1,8 @@
+\SweaveOpts{echo=F,cache=T,external=T}
+
+<<cache=F>>=
+library(ggplot2)
+
+source("../writeup_base.R")
+@
+

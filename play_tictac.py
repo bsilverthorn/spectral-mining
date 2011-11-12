@@ -2,15 +2,18 @@ import plac
 import play_tictac
 
 if __name__ == "__main__":
+#    plac.call(play_tictac.make_optimal_policy)
     plac.call(play_tictac.main)
 
 import gzip
 import cPickle as pickle
+import csv
 import contextlib
 import numpy
 #import matplotlib.pyplot as plt
 import tictac
 import rl
+
 
 def ttt_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
     """Compute the state value (min node) with alpha-beta pruning."""
@@ -123,17 +126,33 @@ def test_value_function(v,index,states):
        [[ 1., -1.,  1.],
         [ 1., -1., -1.],
         [ 0.,  0.,  1.]],
+       [[ 0., -1.,  0.],
+        [ 1., -1.,  1.],
+        [ 1., -1.,  0.]],
+       [[ 1., -1.,  0.],
+        [ 1., -1.,  0.],
+        [ 1.,  0.,  0.]],
+       [[ 0.,  0.,  0.],
+        [ 0.,  0.,  0.],
+        [ 0.,  0.,  0.]]
        ]
 
     boards = [tictac.BoardState(numpy.array(c)) for c in configurations]
-    
+
+    print boards[0]._grid
     print 'negative value?: ', v[index[boards[0]]] 
     #assert v[index[boards[0]]] < 0
     print boards[1]._grid
     print 'positive value?: ', v[index[boards[1]]]
     #assert v[index[boards[0]]] < 0
     print boards[2]._grid
-    print 'value (should be positive if next to move): ', v[index[boards[2]]]
+    print 'negative value?: ', v[index[boards[2]]]
+    print boards[3]._grid
+    print 'negative value?: ', v[index[boards[3]]]
+    print boards[4]._grid
+    print 'positive value?: ', v[index[boards[4]]]
+    print boards[5]._grid
+    print 'value near win rate?: ', v[index[boards[5]]]
    
 
 def eps_optimal_move(board, opt_strat, eps=0):
@@ -227,8 +246,14 @@ def invert_episode(S,R,index,rindex):
         inv_board = tictac.BoardState(-board._grid)
              
 
-def train_rl_ttt_agent(k=50,num_games=1000,freq=100,eps_opt=0,eps_greedy=0):
-    phi, index = tictac.get_ttt_laplacian_basis(k)
+def train_rl_ttt_agent(k=50,num_games=1000,freq=100,eps_opt=0,eps_greedy=0, tabular=True):
+
+    if tabular:
+        phi, index = tictac.get_ttt_tabular_basis()
+        k = phi.shape[0]
+    else:
+        phi, index = tictac.get_ttt_laplacian_basis(k)
+
     n = phi.shape[0] # number of states
     beta = numpy.zeros(k) # numpy.random.standard_normal(k);
     v = numpy.dot(phi,beta)
@@ -236,7 +261,7 @@ def train_rl_ttt_agent(k=50,num_games=1000,freq=100,eps_opt=0,eps_greedy=0):
     print 'learning against opponent'
 
     # load optimal strategy
-    with gzip.GzipFile("ttt_optimal.pickle.gz") as pickle_file:
+    with gzip.GzipFile("ttt_optimal.pickle") as pickle_file:
         opt_strat = pickle.load(pickle_file)
     
     # for recording performance
@@ -244,7 +269,7 @@ def train_rl_ttt_agent(k=50,num_games=1000,freq=100,eps_opt=0,eps_greedy=0):
     lose_rate = [0]*(num_games/freq)
     draw_rate = [0]*(num_games/freq)
 
-    alpha = 0.1 # learning rate
+    alpha = 0.4 # learning rate
     for i in xrange(num_games):
         #print 'game #',i
         # play against epsilon-optimal player 
@@ -254,8 +279,8 @@ def train_rl_ttt_agent(k=50,num_games=1000,freq=100,eps_opt=0,eps_greedy=0):
         v = numpy.dot(phi,beta)
 
         if (i % freq == (freq-1)):
-            alpha = alpha/2
-            eps_greedy = eps_greedy/2
+            alpha = alpha*0.9
+            eps_greedy = eps_greedy*0.9
             print 'alpha: ', alpha
             print 'eps greedy: ',eps_greedy
         
@@ -279,7 +304,7 @@ plac.annotations(
     states_path = ("path to TTT states pickle",),
     )
 
-def make_optimal_policy(out_path = "ttt_optimal.pickle.gz", states_path = "ttt_states.pickle.gz"):
+def make_optimal_policy(out_path = "ttt_optimal.pickle", states_path = "ttt_states.pickle"):
     """
     Generate the optimal TTT policy assuming that player 1 plays first. 
     Gives optimal move for player who is next to go given board state.
@@ -310,19 +335,31 @@ plac.annotations(
     eps_opt = ("fraction of moves played randomly by opponent rl agent trains \
         against", "option",float)
     )
-def main(k=200,num_games=5000,freq=500, eps_opt=1, eps_greedy=0.3):
+def main(k=200,num_games=5000,freq=200, eps_opt=1, eps_greedy=0.4, tabular=False):
 
-    beta, v, win_rate, lose_rate, draw_rate = train_rl_ttt_agent(k,num_games,freq,eps_opt,eps_greedy)
-         
-    with contextlib.closing(gzip.GzipFile("ttt_states.pickle.gz")) as pickle_file:
-        states = pickle.load(pickle_file)
-    index = dict(zip(states, xrange(len(states)))) 
+    beta, v, win_rate, lose_rate, draw_rate = train_rl_ttt_agent(k,num_games,freq,eps_opt,eps_greedy,tabular)
+    if tabular:
+        writer = csv.writer(open('tabular.num_games='+str(num_games)+'.csv', 'wb'))
+    else:
+        writer = csv.writer(open('laplacian.k='+str(k)+'.num_games='+str(num_games)+'.csv', 'wb'))
+    writer.writerow(win_rate)
+    writer.writerow(lose_rate)
+    writer.writerow(draw_rate)
+#    with contextlib.closing(gzip.GzipFile("ttt_states.pickle")) as pickle_file:
+#        states = pickle.load(pickle_file)
+#    index = dict(zip(states, xrange(len(states)))) 
 
-    test_value_function(v,index,states) 
+    #test_value_function(v,index,states) 
      
     # save the learned weight values
-    with open("ttt_beta_laplacian_k="+str(k)+".pickle", "w") as pickle_file:
-        pickle.dump(beta, pickle_file)
+    if tabular:
+        with open("ttt_beta_tabular.pickle", "w") as pickle_file:
+            pickle.dump(beta, pickle_file)
+    else: 
+        with open("ttt_beta_laplacian_k="+str(k)+".pickle", "w") as pickle_file:
+            pickle.dump(beta, pickle_file)
+        
+
 
     x = range(freq,num_games+freq,freq)
     plt.plot(x,win_rate,'g-',x,lose_rate,'r-',x,draw_rate,'b-')
