@@ -45,7 +45,7 @@ class LinearValueFunction:
 
     def __getitem__(self,state):
         # TODO add interpolation to unseen states
-        phi = self.features(state) # returns a vector of feature values
+        phi = self.features[state] # returns a vector of feature values
         return numpy.dot(phi,weights)
 
 class TabularFeatureMap:
@@ -123,12 +123,14 @@ def main(num_episodes=10,k=10):
             adj_dict = pickle.load(pickle_file)
 
     print 'generating representation'
-    adj_matrix = adjacency_dict_to_matrix(adj_dict)
+    adj_matrix, index = adjacency_dict_to_matrix(adj_dict)
+    print index[specmine.tictac.BoardState()]
     phi = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)
-    beta = numpy.zeros(k)
-    feature_map = TabularFeatureMap(phi,beta)
-    v = numpy.dot(phi,beta)
-    lvf_policy = StateValueFunctionPolicy(ttt,v)
+    feature_map = TabularFeatureMap(phi,index)
+
+    weights = numpy.zeros(k)
+    value_function = LinearValueFunction(feature_map,weights)
+    lvf_policy = StateValueFunctionPolicy(ttt,value_function)
 
     print 'learning new policy'
     S = []; R = []
@@ -137,9 +139,7 @@ def main(num_episodes=10,k=10):
         S.extend(s)
         R.extend(r)
     
-    beta = td_episode(S, R, phi, beta = beta) # lam=0.9, gamma=1, alpha = 0.001
-    v = numpy.dot(beta,phi)
-    lvf_policy._values = v
+    value_function.weights = td_episode(S, R, phi, beta = beta) # lam=0.9, gamma=1, alpha = 0.001
 
 if __name__ == '__main__':
     main()
