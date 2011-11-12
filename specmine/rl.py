@@ -7,7 +7,7 @@ import specmine
 class StateValueFunctionPolicy:
     def __init__(self,domain,value_function,epsilon=0):
         self.domain = domain
-        self.values = values_function # split into weights and features?
+        self.values = value_function 
         self.epsilon = epsilon
 
     def __getitem__(self,state):
@@ -18,8 +18,7 @@ class StateValueFunctionPolicy:
             max_value = None
             for action in self.domain.actions_in(state):
                 after_state = self.domain.outcome_of(state,action)
-                after_state_index = self.domain.index[after_state]
-                value = self.values[after_state_index]
+                value = self.values[after_state]
 
                 if value > max_value:
                     best_moves = [action]
@@ -55,7 +54,7 @@ class TabularFeatureMap:
         self.index = index
 
     def __getitem__(self,state):
-        return self.basis[index[state],:]
+        return self.basis[self.index[state],:]
 
 def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
 
@@ -106,7 +105,7 @@ def generate_episode(domain,policy):
 
     while not domain.check_end(state):
         action = policy[state]
-        state = domain.outcome_of(state,action)
+        state = domain.outcome_of(state,action) # assumes deterministic
         S.append(state)
         R.append(domain.reward_in(state))
     
@@ -125,7 +124,7 @@ def main(num_episodes=10,k=10):
 
     print 'generating representation'
     adj_matrix, index = specmine.discovery.adjacency_dict_to_matrix(adj_dict)
-    print index[specmine.tictac.BoardState()]
+    print index[(specmine.tictac.BoardState(),1)]
     phi = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)
     feature_map = TabularFeatureMap(phi,index)
 
