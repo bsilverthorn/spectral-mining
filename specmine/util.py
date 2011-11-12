@@ -20,3 +20,8 @@ def openz(path, mode = "rb", closing = True):
     if closing:
         return contextlib.closing(file_)
 
+def static_path(relative):
+    """Return the path to an associated static data file."""
+
+    return os.path.join(os.path.dirname(__file__), "static", relative)
+

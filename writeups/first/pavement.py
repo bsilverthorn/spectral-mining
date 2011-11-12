@@ -123,7 +123,7 @@ def paper(options):
 
     # run the relevant inputs through Sweave
     sweave_names = [
-        "validation",
+        "discovery",
         "scaling",
         ]
     sweave_paths = [options.source_root / "sections" / (name + ".Rnw") for name in sweave_names]

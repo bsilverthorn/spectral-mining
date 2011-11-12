@@ -1,0 +1,4 @@
+\section{Scaling to Larger Domains}
+
+XXX.
+
