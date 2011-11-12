@@ -93,13 +93,12 @@ class BoardState(object):
     def grid(self):
         return self._grid
 
-def construct_adjacency(init_board = None, cutoff = None):
-    
+def construct_adjacency_dict(init_board = None, cutoff = None):
     states = {}
 
     if init_board is None:
         init_board = BoardState()
-    
+
     def board_recurs(player, parent, board, depth = 0):
         print len(states)
 
@@ -107,45 +106,22 @@ def construct_adjacency(init_board = None, cutoff = None):
             return
 
         adjacent = states.get(board)
-        
+
         if adjacent is None:
             adjacent = states[board] = set()
-        
+
         if parent is not None:
             adjacent.add(parent)
-            
+
         if board.check_end():
             return
-        
+
         for i in xrange(3):
             for j in xrange(3):
                 if board._grid[i,j] == 0:
                     board_recurs(-1 * player, board, board.make_move(player, i, j), depth + 1)
-    
+
     board_recurs(1, None, init_board)
-    
+
     return states
 
-def adjacency_matrix(init_board = None, cutoff = None):
-    ''' creates a symmetric adjacency matrix enumerating all tictactoe states 
-    starting from init_board and going for cutoff moves'''
-
-    if os.path.isfile("dropbox/ttt_states.pickle.gz"): # TODO add options to file name?
-        with contextlib.closing(gzip.GzipFile("dropbox/ttt_states.pickle.gz")) as pickle_file:
-            states = pickle.load(pickle_file)
-    else:
-        states = construct_adjacency(init_board,cutoff)
-
-    index = dict(zip(states, xrange(len(states))))
-    rindex = sorted(states, key = lambda s: index[s])
-    N = len(index)
-    adjacency = numpy.zeros((N, N))
-
-    for state in index:
-        n = index[state]
-
-        for parent in states[state]:
-            adjacency[index[parent], n] = 1
-            adjacency[n, index[parent]] = 1
-
-    return adjacency

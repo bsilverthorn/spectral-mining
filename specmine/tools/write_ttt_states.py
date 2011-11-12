@@ -9,6 +9,38 @@ import cPickle as pickle
 import numpy
 import tictac
 
+def construct_adjacency(init_board = None, cutoff = None):
+    states = {}
+
+    if init_board is None:
+        init_board = BoardState()
+
+    def board_recurs(player, parent, board, depth = 0):
+        print len(states)
+
+        if cutoff is not None and depth == cutoff:
+            return
+
+        adjacent = states.get(board)
+
+        if adjacent is None:
+            adjacent = states[board] = set()
+
+        if parent is not None:
+            adjacent.add(parent)
+
+        if board.check_end():
+            return
+
+        for i in xrange(3):
+            for j in xrange(3):
+                if board._grid[i,j] == 0:
+                    board_recurs(-1 * player, board, board.make_move(player, i, j), depth + 1)
+
+    board_recurs(1, None, init_board)
+
+    return states
+
 @plac.annotations(
     out_path = ("path to write states pickle",),
     start = ("start state", "option", None, json.loads),
