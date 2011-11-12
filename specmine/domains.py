@@ -36,8 +36,9 @@ class TicTacToeDomain(object):
     def __init__(self, opponent = None):
         # construct opponent
         if opponent is None: 
+            pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
 
-            with contextlib.closing(gzip.GzipFile("dropbox/ttt_optimal.pickle.gz")) as pickle_file:
+            with specmine.util.openz(pickle_path) as pickle_file:
                 optimal = pickle.load(pickle_file)
 
                 class OptimalOpponent(object):
@@ -49,11 +50,12 @@ class TicTacToeDomain(object):
             self._opponent = opponent
 
         # construct state space
-        with contextlib.closing(gzip.GzipFile("dropbox/ttt_states.pickle.gz")) as pickle_file:
+        pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
+
+        with specmine.util.openz(pickle_path) as pickle_file:
             boards = pickle.load(pickle_file)
 
-        self._states = [(board.get_player(), board) for board in boards]
-        self._index = dict(zip(self._states,xrange(len(self._states))))
+        self.states = [(board.get_player(), board) for board in boards]
         self.initial_state = (1,specmine.tictac.BoardState())
 
     def actions_in(self, (player, board)):
@@ -86,8 +88,3 @@ class TicTacToeDomain(object):
 
     def check_end(self, (player,board)):
         return board.check_end()
-
-    @property
-    def states(self):
-        return self._states
-

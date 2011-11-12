@@ -107,21 +107,11 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
 
         adjacent = states.get(board)
 
-        if adjacent is None:
-            adjacent = states[board] = set()
-
-        if parent is not None:
-            adjacent.add(parent)
-
-        if board.check_end():
-            return
-
-        for i in xrange(3):
-            for j in xrange(3):
-                if board._grid[i,j] == 0:
-                    board_recurs(-1 * player, board, board.make_move(player, i, j), depth + 1)
+    for i in xrange(3):
+        for j in xrange(3):
+            if board._grid[i,j] == 0:
+                board_recurs(-1 * player, board, board.make_move(player, i, j), depth + 1)
 
     board_recurs(1, None, init_board)
 
     return states
-
