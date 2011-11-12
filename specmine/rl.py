@@ -117,13 +117,16 @@ def main(num_episodes=10,k=10):
     rand_policy = RandomPolicy(None)
     ttt = specmine.domains.TicTacToeDomain(rand_policy)
     rand_policy.domain = ttt
-    
+
+    pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
+    with specmine.util.openz(pickle_path) as pickle_file:
+            adj_dict = pickle.load(pickle_file)
+
     print 'generating representation'
-    adj = specmine.tictac.adjacency_matrix(ttt)
-    phi = specmine.spectral.laplacian_basis(adj,k, sparse=True)
+    adj_matrix = adjacency_dict_to_matrix(adj_dict)
+    phi = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)
     beta = numpy.zeros(k)
-    print phi.shape
-    print beta.shape
+    feature_map = TabularFeatureMap(phi,beta)
     v = numpy.dot(phi,beta)
     lvf_policy = StateValueFunctionPolicy(ttt,v)
 

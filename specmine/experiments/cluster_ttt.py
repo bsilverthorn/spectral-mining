@@ -19,11 +19,17 @@ def main():
         boards = pickle.load(pickle_file)
 
     # construct the adjacency matrix
+    K = 8
     N = len(boards)
     index = dict(zip(boards, xrange(N)))
+    rindex = sorted(index, key = index.__getitem__)
     adjacency = scipy.sparse.lil_matrix((N, N))
 
     for board in boards:
         n = index[board]
-        distances = [hamming_affinity(board, b) for b in boards]
+        affinities = numpy.fromiter(hamming_affinity(board, b) for b in boards, float)
+        ordered = numpy.argsort(affinities)
+
+        for i in ordered[-K:]:
+            adjacency[n, index[]] = affinities[m]
 

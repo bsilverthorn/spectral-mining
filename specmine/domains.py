@@ -56,7 +56,6 @@ class TicTacToeDomain(object):
             boards = pickle.load(pickle_file)
 
         self.states = [(board.get_player(), board) for board in boards]
-        self.index = dict(zip(self.states,xrange(len(self.states))))
         self.initial_state = (1,specmine.tictac.BoardState())
 
     def actions_in(self, (player, board)):
