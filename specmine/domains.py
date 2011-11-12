@@ -2,6 +2,8 @@ import gzip
 import cPickle as pickle
 import contextlib
 import numpy
+import specmine
+
 
 class SimpleRoomDomain(object):
     def __init__(self, width = 8):
@@ -33,8 +35,9 @@ class TicTacToeDomain(object):
 
     def __init__(self, opponent = None):
         # construct opponent
-        if opponent is None:
-            with contextlib.closing(gzip.GzipFile("ttt_optimal.pickle.gz")) as pickle_file:
+        if opponent is None: 
+
+            with contextlib.closing(gzip.GzipFile("dropbox/ttt_optimal.pickle.gz")) as pickle_file:
                 optimal = pickle.load(pickle_file)
 
                 class OptimalOpponent(object):
@@ -46,10 +49,12 @@ class TicTacToeDomain(object):
             self._opponent = opponent
 
         # construct state space
-        with contextlib.closing(gzip.GzipFile("ttt_states.pickle.gz")) as pickle_file:
+        with contextlib.closing(gzip.GzipFile("dropbox/ttt_states.pickle.gz")) as pickle_file:
             boards = pickle.load(pickle_file)
 
         self._states = [(board.get_player(), board) for board in boards]
+        self._index = dict(zip(self._states,xrange(len(self._states))))
+        self.initial_state = (1,specmine.tictac.BoardState())
 
     def actions_in(self, (player, board)):
         if board.get_winner() is None:
@@ -62,8 +67,9 @@ class TicTacToeDomain(object):
                 yield (None, None)
 
     def reward_in(self, (player, board)):
-        if board.get_winner() == 1:
-            return 1
+        winner = board.get_winner()
+        if winner != None:
+            return winner
         else:
             return 0
 
@@ -77,6 +83,9 @@ class TicTacToeDomain(object):
             (opponent_i, opponent_j) = self._opponent[board]
 
             return (1, board.make_move(-1, opponent_i, opponent_j))
+
+    def check_end(self, (player,board)):
+        return board.check_end()
 
     @property
     def states(self):

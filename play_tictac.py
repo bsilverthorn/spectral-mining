@@ -10,7 +10,7 @@ import cPickle as pickle
 import csv
 import contextlib
 import numpy
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import tictac
 import rl
 

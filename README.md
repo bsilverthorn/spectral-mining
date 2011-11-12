@@ -35,4 +35,3 @@ Learning functions are of the form:
 Where policies are of the form:
 
 `policy[state] -> action`
-

@@ -7,7 +7,11 @@ class QFunctionPolicy(object):
         self._q_values = q_values
 
     def __getitem__(self, state):
-        return max(self._domain.actions_in(state), key = self._q_values.__getitem__)
+        return \
+            max(
+                self._domain.actions_in(state),
+                key = lambda a: self._q_values[(state, a)],
+                )
 
 def learn_q_values(domain, rate = 1e-1, discount = 9e-1, iterations = 128):
     q_values = {}
