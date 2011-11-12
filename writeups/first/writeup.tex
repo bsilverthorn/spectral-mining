@@ -1,0 +1,35 @@
+\documentclass[11pt]{article}
+\input{presweave.tex}
+\usepackage{tikz}
+\usetikzlibrary{external,arrows,backgrounds,fit,positioning,backgrounds,calc,shapes.geometric}
+\tikzexternalize[mode=list and make]
+\usepackage[nogin]{Sweave}
+\usepackage{natbib}
+\usepackage{parskip}
+\usepackage{amsmath}
+\usepackage{grffile}
+\usepackage{booktabs}
+\usepackage[np,autolanguage]{numprint}
+\usepackage[capitalise]{cleveref}
+\usepackage{glossaries}
+
+\title{Mining State-Space Graphs to Build Value-Function Representations}
+
+\author{Bryan Silverthorn\\
+\texttt{bsilvert@cs.utexas.edu}
+\and Craig Corcoran\\
+\texttt{ccor@cs.utexas.edu}}
+
+\date{15 November 2011}
+
+\begin{document}
+
+\maketitle
+
+\input{introduction.tex}
+
+\bibliographystyle{abbrvnat}
+\bibliography{references}
+
+\end{document}
+
