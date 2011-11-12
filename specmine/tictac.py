@@ -99,9 +99,11 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
         for i in xrange(3):
             for j in xrange(3):
                 if board._grid[i,j] == 0:
+                    # move
                     next_player = -1 * player
                     next_board = board.make_move(player, i, j)
 
+                    # update the dict
                     adjacent = adict.get(state)
 
                     if adjacent is None:
@@ -109,6 +111,7 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
 
                     adjacent.add((next_board, next_player))
 
+                    # recurse
                     board_recurse(next_player, board, next_board, depth + 1)
 
     if init_board is None:
