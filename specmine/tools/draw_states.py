@@ -1,5 +1,5 @@
 import plac
-import specmine
+import specmine.tools.draw_states
 
 if __name__ == "__main__":
     plac.call(specmine.tools.draw_states.main)
@@ -9,6 +9,7 @@ import colorsys
 import tempfile
 import subprocess
 import numpy
+import specmine
 
 def write_dot_file(out_file, states, directed = False, coloring = None):
     # prepare

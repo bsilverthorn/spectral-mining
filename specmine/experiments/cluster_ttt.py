@@ -8,8 +8,8 @@ import cPickle as pickle
 import numpy
 import scipy.sparse
 
-def hamming_affinity(board_a, board_b):
-    return numpy.sum(board_a == board_b)
+def raw_state_features((board, player)):
+    return board.flatten()
 
 @plac.annotations()
 def main():

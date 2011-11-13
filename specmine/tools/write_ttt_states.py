@@ -1,5 +1,5 @@
 import plac
-import specmine
+import specmine.tools.write_ttt_states
 
 if __name__ == '__main__':
     plac.call(specmine.tools.write_ttt_states.main)
@@ -7,6 +7,7 @@ if __name__ == '__main__':
 import json
 import cPickle as pickle
 import numpy
+import specmine
 
 @plac.annotations(
     out_path = ("path to write states pickle",),

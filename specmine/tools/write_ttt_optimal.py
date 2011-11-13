@@ -1,5 +1,5 @@
 import plac
-import specmine
+import specmine.tools.write_ttt_optimal
 
 if __name__ == "__main__":
     plac.call(specmine.tools.write_ttt_optimal.main)

@@ -1,4 +1,6 @@
+import cPickle as pickle
 import numpy
+import specmine
 
 class BoardState(object):
     def __init__(self, grid = None):
@@ -117,7 +119,15 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
 
     return adict
 
-def ttt_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
+def load_states():
+    """Load all TTT states from disk."""
+
+    states_path = specmine.util.static_path("ttt_states.pickle.gz")
+
+    with specmine.util.openz(states_path) as pickle_file:
+        return pickle.load(pickle_file)
+
+def ab_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
     """Compute the state value (min node) with alpha-beta pruning."""
 
     # terminal state?
@@ -132,7 +142,7 @@ def ttt_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
     for i in xrange(3):
         for j in xrange(3):
             if board._grid[i, j] == 0:
-                value = ttt_value_max(board.make_move(player, i, j), -1 * player, alpha, beta)
+                value = ab_value_max(board.make_move(player, i, j), -1 * player, alpha, beta)
 
                 if value <= alpha:
                     return value
@@ -145,7 +155,7 @@ def ttt_value_min(board, player, alpha = -numpy.inf, beta = numpy.inf):
 
     return min_value
 
-def ttt_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
+def ab_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
     """Compute the state value (max node) with alpha-beta pruning."""
 
     # terminal state?
@@ -160,7 +170,7 @@ def ttt_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
     for i in xrange(3):
         for j in xrange(3):
             if board._grid[i, j] == 0:
-                value = ttt_value_min(board.make_move(player, i, j), -1 * player, alpha, beta)
+                value = ab_value_min(board.make_move(player, i, j), -1 * player, alpha, beta)
 
                 if value >= beta:
                     return value
@@ -173,7 +183,7 @@ def ttt_value_max(board, player, alpha = -numpy.inf, beta = numpy.inf):
 
     return max_value
 
-def ttt_optimal_move(board, player = 1):
+def ab_optimal_move(board, player = 1):
     """Compute the optimal move in a given state."""
 
     max_i = None
@@ -183,7 +193,7 @@ def ttt_optimal_move(board, player = 1):
     for i in xrange(3):
         for j in xrange(3):
             if board._grid[i, j] == 0:
-                value = ttt_value_min(board.make_move(player, i, j), -1 * player)
+                value = ab_value_min(board.make_move(player, i, j), -1 * player)
 
                 if max_value < value:
                     max_i = i

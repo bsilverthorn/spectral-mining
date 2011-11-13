@@ -1,5 +1,5 @@
 import plac
-import specmine
+import specmine.tools.cluster_states
 
 if __name__ == "__main__":
     plac.call(specmine.tools.cluster_states.main)
@@ -7,6 +7,7 @@ if __name__ == "__main__":
 import cPickle as pickle
 import numpy
 import scipy.sparse
+import specmine
 
 def state_dict_to_adjacency(states):
     """Build a (symmetric) adjacency matrix from a {state: [state]} dict."""
