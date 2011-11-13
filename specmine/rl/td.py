@@ -42,10 +42,8 @@ def lstd_solve(A,b):
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
 
-def linear_td_learn_policy(domain, features, episodes = 1, **kwargs):
-    """Learn a linear TD policy."""
-
-    weights = None
+def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
+    """Learn a linear TD policy starting with the given weights."""
 
     rewards = []
 
@@ -55,11 +53,6 @@ def linear_td_learn_policy(domain, features, episodes = 1, **kwargs):
         S, R = specmine.rl.generate_episode(domain, lvf_policy)
         weights = specmine.rl.td_episode(S, R, features, beta = weights, **kwargs)
 
-        rewards.append(R[-1])
-
-        if i % 200 == 0:
-            print numpy.mean(rewards)
-            rewards = []
-
+    assert (lvf_policy.values.weights == weights).all()
     return lvf_policy
 
