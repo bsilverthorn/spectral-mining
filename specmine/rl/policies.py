@@ -1,4 +1,5 @@
 from random import choice
+import numpy
 
 class QFunctionPolicy(object):
     def __init__(self, domain, q_values):
@@ -13,14 +14,18 @@ class QFunctionPolicy(object):
                 )
 
 class LinearValueFunction:
-    def __init__(self,feature_map,weights):
-        self.features = feature_map
+    def __init__(self,features,weights = None):
+        self.features = features
         self.weights = weights
 
     def __getitem__(self,state):
         # TODO add interpolation to unseen states
         phi = self.features[state] # returns a vector of feature values
-        return numpy.dot(phi,weights)
+
+        if self.weights is None:
+            self.weights = numpy.zeros_like(phi)
+
+        return numpy.dot(phi, self.weights)
 
 class StateValueFunctionPolicy:
     def __init__(self,domain,value_function,epsilon=0):
@@ -48,11 +53,9 @@ class StateValueFunctionPolicy:
             return choice(best_moves)
 
 class RandomPolicy:
-    def __init__(self,domain):
+    def __init__(self, domain):
         self.domain = domain
 
     def __getitem__(self,state):
-        print self.domain.actions_in(state)
-        moves = list(self.domain.actions_in(state))
-        return choice(moves)
+        return choice(list(self.domain.actions_in(state)))
 

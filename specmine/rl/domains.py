@@ -30,21 +30,10 @@ class SimpleRoomDomain(object):
 class TicTacToeDomain(object):
     # XXX assumes player 1
 
-    def __init__(self, opponent = None):
+    def __init__(self, player = 1, opponent = None):
         # construct opponent
-        if opponent is None: 
-            pickle_path = specmine.util.static_path("ttt_optimal.pickle.gz")
-
-            with specmine.util.openz(pickle_path) as pickle_file:
-                optimal = pickle.load(pickle_file)
-
-                class OptimalOpponent(object):
-                    def __getitem__(self, board):
-                        return optimal[board][:2]
-
-                self._opponent = OptimalOpponent()
-        else:
-            self._opponent = opponent
+        self._player = player
+        self._opponent = opponent
 
         # construct state space
         pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
@@ -57,7 +46,7 @@ class TicTacToeDomain(object):
 
     def actions_in(self, (board, player)):
         if board.get_winner() is None:
-            if player == 1:
+            if player == self._player:
                 for i in xrange(3):
                     for j in xrange(3):
                         if board.grid[i, j] == 0:
@@ -65,23 +54,26 @@ class TicTacToeDomain(object):
             else:
                 yield (None, None)
 
-    def reward_in(self, (board,player)):
+    def reward_in(self, (board, player)):
         winner = board.get_winner()
+
         if winner != None:
             return winner
         else:
             return 0
 
-    def outcome_of(self, (board,player), (i, j)):
-        if player == 1:
-            return (board.make_move(1, i, j), -1)
+    def outcome_of(self, state, (i, j)):
+        (board, player) = state
+
+        if player == self._player:
+            return (board.make_move(self._player, i, j), -1 * self._player)
         else:
-            assert player == -1
             assert i is None and j is None
 
-            (opponent_i, opponent_j) = self._opponent[board]
+            (opponent_i, opponent_j) = self._opponent[state]
 
-            return (board.make_move(-1, opponent_i, opponent_j), 1)
+            return (board.make_move(-1 * self._player, opponent_i, opponent_j), self._player)
 
-    def check_end(self, (board,player)):
+    def check_end(self, (board, player)):
         return board.check_end()
+

@@ -13,8 +13,9 @@ def generate_episode(domain,policy):
     while not domain.check_end(state):
         action = policy[state]
         state = domain.outcome_of(state,action) # assumes deterministic
+
         S.append(state)
         R.append(domain.reward_in(state))
     
-    return S,R
+    return S, R
 

@@ -9,8 +9,7 @@ import cPickle as pickle
 import csv
 import contextlib
 import numpy
-import tictac
-import rl
+import specmine
 
 def test_value_function(v,index,states):
     configurations = [
