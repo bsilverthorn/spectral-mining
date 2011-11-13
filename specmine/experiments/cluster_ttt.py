@@ -12,28 +12,35 @@ import sklearn.neighbors
 logger = specmine.get_logger(__name__)
 
 def raw_state_features((board, player)):
-    return board.grid.flatten()
+    return [1] + list(board.grid.flatten())
 
-#def xxx_feature_map(adict):
-    ## find nearest neighbors
-    #logger.info("finding nearest neighbors")
+def xxx_feature_map(adict):
+    pass
 
-    #G = neighbors
-    #tree = sklearn.neighbors.BallTree(features_ND)
-    #(neighbor_distances_NG, neighbor_indices_NG) = tree.query(features_ND, k = G)
+def affinity_graph(vectors_ND, neighbors):
+    """Build the k-NN affinity graph from state feature vectors."""
 
-    ## construct the adjacency matrix
-    #logger.info("constructing the adjacency matrix")
+    G = neighbors
+    (N, D) = vectors_ND.shape
 
-    #affinity_lil_NN = scipy.sparse.lil_matrix((N, N))
+    # find nearest neighbors
+    logger.info("finding nearest neighbors in affinity space")
 
-    #for state in states:
-        #n = index[state]
+    tree = sklearn.neighbors.BallTree(vectors_ND)
+    (neighbor_distances_NG, neighbor_indices_NG) = tree.query(vectors_ND, k = G)
 
-        #for g in xrange(G):
-            #m = neighbor_indices_NG[n, g]
+    # construct the affinity graph
+    logger.info("constructing the affinity graph")
 
-            #affinity_lil_NN[n, m] = affinity_lil_NN[m, n] = neighbor_distances_NG[n, g]
+    affinity_lil_NN = scipy.sparse.lil_matrix((N, N))
+
+    for n in xrange(N):
+        for g in xrange(G):
+            m = neighbor_indices_NG[n, g]
+
+            affinity_lil_NN[n, m] = affinity_lil_NN[m, n] = neighbor_distances_NG[n, g]
+
+    return affinity_lil_NN
 
     ## cluster states
     #logger.info("aliasing states with spectral clustering")
@@ -47,16 +54,30 @@ def raw_state_features((board, player)):
     neighbors = ("number of neighbors", "option", None, int),
     )
 def main(clusters = 16, neighbors = 8):
-    """Cluster TTT states."""
+    """Run TTT state-clustering experiment(s)."""
 
-    ## convert states to their vector representations
-    #states = list(specmine.tictac.load_adjacency_dict())
+    # convert states to their vector representations
+    states = list(specmine.tictac.load_adjacency_dict())
 
-    #logger.info("converting states to their vector representation")
+    logger.info("converting states to their vector representation")
 
-    #index = dict(zip(states, xrange(len(states))))
-    #features_ND = numpy.array(map(raw_state_features, states))
-    #(N, D) = features_ND.shape
+    index = dict(zip(states, xrange(len(states))))
+    vectors_ND = numpy.array(map(raw_state_features, states))
+    #(N, D) = vectors_ND.shape
+
+    # build the affinity graph
+    affinity_NN = affinity_graph(vectors_ND, neighbors)
+
+    for B in numpy.r_[0:200:16j].astype(int):
+        if B > 0:
+            affinity_basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
+            all_features_NF = numpy.hstack([vectors_ND, affinity_basis_NB])
+        else:
+            all_features_NF = vectors_ND
+
+        feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
+
+        print specmine.science.evaluate_feature_map(feature_map)
 
     ## cluster states directly
     #K = clusters

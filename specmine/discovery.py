@@ -1,13 +1,15 @@
 import numpy
 import scipy.sparse
 
-class TabularFeatureMap:
+class TabularFeatureMap(object):
+    """Map states to features via simple table lookup."""
+
     def __init__(self, basis_matrix, index):
         self.basis = basis_matrix # number of states x number of features
         self.index = index
 
     def __getitem__(self,state):
-        return self.basis[self.index[state],:]
+        return self.basis[self.index[state], :]
 
 def adjacency_dict_to_matrix(adict):
     """
