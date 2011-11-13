@@ -23,6 +23,8 @@ def main():
 
     laplacian_reward = [0]*len(k_vals)
     laplacian_variance = [0]*len(k_vals)
+    random_reward = [0]*len(k_vals)
+    random_variance = [0]*len(k_vals)
     for i in range(len(k_vals)):
         k = k_vals[i]
         print 'k: ', k
