@@ -10,12 +10,6 @@ def main():
 
     print 'creating domain and opponent'
 
-    opponent_domain = specmine.rl.TicTacToeDomain(player = -1)
-    opponent_policy = specmine.rl.RandomPolicy(opponent_domain)
-
-    ttt = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
-    
-
     pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
     with specmine.util.openz(pickle_path) as pickle_file:
             adj_dict = pickle.load(pickle_file)
@@ -25,7 +19,7 @@ def main():
     w = csv.writer(file(specmine.util.static_path( \
         'feature_number_test.csv'),'wb'))
     w.writerow(['method','features','reward_mean','reward_variance'])
-    plt.hold(True)
+    #plt.hold(True)
 
     laplacian_reward = [0]*len(k_vals)
     laplacian_variance = [0]*len(k_vals)
@@ -43,9 +37,9 @@ def main():
         w.writerow(['laplacian',k,laplacian_reward[i],laplacian_variance[i]])
         w.writerow(['random',k,random_reward[i],random_variance[i]])
 
-    plt.plot(k_vals,laplacian_reward,k_vals,random_reward)
-    plt.legend(('laplacian','random'))
-    plt.show()
+    #plt.plot(k_vals,laplacian_reward,k_vals,random_reward)
+    #plt.legend(('laplacian','random'))
+    #plt.show()
 
 
 if __name__ == '__main__':
