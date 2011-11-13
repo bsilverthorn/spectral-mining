@@ -42,7 +42,7 @@ def lstd_solve(A,b):
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
 
-def linear_td_learn_policy(domain, features, episodes = 1, weights = None, alpha = 0.01, **kwargs):
+def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
     """Learn a linear TD policy starting with the given weights."""
 
     rewards = []
