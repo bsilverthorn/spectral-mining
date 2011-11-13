@@ -18,7 +18,7 @@ def test_adjacency_dict_to_matrix():
     ci = index["c"]
 
     alist[ai][bi] = alist[bi][ai] = 1
-    alist[ai][ci] = alist[ci][ai] = 1
+    alist[ai][ci] = alist[ci][ai] = 2
     alist[bi][ci] = alist[ci][bi] = 1
 
     # compare

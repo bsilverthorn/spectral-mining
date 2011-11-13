@@ -1,3 +1,4 @@
+import numpy
 import scipy.sparse
 
 class TabularFeatureMap:
@@ -9,20 +10,32 @@ class TabularFeatureMap:
         return self.basis[self.index[state],:]
 
 def adjacency_dict_to_matrix(adict):
-    """Create a symmetric adjacency matrix from a state -> [state] dict."""
+    """
+    Create a symmetric adjacency matrix from a {state: [state]} dict.
 
-    N = len(adict)
-    index = dict(zip(adict, xrange(N)))
-    amatrix = scipy.sparse.lil_matrix((N, N), dtype = int)
+    Return a sparse matrix in an unspecified storage format. Note that the
+    value of an edge between a pair of nodes will be the number of edges that
+    exist between those nodes, i.e., the matrix will consist of values in {0,
+    1, 2}.
+    """
 
-    for node in adict:
+    index = dict(zip(adict, xrange(len(adict))))
+    coo_is = []
+    coo_js = []
+
+    for (node, neighbors) in adict.iteritems():
         n = index[node]
 
-        for neighbor in adict[node]:
+        for neighbor in neighbors:
             m = index[neighbor]
 
-            amatrix[n, m] = 1
-            amatrix[m, n] = 1
+            coo_is.append(n)
+            coo_js.append(m)
 
-    return (amatrix.tocsr(), index)
+    coo_values = numpy.ones(len(coo_is) * 2, int)
+
+    return (
+        scipy.sparse.coo_matrix((coo_values, (coo_is + coo_js, coo_js + coo_is))),
+        index,
+        )
 

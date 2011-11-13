@@ -2,7 +2,11 @@ import cPickle as pickle
 import numpy
 import specmine
 
+logger = specmine.get_logger(__name__)
+
 class BoardState(object):
+    """Tic-Tac-Toe board."""
+
     def __init__(self, grid = None):
         if grid is None:
             grid = numpy.zeros((3, 3))
@@ -119,10 +123,12 @@ def construct_adjacency_dict(init_board = None, cutoff = None):
 
     return adict
 
-def load_states():
-    """Load all TTT states from disk."""
+def load_adjacency_dict():
+    """Load the complete TTT state-adjacency dict from disk."""
 
     states_path = specmine.util.static_path("ttt_states.pickle.gz")
+
+    logger.info("loading TTT adjacency dict from %s", states_path)
 
     with specmine.util.openz(states_path) as pickle_file:
         return pickle.load(pickle_file)
