@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
+import specmine
+
+logger = specmine.get_logger(__name__)
 
 def laplacian_operator(W):
     n = W.shape[0]
@@ -71,23 +74,28 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-def laplacian_basis(W,k,sparse=False):
-    ''' build laplacian basis matrix with k bases from weighted adjacency matrix W '''
+def laplacian_basis(W, k, which = "SM", sparse = True):
+    """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
+
+    logger.info("solving for %i eigenvectors of the Laplacian", k)
+
     L = laplacian_operator(W) 
-    print "solving for the eigenvectors of the laplacian"
+
     if sparse:
         spL = scipy.sparse.csr_matrix(L)
-        (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = "SM")
+
+        (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
     else:
         if scipy.sparse.issparse(L):
             L = L.todense()
+
         (eig_lam,eig_vec) = np.linalg.eigh(L)
 
     sort_inds = eig_lam.argsort()
     eig_lam = eig_lam[sort_inds]
-    phi = eig_vec[:,sort_inds]
-    phi = phi[:,:k]
-    
+    phi = eig_vec[:, sort_inds]
+    phi = phi[:, :k]
+
     return phi
 
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
@@ -97,3 +105,4 @@ def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 
     return expand_wavelets(phi_dict, psi_dict, k, n) 
+

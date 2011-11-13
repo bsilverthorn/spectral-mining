@@ -1,6 +1,8 @@
 import numpy
 import specmine
 
+logger = specmine.get_logger(__name__)
+
 def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.01):
     z = features[S[0]]
 
@@ -18,7 +20,10 @@ def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.01):
             delta = z*(R[t]+numpy.dot((gamma*features[S[t+1]]-curr_phi),beta))
             z = gamma * lam * z + features[S[t + 1]]
 
-        beta += delta*alpha/numpy.dot(z_old,curr_phi)
+        inner = numpy.dot(z_old,curr_phi)
+
+        if inner > 0.0:
+            beta += delta * alpha / inner
 
     return beta
 
@@ -45,14 +50,16 @@ def lstd_solve(A,b):
 def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
     """Learn a linear TD policy starting with the given weights."""
 
-    rewards = []
-
     for i in xrange(episodes):
+        if i % 1000 == 0:
+            logger.info("learning linear TD policy; iteration %i", i)
+
         value_function = specmine.rl.LinearValueFunction(features, weights)
         lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function)
         S, R = specmine.rl.generate_episode(domain, lvf_policy)
         weights = specmine.rl.td_episode(S, R, features, beta = weights, **kwargs)
 
     assert (lvf_policy.values.weights == weights).all()
+
     return lvf_policy
 
