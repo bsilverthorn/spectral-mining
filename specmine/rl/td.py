@@ -1,7 +1,7 @@
 import numpy
 import specmine
 
-def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.001):
+def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.01):
     z = features[S[0]]
 
     if beta == None:
@@ -42,7 +42,7 @@ def lstd_solve(A,b):
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
 
-def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
+def linear_td_learn_policy(domain, features, episodes = 1, weights = None, alpha = 0.01, **kwargs):
     """Learn a linear TD policy starting with the given weights."""
 
     rewards = []
