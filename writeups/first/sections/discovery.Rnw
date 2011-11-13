@@ -8,3 +8,15 @@ source("../writeup_base.R")
 
 \section{Spectral Representation Discovery}
 
+<<vs.tabular.first,fig=T,height=4,sanitize=T>>=
+data <- read.csv("../results/learning_curve.200games.alpha=0.001.gpe=200.csv")
+data$name <- paste(data$method, data$features)
+plot <- 
+    ggplot(data, aes(games, mean_reward, colour = name, shape = name)) +
+    geom_point() +
+    geom_line() +
+    labs(colour = "Method", shape = "Method")
+
+print(plot)
+@
+

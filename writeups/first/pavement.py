@@ -121,6 +121,10 @@ def prepare(options):
 def paper(options):
     """Build the paper."""
 
+    # sanity check(s)
+    if not os.path.lexists(options.source_root / "results"):
+        raise Exception("symlink to results data is missing")
+
     # run the relevant inputs through Sweave
     sweave_names = [
         "discovery",
@@ -161,7 +165,7 @@ def paper(options):
     xelatex()
     bibtex(options, options.build_root / "writeup.aux")
     bibtex(options, options.build_root / "writeup.aux")
-    #tikz_make_external(options, options.build_root / "writeup.makefile")
+    tikz_make_external(options, options.build_root / "writeup.makefile")
     xelatex()
     xelatex()
 
