@@ -1,35 +1,65 @@
-import plac
 import specmine
+import specmine.experiments.cluster_ttt
 
 if __name__ == "__main__":
-    plac.call(specmine.experiments.cluster_ttt)
+    specmine.script(specmine.experiments.cluster_ttt.main)
 
-import cPickle as pickle
 import numpy
 import scipy.sparse
+import sklearn.cluster
+import sklearn.neighbors
+
+logger = specmine.get_logger(__name__)
 
 def raw_state_features((board, player)):
-    return board.flatten()
+    return board.grid.flatten()
 
-@plac.annotations()
-def main():
-    states_path = specmine.util.static_path("ttt_states.pickle.gz")
+@specmine.annotations(
+    clusters = ("number of clusters", "option", None, int),
+    neighbors = ("number of neighbors", "option", None, int),
+    )
+def main(clusters = 16, neighbors = 8):
+    """Cluster TTT states."""
 
-    with specmine.util.openz(states_path) as pickle_file:
-        boards = pickle.load(pickle_file)
+    # convert states to their vector representations
+    states = list(specmine.tictac.load_adjacency_dict())
+
+    logger.info("converting states to their vector representation")
+
+    index = dict(zip(states, xrange(len(states))))
+    features_ND = numpy.array(map(raw_state_features, states))
+    (N, D) = features_ND.shape
+
+    ## cluster states directly
+    #K = clusters
+    #clustering = sklearn.cluster.KMeans(k = K)
+
+    #clustering.fit(features_ND)
+
+    # find nearest neighbors
+    logger.info("finding nearest neighbors")
+
+    G = neighbors
+    tree = sklearn.neighbors.BallTree(features_ND)
+    (neighbor_distances_NG, neighbor_indices_NG) = tree.query(features_ND, k = G)
 
     # construct the adjacency matrix
-    K = 8
-    N = len(boards)
-    index = dict(zip(boards, xrange(N)))
-    rindex = sorted(index, key = index.__getitem__)
-    adjacency = scipy.sparse.lil_matrix((N, N))
+    logger.info("constructing the adjacency matrix")
 
-    for board in boards:
-        n = index[board]
-        affinities = numpy.fromiter(hamming_affinity(board, b) for b in boards, float)
-        ordered = numpy.argsort(affinities)
+    affinity_lil_NN = scipy.sparse.lil_matrix((N, N))
 
-        for i in ordered[-K:]:
-            adjacency[n, index[]] = affinities[m]
+    for state in states:
+        n = index[state]
+
+        for g in xrange(G):
+            m = neighbor_indices_NG[n, g]
+
+            affinity_lil_NN[n, m] = affinity_lil_NN[m, n] = neighbor_distances_NG[n, g]
+
+    # cluster states
+    logger.info("aliasing states with spectral clustering")
+
+    clustering = sklearn.cluster.SpectralClustering(mode = "arpack")
+
+    clustering.fit(affinity_lil_NN.tocsr())
 
