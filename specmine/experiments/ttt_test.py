@@ -71,7 +71,7 @@ def main(K=[50,100,200,300], num_evals = 250, games_per_eval = 500, games_betwee
         #plt.errorbar(x,reward_laplacian,yerr=var_laplacian)
 
         print 'random for ', k, ' features'
-        rand = numpy.random.standard_normal((num_states,k))
+        rand = numpy.hstack((numpy.ones((num_states,1)),numpy.random.standard_normal((num_states,k-1))))
         reward_random,var_random  = get_learning_curve(ttt, rand, index, num_evals, games_per_eval, games_between,alpha)
         for i in xrange(len(reward_random)):
             w.writerow(['random',k,x[i],reward_random[i], var_random[i]]) 
