@@ -8,6 +8,21 @@ source("../writeup_base.R")
 
 \section{Spectral Representation Discovery}
 
+XXX
+
+\subsection{Domain 1: Two-Room Grid World}
+
+Existing work on spectral methods for feature discovery has focused on domains
+where the state graph has a simple spatial interpretation, and on grid worlds
+in particular. The standard two-room domain is therefore a good first test of
+our implementation, and a good example of the value of spectral methods for
+uncovering useful representations of the state space.
+
+XXX
+
+\subsection{Domain 2: Tic-Tac-Toe}
+
+\begin{figure}
 <<vs.tabular.first,fig=T,height=4,sanitize=T>>=
 data <- read.csv("../results/learning_curve.200games.alpha=0.001.gpe=200.csv")
 data$name <- paste(data$method, data$features)
@@ -19,4 +34,6 @@ plot <-
 
 print(plot)
 @
+\caption{\label{fig:vs.tabular}XXX}
+\end{figure}
 

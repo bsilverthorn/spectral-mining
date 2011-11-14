@@ -47,7 +47,7 @@ def main(K=[50,100,200,300], num_evals = 250, games_per_eval = 500, games_betwee
     x = numpy.array(range(num_evals))*games_between
     w = csv.writer(file(specmine.util.static_path( \
         'learning_curve.'+str(num_evals*games_between)+'games.alpha='+str(alpha)+'.gpe='+str(games_per_eval)+'.csv'),'wb'))
-    w.writerow(['Method Name','Number of Features','Games Played','Average Reward','Reward Variance'])
+    w.writerow(['method','features','games','reward_mean','reward_variance'])
     plt.hold(True)
 
     print 'evaluating tabular representation'
