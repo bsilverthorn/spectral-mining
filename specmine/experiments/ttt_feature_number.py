@@ -1,7 +1,6 @@
 import csv
 import cPickle as pickle
 import numpy 
-import matplotlib.pyplot as plt
 import specmine
 
 def main():

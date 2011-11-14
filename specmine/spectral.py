@@ -84,7 +84,8 @@ def laplacian_basis(W, k, which = "SM", sparse = True):
     if sparse:
         spL = scipy.sparse.csr_matrix(L)
 
-        (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
+        #(eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
+        (eig_lam, eig_vec) = scipy.sparse.linalg.eigsh(spL, k, which = which)
     else:
         if scipy.sparse.issparse(L):
             L = L.todense()
