@@ -106,6 +106,20 @@ graph are much more useful.
 
 \subsection{Evaluation in Value Function Regression}
 
+The goal of this work is to construct features that are useful for linear
+approximations of the \emph{state value function}; that is, a linear
+combination of our features should approximate the utilities of our game
+states, with utility given by the fixed point of the Bellman equation
+\citep{Bellman1957Dynamic}
+%
+\begin{equation}
+V(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
+\end{equation}
+%
+where $V(x)$ is the value of state $x$, $\mathcal{A}_x$ is the set of possible
+actions in $x$, $R(x)$ is the reward given by transitioning to $x$, $T(x, a)$
+is the state that results from taking action $a$ in $x$.
+
 \subsection{Evaluation in Temporal Difference Learning}
 
 \begin{figure}
