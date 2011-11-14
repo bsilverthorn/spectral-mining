@@ -3,7 +3,7 @@ import specmine
 
 logger = specmine.get_logger(__name__)
 
-def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.01):
+def td_episode(S, R, features, beta = None, lam=0.9, gamma=1, alpha = 0.001):
     z = features[S[0]]
 
     if beta == None:

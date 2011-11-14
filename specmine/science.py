@@ -11,7 +11,7 @@ def evaluate_feature_map(feature_map):
     domain = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
 
     # learn a policy
-    games_for_learning = 10000
+    games_for_learning = 2000
 
     logger.info("learning TTT policy over %i games", games_for_learning)
 

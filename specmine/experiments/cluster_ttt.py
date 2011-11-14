@@ -1,14 +1,18 @@
-import specmine
 import specmine.experiments.cluster_ttt
 
 if __name__ == "__main__":
     specmine.script(specmine.experiments.cluster_ttt.main)
 
+import csv
 import numpy
 import scipy.sparse
 import sklearn.cluster
 import sklearn.neighbors
+<<<<<<< HEAD
 import condor
+=======
+import specmine
+>>>>>>> 34b74182af48b7ae75f0c44aba20829717c2188d
 
 logger = specmine.get_logger(__name__)
 
@@ -64,14 +68,16 @@ def evaluate_vs_b(B, vectors_ND, affinity_NN):
         all_features_NF = vectors_ND
 
     feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
+    (mean, variance) = specmine.science.evaluate_feature_map(feature_map)
 
-    print specmine.science.evaluate_feature_map(feature_map)
+    return [B, mean, variance]
 
 @specmine.annotations(
+    out_path = ("path to write CSV",),
     clusters = ("number of clusters", "option", None, int),
     neighbors = ("number of neighbors", "option", None, int),
     )
-def main(clusters = 16, neighbors = 8):
+def main(out_path, clusters = 16, neighbors = 8):
     """Run TTT state-clustering experiment(s)."""
 
     # convert states to their vector representations
@@ -81,17 +87,20 @@ def main(clusters = 16, neighbors = 8):
 
     vectors_ND = numpy.array(map(raw_state_features, states))
 
-    # build the affinity graph
-    affinity_NN = affinity_graph(vectors_ND, neighbors)
-
     def yield_jobs():
         for B in numpy.r_[0:200:16j].astype(int):
             yield (evaluate_vs_b, [B, vectors_ND, affinity_NN])
 
+    with open(out_path, "wb") as out_file:
+        out_csv = csv.writer(out_file)
+
+        # build the affinity graph
+        affinity_NN = affinity_graph(vectors_ND, neighbors)
+
     with open(out_path, "w") as out_file:
         writer = csv.writer(out_file)
 
-        writer.writerow(["alpha", "instances", "split", "mean_log_probability"])
+        writer.writerow(["basis_vectors", "mean_reward", "reward_variance"])
 
-        cargo.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r), local)
+        cargo.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
 
