@@ -46,6 +46,6 @@ def main(out_path, player = -1):
         logger.info("optimal move in %s: %s", board._grid.astype(int).tolist(), move)
 
     # and store it
-    with specmine.util.openz(out_path, "wb") as out_file:
+    with specmine.openz(out_path, "wb") as out_file:
         pickle.dump(policy, out_file)
 

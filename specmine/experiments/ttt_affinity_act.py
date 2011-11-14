@@ -1,11 +1,12 @@
-import specmine.experiments.cluster_ttt
+import specmine.experiments.ttt_affinity_act
 
 if __name__ == "__main__":
-    specmine.script(specmine.experiments.cluster_ttt.main)
+    specmine.script(specmine.experiments.ttt_affinity_act.main)
 
 import csv
 import numpy
 import random
+import cPickle as pickle
 import scipy.sparse
 import sklearn.cluster
 import sklearn.neighbors
@@ -62,7 +63,7 @@ def affinity_graph(vectors_ND, neighbors):
 
     #clustering.fit(features_ND)
 
-def evaluate_vs_b(B, vectors_ND, affinity_NN, index):
+def evaluate_vs_b_td(B, vectors_ND, affinity_NN, index):
     if condor.get_task() is not None:
         numpy.random.seed(hash(condor.get_task().key))
         random.seed(2 * hash(condor.get_task().key))
@@ -80,12 +81,16 @@ def evaluate_vs_b(B, vectors_ND, affinity_NN, index):
 
 @specmine.annotations(
     out_path = ("path to write CSV",),
-    clusters = ("number of clusters", "option", None, int),
+    values_path = ("path to value function",),
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     )
-def main(out_path, clusters = 16, neighbors = 8, workers = 0):
+def main(out_path, values_path, neighbors = 8, workers = 0):
     """Run TTT state-clustering experiment(s)."""
+
+    # load the value function
+    with specmine.openz(values_path) as values_file:
+        values = pickle.load(values_file)
 
     # convert states to their vector representations
     states = list(specmine.tictac.load_adjacency_dict())
@@ -93,23 +98,19 @@ def main(out_path, clusters = 16, neighbors = 8, workers = 0):
     logger.info("converting states to their vector representation")
 
     index = dict(zip(states, xrange(len(states))))
-    #vectors_ND = numpy.array(map(raw_state_features, states))
-    #affinity_NN = affinity_graph(vectors_ND, neighbors)
+    vectors_ND = numpy.array(map(raw_state_features, states))
 
-    indicator_features_NN = numpy.eye(len(index))
-    feature_map = specmine.discovery.TabularFeatureMap(indicator_features_NN, index)
-    (mean, variance) = specmine.science.evaluate_feature_map(feature_map)
+    # build the affinity graph
+    affinity_NN = affinity_graph(vectors_ND, neighbors)
 
-    #def yield_jobs():
-        #for B in numpy.r_[0:500:16j].astype(int):
-        ##for B in numpy.r_[0:100:16j].astype(int):
-        ##for B in [100]:
-            #yield (evaluate_vs_b, [B, vectors_ND, affinity_NN, index])
+    def yield_jobs():
+        for B in numpy.r_[0:500:16j].astype(int):
+            yield (evaluate_vs_b_regression, [B, vectors_ND, affinity_NN, index, values])
 
-    #with open(out_path, "wb") as out_file:
-        #writer = csv.writer(out_file)
+    with open(out_path, "wb") as out_file:
+        writer = csv.writer(out_file)
 
-        #writer.writerow(["basis_vectors", "reward_mean", "reward_variance"])
+        writer.writerow(["basis_vectors", "reward_mean", "reward_variance"])
 
-        #condor.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
+        condor.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
 

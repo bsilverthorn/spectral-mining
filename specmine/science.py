@@ -1,4 +1,6 @@
 import numpy
+import sklearn.linear_model
+import sklearn.cross_validation
 import specmine
 
 logger = specmine.get_logger(__name__)
@@ -31,4 +33,27 @@ def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_tes
         rewards.append(r[-1])
 
     return (numpy.mean(rewards), numpy.var(rewards))
+
+def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
+    """Score a feature map on value-function prediction."""
+
+    # prepare features and targets
+    states = list(values)
+
+    state_features = numpy.array([feature_map[s] for s in states])
+    state_values = numpy.array([values[s] for s in states])
+
+    # run the experiment
+    ridge = sklearn.linear_model.Ridge(alpha = alpha)
+    k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
+    scores = \
+        sklearn.cross_validation.cross_val_score(
+            ridge,
+            state_features,
+            state_values,
+            cv = k_fold_cv,
+            )
+
+    # ...
+    return (numpy.mean(scores), numpy.var(scores))
 
