@@ -6,7 +6,7 @@ library(ggplot2)
 source("../writeup_base.R")
 @
 
-\section{Grid World Domain}
+\section{\label{sec:discovery}Grid World Domain}
 
 Existing work on spectral methods for feature discovery has focused on domains
 where the state graph has a simple spatial interpretation, and on grid worlds
@@ -16,18 +16,93 @@ uncovering useful representations of the state space.
 
 XXX
 
+\begin{figure}
+<<grid.world.evs,fig=T,sanitize=T>>=
+data <- read.csv("../results/two_room_features.csv")
+plot <-
+    ggplot(data[data$eigen_num < 9,], aes(x, y, fill = value)) +
+    geom_tile() +
+    facet_wrap(~ eigen_num) +
+    scale_fill_continuous(low = "#000000", high = "#ffffff")
+
+print(plot)
+@
+\caption{\label{fig:grid.world.evs}XXX}
+\end{figure}
+
 \section{Tic-Tac-Toe Domain}
+
+% XXX define TTT notation (x_ij, 0, 1, -1, etc.)
 
 XXX
 
 \subsection{Mining the Gameplay Graph}
 
-% XXX figure for gameplay graph of TTT
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{results/ttt_graph.gameplay.pdf}
+\end{center}
+\caption{\label{fig:ttt.gameplay.graph}The complete TTT gameplay graph. Each
+vertex represents a board configuration, with the empty starting board at the
+center of the graph, and each edge represents a move. Every path from the root
+to a leaf represents a complete game. While the tree-like structure is clear,
+the complete gameplay graph also includes many nodes in which multiple game
+paths intersect, i.e., it remains a DAG. This structural complexity will
+largely disappear in \cref{sec:scaling}, when only sampled paths are
+available.}
+\end{figure}
+
 % XXX figures for eigenvectors of TTT
 
 \subsection{Mining a State Affinity Graph}
 
-% XXX figure for sampled paths in TTT gameplay graph
+A complete graph represention of the rules of a game, a \emph{gameplay graph}, is
+clearly a rich source of information from which to extract representation
+information. The graph representation of a nontrivial game, however, is often
+intractably large. Approaches to larger games will be explored in
+\cref{sec:scaling}; for now, we will focus on alternative graph representations
+that may be useful in these contexts.
+
+If we can construct a measure of the similarity or ``affinity'' between
+arbitrary game states, that affinity function could be used to build an
+alternative graph representation of a game. This representation, an
+\emph{affinity graph}, will not represent as much information as the gameplay
+graph, but may include enough information to allow useful features to be
+extracted.
+
+In Tic-Tac-Toe, one obvious distance function is the the Hamming
+distance between two board configurations
+%
+\begin{equation}
+d_{H}(x, z) = \sum_{i = 1}^3 \sum_{j = 1}^3 (1 - \delta_{x_{i,j}z_{i,j}})
+\end{equation}
+%
+where $\delta$ is the Kronecker delta. It will be convenient to first map each
+board state to a vector of hand-selected state features, then use a vector norm
+to measure distance; we can approximate the Hamming distance by simply
+flattening our board representation into a vector, then using, e.g., Euclidean
+distance. The Gaussian kernel
+%
+\begin{equation}
+g(x) = \exp(-\frac{x^2}{2 \sigma^2})
+\end{equation}
+is used to convert distances into affinities, when necessary.
+
+Given an affinity function $a(x, z)$, a graph can be constructed by placing
+edges from each games state to its $k$ most similar game states, weighting each
+edge by the affinity between the two states. \Cref{fig:ttt.affinity.graph}
+shows such a graph of TTT game states. XXX
+
+\begin{figure}
+\begin{center}
+%\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
+\end{center}
+\caption{\label{fig:ttt.affinity.graph}XXX}
+\end{figure}
+
+While constructing an affinity graph requires defining a simple state feature
+set by hand, the following sections will show that the features mined from this
+graph are much more useful.
 
 \subsection{Evaluation in Value Function Regression}
 
@@ -35,7 +110,7 @@ XXX
 
 \begin{figure}
 <<vs.tabular.first,fig=T,height=4,sanitize=T>>=
-data <- read.csv("../results/learning_curve.200games.alpha=0.001.gpe=200.csv")
+data <- read.csv("../results/specmine-static/learning_curve.200games.alpha=0.001.gpe=200.csv")
 data$name <- paste(data$method, data$features)
 plot <- 
     ggplot(data, aes(games, mean_reward, colour = name, shape = name)) +
