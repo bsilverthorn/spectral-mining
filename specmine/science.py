@@ -3,7 +3,7 @@ import specmine
 
 logger = specmine.get_logger(__name__)
 
-def evaluate_feature_map(feature_map, games_for_learning = 20000, games_for_testing = 500):
+def evaluate_feature_map(feature_map, games_for_learning = 10000, games_for_testing = 2000):
     # construct domain
     opponent_domain = specmine.rl.TicTacToeDomain(player = -1)
     opponent_policy = specmine.rl.RandomPolicy(opponent_domain)

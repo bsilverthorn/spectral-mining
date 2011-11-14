@@ -1,11 +1,30 @@
+import specmine.experiments.ttt_feature_number
+
+if __name__ == '__main__':
+    specmine.script(specmine.experiments.ttt_feature_number.main)
+
 import csv
 import cPickle as pickle
 import numpy 
+import condor
 import specmine
 
-def main():
+def run_laplacian_evaluation(k, adj_matrix, index):
+    laplacian_basis = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)        
+    laplacian_feature_map = specmine.discovery.TabularFeatureMap(laplacian_basis, index)    
+    reward, variance = specmine.science.evaluate_feature_map(laplacian_feature_map)
 
-    k_vals = numpy.array(range(1,11))*50
+    return ["laplacian", k, reward, variance]
+
+def run_random_evaluation(k, adj_matrix, index):
+    num_states = len(index)
+    random_basis = numpy.hstack((numpy.ones((num_states,1)),numpy.random.standard_normal((num_states,k-1))))        
+    random_feature_map = specmine.discovery.TabularFeatureMap(random_basis, index) 
+    reward, variance = specmine.science.evaluate_feature_map(random_feature_map)
+
+    return ["random", k, reward, variance]
+
+def main():
 
     print 'creating domain and opponent'
 
@@ -13,35 +32,20 @@ def main():
     with specmine.util.openz(pickle_path) as pickle_file:
             adj_dict = pickle.load(pickle_file)
     adj_matrix, index = specmine.discovery.adjacency_dict_to_matrix(adj_dict)    
-    num_states = len(index)
 
     w = csv.writer(file(specmine.util.static_path( \
         'feature_number_test.csv'),'wb'))
     w.writerow(['method','features','reward_mean','reward_variance'])
+
+    def yield_jobs():
+        for k in numpy.array(range(1,11))*50:
+            yield (run_laplacian_evaluation, [k, adj_matrix, index])
+            yield (run_random_evaluation, [k, adj_matrix, index])
+
+    condor.do_or_distribute(yield_jobs(), 20, lambda _, r: w.writerow(r))
+
     #plt.hold(True)
-
-    laplacian_reward = [0]*len(k_vals)
-    laplacian_variance = [0]*len(k_vals)
-    random_reward = [0]*len(k_vals)
-    random_variance = [0]*len(k_vals)
-    for i in range(len(k_vals)):
-        k = k_vals[i]
-        print 'k: ', k
-        laplacian_basis = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)        
-        laplacian_feature_map = specmine.discovery.TabularFeatureMap(laplacian_basis, index)    
-        laplacian_reward[i], laplacian_variance[i] = specmine.science.evaluate_feature_map(laplacian_feature_map)
-
-        random_basis = numpy.hstack((numpy.ones((num_states,1)),numpy.random.standard_normal((num_states,k-1))))        
-        random_feature_map = specmine.discovery.TabularFeatureMap(random_basis, index) 
-        random_reward[i], random_variance[i] = specmine.science.evaluate_feature_map(random_feature_map)
-    
-        w.writerow(['laplacian',k,laplacian_reward[i],laplacian_variance[i]])
-        w.writerow(['random',k,random_reward[i],random_variance[i]])
-
     #plt.plot(k_vals,laplacian_reward,k_vals,random_reward)
     #plt.legend(('laplacian','random'))
     #plt.show()
 
-
-if __name__ == '__main__':
-    main()
