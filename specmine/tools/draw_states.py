@@ -11,6 +11,8 @@ import subprocess
 import numpy
 import specmine
 
+logger = specmine.get_logger(__name__)
+
 def write_dot_file(out_file, states, directed = False, coloring = None):
     # prepare
     names = dict((s, "s{0}".format(i)) for (i, s) in enumerate(states))
@@ -69,17 +71,15 @@ def render_dot_file(out_path, dot_path, tool_name):
 
 @plac.annotations(
     out_path = ("path to write graphviz dot file",),
-    states_path = ("path to state space pickle",),
     render_with = ("graphviz rendering tool", "option", "r"),
     coloring_path = ("path to vertex-color map", "option", "c"),
     )
 def main(out_path, states_path, render_with = None, coloring_path = None):
     """Visualize a state space graph."""
 
-    with specmine.util.openz(states_path) as pickle_file:
-        boards = pickle.load(pickle_file)
+    boards = specmine.tictac.load_adjacency_dict()
 
-    print "writing {1}-vertex graph to {0}".format(out_path, len(boards))
+    logger.info("writing %i-vertex graph to %s", len(boards), out_path)
 
     if coloring_path is None:
         coloring = None

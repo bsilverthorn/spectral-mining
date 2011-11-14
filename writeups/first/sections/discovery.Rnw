@@ -6,11 +6,7 @@ library(ggplot2)
 source("../writeup_base.R")
 @
 
-\section{Spectral Representation Discovery}
-
-XXX
-
-\subsection{Domain 1: Two-Room Grid World}
+\section{Grid World Domain}
 
 Existing work on spectral methods for feature discovery has focused on domains
 where the state graph has a simple spatial interpretation, and on grid worlds
@@ -20,7 +16,22 @@ uncovering useful representations of the state space.
 
 XXX
 
-\subsection{Domain 2: Tic-Tac-Toe}
+\section{Tic-Tac-Toe Domain}
+
+XXX
+
+\subsection{Mining the Gameplay Graph}
+
+% XXX figure for gameplay graph of TTT
+% XXX figures for eigenvectors of TTT
+
+\subsection{Mining a State Affinity Graph}
+
+% XXX figure for sampled paths in TTT gameplay graph
+
+\subsection{Evaluation in Value Function Regression}
+
+\subsection{Evaluation in Temporal Difference Learning}
 
 \begin{figure}
 <<vs.tabular.first,fig=T,height=4,sanitize=T>>=
