@@ -8,7 +8,7 @@ source("../writeup_base.R")
 
 \section{Spectral Representation Discovery}
 
-XXX
+
 
 \subsection{Domain 1: Two-Room Grid World}
 
