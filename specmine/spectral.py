@@ -13,10 +13,13 @@ def laplacian_operator(W):
     W_row_sum = W.sum(1).T
     D = scipy.sparse.spdiags(W_row_sum,0,n,n)
 
-    #D_invsqrt = scipy.sparse.spdiags(1./np.sqrt(W_row_sum),0,n,n)
-    #return D_invsqrt*(D-W)*D_invsqrt
-    D_inv = scipy.sparse.spdiags(1./(W_row_sum),0,n,n)
-    return D_inv*(D-W)
+    D_invsqrt = scipy.sparse.spdiags(1./np.sqrt(W_row_sum),0,n,n)
+    return D_invsqrt*(D-W)*D_invsqrt
+
+# funky behavior with random walk laplacian
+#    D_inv = scipy.sparse.spdiags(1./(W_row_sum),0,n,n)
+#    assert (D_inv*(D-W) - D_inv.dot(D-W)).sum() < 10**-4
+#    return scipy.sparse.eye(n,n)-D_inv*W #D_inv*(D-W)
 
 def diffusion_operator(W):
     D = np.diag(np.sum(W,1))
@@ -83,9 +86,12 @@ def laplacian_basis(W, k, which = "SM", sparse = True):
 
     if sparse:
         spL = scipy.sparse.csr_matrix(L)
-
-        #(eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
-        (eig_lam, eig_vec) = scipy.sparse.linalg.eigsh(spL, k, which = which)
+        
+        if hasattr(scipy, "sparse.linalg.eigsh"):
+            (eig_lam, eig_vec) = scipy.sparse.linalg.eigsh(spL, k, which = which)
+        else: 
+            (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
+        
     else:
         if scipy.sparse.issparse(L):
             L = L.todense()
