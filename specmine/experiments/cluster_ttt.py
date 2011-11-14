@@ -1,13 +1,15 @@
-import specmine
 import specmine.experiments.cluster_ttt
 
 if __name__ == "__main__":
     specmine.script(specmine.experiments.cluster_ttt.main)
 
+import csv
 import numpy
 import scipy.sparse
 import sklearn.cluster
 import sklearn.neighbors
+import condor
+import specmine
 
 logger = specmine.get_logger(__name__)
 
@@ -49,11 +51,31 @@ def affinity_graph(vectors_ND, neighbors):
 
     #clustering.fit(affinity_lil_NN.tocsr())
 
+    ## cluster states directly
+    #K = clusters
+    #clustering = sklearn.cluster.KMeans(k = K)
+
+    #clustering.fit(features_ND)
+
+def evaluate_vs_b(B, vectors_ND, affinity_NN):
+    if B > 0:
+        affinity_basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
+        all_features_NF = numpy.hstack([vectors_ND, affinity_basis_NB])
+    else:
+        all_features_NF = vectors_ND
+
+    feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
+    (mean, variance) = specmine.science.evaluate_feature_map(feature_map)
+
+    return [B, mean, variance]
+
 @specmine.annotations(
+    out_path = ("path to write CSV",),
     clusters = ("number of clusters", "option", None, int),
     neighbors = ("number of neighbors", "option", None, int),
+    workers = ("number of condor jobs", "option", None, int),
     )
-def main(clusters = 16, neighbors = 8):
+def main(out_path, clusters = 16, neighbors = 8, workers = 0):
     """Run TTT state-clustering experiment(s)."""
 
     # convert states to their vector representations
@@ -61,27 +83,17 @@ def main(clusters = 16, neighbors = 8):
 
     logger.info("converting states to their vector representation")
 
-    index = dict(zip(states, xrange(len(states))))
     vectors_ND = numpy.array(map(raw_state_features, states))
-    #(N, D) = vectors_ND.shape
-
-    # build the affinity graph
     affinity_NN = affinity_graph(vectors_ND, neighbors)
 
-    for B in numpy.r_[0:200:16j].astype(int):
-        if B > 0:
-            affinity_basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
-            all_features_NF = numpy.hstack([vectors_ND, affinity_basis_NB])
-        else:
-            all_features_NF = vectors_ND
+    def yield_jobs():
+        for B in numpy.r_[0:200:16j].astype(int):
+            yield (evaluate_vs_b, [B, vectors_ND, affinity_NN])
 
-        feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
+    with open(out_path, "wb") as out_file:
+        writer = csv.writer(out_file)
 
-        print specmine.science.evaluate_feature_map(feature_map)
+        writer.writerow(["basis_vectors", "mean_reward", "reward_variance"])
 
-    ## cluster states directly
-    #K = clusters
-    #clustering = sklearn.cluster.KMeans(k = K)
-
-    #clustering.fit(features_ND)
+        condor.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
 
