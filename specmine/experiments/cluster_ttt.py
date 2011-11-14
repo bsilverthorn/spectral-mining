@@ -8,11 +8,8 @@ import numpy
 import scipy.sparse
 import sklearn.cluster
 import sklearn.neighbors
-<<<<<<< HEAD
 import condor
-=======
 import specmine
->>>>>>> 34b74182af48b7ae75f0c44aba20829717c2188d
 
 logger = specmine.get_logger(__name__)
 
@@ -76,8 +73,9 @@ def evaluate_vs_b(B, vectors_ND, affinity_NN):
     out_path = ("path to write CSV",),
     clusters = ("number of clusters", "option", None, int),
     neighbors = ("number of neighbors", "option", None, int),
+    workers = ("number of condor jobs", "option", None, int),
     )
-def main(out_path, clusters = 16, neighbors = 8):
+def main(out_path, clusters = 16, neighbors = 8, workers = 0):
     """Run TTT state-clustering experiment(s)."""
 
     # convert states to their vector representations
@@ -86,21 +84,16 @@ def main(out_path, clusters = 16, neighbors = 8):
     logger.info("converting states to their vector representation")
 
     vectors_ND = numpy.array(map(raw_state_features, states))
+    affinity_NN = affinity_graph(vectors_ND, neighbors)
 
     def yield_jobs():
         for B in numpy.r_[0:200:16j].astype(int):
             yield (evaluate_vs_b, [B, vectors_ND, affinity_NN])
 
     with open(out_path, "wb") as out_file:
-        out_csv = csv.writer(out_file)
-
-        # build the affinity graph
-        affinity_NN = affinity_graph(vectors_ND, neighbors)
-
-    with open(out_path, "w") as out_file:
         writer = csv.writer(out_file)
 
         writer.writerow(["basis_vectors", "mean_reward", "reward_variance"])
 
-        cargo.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
+        condor.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
 
