@@ -2,6 +2,8 @@ import cPickle as pickle
 import numpy
 import specmine
 
+# XXX other code assumes that actions in states with multiple actions are deterministic
+
 class SimpleRoomDomain(object):
     def __init__(self, width = 8):
         self._width = width
@@ -28,21 +30,16 @@ class SimpleRoomDomain(object):
                 yield (x, y)
 
 class TicTacToeDomain(object):
-    # XXX assumes player 1
+    states = None
 
     def __init__(self, player = 1, opponent = None):
-        # construct opponent
         self._player = player
         self._opponent = opponent
 
-        # construct state space
-        pickle_path = specmine.util.static_path("ttt_states.pickle.gz")
+        if TicTacToeDomain.states is None:
+            TicTacToeDomain.states = specmine.tictac.load_adjacency_dict()
 
-        with specmine.util.openz(pickle_path) as pickle_file:
-            states = pickle.load(pickle_file)
-
-        self.states = states
-        self.initial_state = (specmine.tictac.BoardState(),1)
+        self.initial_state = (specmine.tictac.BoardState(), 1)
 
     def actions_in(self, (board, player)):
         if board.get_winner() is None:
@@ -75,5 +72,7 @@ class TicTacToeDomain(object):
             return (board.make_move(-1 * self._player, opponent_i, opponent_j), self._player)
 
     def check_end(self, (board, player)):
+        # XXX alternatively, terminal states are simply states with no actions
+
         return board.check_end()
 

@@ -15,18 +15,18 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
     for t in xrange(len(R)):
         curr_phi = next_phi
-        z = gamma * lam * z + curr_phi
 
         if t == len(R)-1:
             # terminal state is defined as having value zero
             delta = R[t] - numpy.dot(curr_phi, beta)
-            #delta = R[t] - numpy.dot(beta, curr_phi)
         else:
             next_phi = features[S[t + 1]]
-            delta = R[t] + numpy.dot((gamma * next_phi - curr_phi), beta)
-            #delta = R[t] + numpy.dot(beta, (gamma * next_phi - curr_phi))
 
-        #beta += delta * alpha * curr_phi
+            delta = R[t] + numpy.dot((gamma * next_phi - curr_phi), beta)
+
+        z *= gamma * lam
+        z += curr_phi
+
         beta += delta * alpha * z
 
         deltas.append(delta)
