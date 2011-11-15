@@ -189,7 +189,7 @@ representation.}
 
 While constructing an affinity graph requires defining a simple state feature
 set by hand, the following sections show that the features mined from this
-graph are much more useful. % augmenting, etc.?
+graph are much more useful than the features used to construct the graph.
 
 \subsection{Evaluation in Value Function Regression}
 
