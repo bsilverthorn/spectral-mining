@@ -28,13 +28,16 @@ As in any linear prediction scheme, the quality of the resulting value function
 and the performance of the resulting policy depends critically on the basis
 functions or state features $\phi(s)$. These features are typically constructed
 by hand, a labor-intensive process that requires both extensive domain
-knowledge and an intimate understanding of the dynamics of the linear RL method
-used for online weight learning.
+knowledge.
 
-The goal of this work is to leverage results from spectral graph theory to aid
-in discovering useful representations for linear value function approximation
-in reinforcement learning, building on prior work by \citet{Mahadevan2006Value}
-and others.
+Prior work in automatically generating representations for value function 
+approximation include population-based search methods 
+\citep{whiteson2006evolutionary}, methods based on Bellman
+error \citep{parr2007analyzing}, methods based on augmented Krylov techniques 
+\citep{petrik2007analysis} as well as many others. This work builds upon
+a particularly promising approach which leverages results from harmonic analysis
+of graphs to aid in discovering useful representations 
+\citep{Mahadevan2006Value,Coifman06Diffusion,Wang2009Multiscale}.
 
 \subsection{Spectral Representation Discovery}
 
@@ -69,12 +72,14 @@ Using this state adjacency graph $W$, we can form the (normalized) graph
 Laplacian and use the eigenvectors as a basis for performing linear value 
 function approximation.
 
-Recent work \citep{Wang2009Multiscale,Mahadevan2006Value,Coifman06Diffusion}
+Recent work \citep{petrik2007analysis,mahadevan2006learning,Mahadevan2006Value,mahadevan2007proto}
 has begun to examine the use of harmonic analysis of graphs in this framework,
-but have focused on domains small enough for direct application of the
-approaches described above. As the state space grows, however, representing the
-full adjacency graph and finding its eigenvectors becomes prohibitively
-expensive. 
+but have focused on domains small enough for direct application of approaches
+similar to those described above. As the state space grows, however, 
+representing the full adjacency graph and finding its eigenvectors becomes 
+prohibitively expensive. Some prior work has addressed issues of scaling 
+\citep{johns2007compact} using Kronecker matrix factorization. This work plans
+to take a different clustering-based approach.
 
 We focus on two domains in this preliminary submission: first, a simple
 two-room grid world that highlights the desirable properties of the Laplacian
