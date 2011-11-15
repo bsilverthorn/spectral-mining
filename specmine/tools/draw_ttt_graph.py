@@ -1,8 +1,7 @@
-import plac
-import specmine.tools.draw_states
+import specmine.tools.draw_ttt_graph
 
 if __name__ == "__main__":
-    plac.call(specmine.tools.draw_states.main)
+    specmine.script(specmine.tools.draw_ttt_graph.main)
 
 import cPickle as pickle
 import colorsys
@@ -18,10 +17,10 @@ def write_dot_file(out_file, states, directed = False, coloring = None):
     names = dict((s, "s{0}".format(i)) for (i, s) in enumerate(states))
 
     if coloring is None:
-        coloring = dict((s, 0) for s in states)
-
-    unique = len(set(coloring.values()))
-    hues = numpy.r_[0.0:1.0 - 1.0 / unique:unique * 1j]
+        coloring = {}
+    else:
+        unique = len(set(coloring.values()))
+        hues = numpy.r_[0.0:1.0 - 1.0 / unique:unique * 1j]
 
     # write general configuration
     if directed:
@@ -33,24 +32,31 @@ def write_dot_file(out_file, states, directed = False, coloring = None):
 
         edge = "--"
 
-    out_file.write("node [label=\"\",shape=point,color=\"#00002299\"];\n")
+    out_file.write("node [label=\"\",width=0.15,height=0.15];\n")
     out_file.write("edge [color=\"#00000022\"];\n")
     out_file.write("splines=true;\n")
+    out_file.write("outputorder=edgesfirst;\n")
     out_file.write("root={0};\n".format(names[(specmine.tictac.BoardState(), 1)]))
 
     # write the nodes
     for (i, state) in enumerate(states):
         (board, player) = state
+        attributes = []
 
-        #if player == 1:
-        shape = "point"
-        #else:
-            #shape = "triangle"
+        if player == 1:
+            attributes.append("shape=point,color=\"#00ff00\"")
+        else:
+            attributes.append("shape=square,color=\"#0000ff\",style=filled")
 
-        values = colorsys.hsv_to_rgb(hues[coloring[state]], 0.85, 0.85)
-        string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
+        h = coloring.get(state)
 
-        out_file.write("{0} [color=\"{1}\",shape={2}];\n".format(names[state], string, shape))
+        if h is not None:
+            values = colorsys.hsv_to_rgb(hues[h], 0.85, 0.85)
+            string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
+
+            attributes.append("color=" + string)
+
+        out_file.write("{0} [{1}];\n".format(names[state], ",".join(attributes)))
 
     # write the edges
     for (state, next_states) in states.iteritems():
@@ -74,15 +80,20 @@ def render_dot_file(out_path, dot_path, tool_name):
 
     subprocess.check_call(command)
 
-@plac.annotations(
+@specmine.annotations(
     out_path = ("path to write graphviz dot file",),
+    states_path = ("path to adjacency dict", "option",),
     render_with = ("graphviz rendering tool", "option", "r"),
     coloring_path = ("path to vertex-color map", "option", "c"),
     )
-def main(out_path, render_with = None, coloring_path = None):
+def main(out_path, states_path = None, render_with = None, coloring_path = None):
     """Visualize a state space graph."""
 
-    states = specmine.tictac.load_adjacency_dict()
+    if states_path is None:
+        states = specmine.tictac.load_adjacency_dict()
+    else:
+        with specmine.openz(states_path) as states_file:
+            states = pickle.load(states_file)
 
     logger.info("writing %i-vertex graph to %s", len(states), out_path)
 

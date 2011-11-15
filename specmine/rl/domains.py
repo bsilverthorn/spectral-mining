@@ -1,4 +1,3 @@
-import cPickle as pickle
 import numpy
 import specmine
 
