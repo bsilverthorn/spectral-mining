@@ -80,17 +80,18 @@ discovery in TTT, the simplest and most obvious option is the adjacency graph
 for neighboring board states. We define the gameplay adjacency graph as having
 weight-one edges between each board and all previous or subsequent boards.
 
-From the symmetric adjacency matrix representation of the graph, we formed the 
-normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of 
-the first nine eigenvectors is given in \cref{fig:ttt.gameplay.graph}. Again, 
-the eigenvectors capture much of domain's symmetry as well as providing useful 
-features for evaluating gameplay, such as separating corner versus center moves. 
+From the symmetric adjacency matrix representation of the graph, we formed the
+normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of
+the first nine eigenvectors is given in \cref{fig:ttt.gameplay.graph}. Again,
+the eigenvectors capture much of domain's symmetry. They also provide useful
+features for evaluating gameplay, such as separating corner versus center
+moves. 
 
-It should be noted that we are throwing out some information here as TicTacToe
-is fundamentally a directed game, but we are only considering the undirected
-connections between states. This is convenient as a symmetric matrix is 
-necessary for computing the eigenvectors, but other alternatives exist, such as
-using the directed graph Laplacian \cref{chung2005laplacians}.
+It should be noted that we are discarding some information: Tic-Tac-Toe is
+fundamentally a directed game, but we consider only the undirected connections
+between states. This simplification is convenient, since a symmetric matrix is
+necessary for computing the eigenvectors, but alternatives such as the directed
+graph Laplacian \citep{chung2005laplacians} exist.
 
 \begin{figure}
 \begin{center}
