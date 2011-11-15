@@ -177,7 +177,7 @@ actions in $x$, $R(x)$ is the reward given by transitioning to $x$, $T(x, a)$
 is the state that results from taking action $a$ in $x$.
 
 \begin{figure}
-<<ttt.regression,fig=T,height=2,sanitize=T>>=
+<<ttt.regression,fig=T,height=3,sanitize=T>>=
 data <- read.csv("../results/ttt_prediction.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
@@ -190,31 +190,58 @@ print(plot)
 \caption{\label{fig:ttt.regression}The mean $R^2$ score of value function
 prediction versus the number of feature vectors added from the specified
 feature set, under $10$-fold cross validation using ridge regression ($alpha =
-1.0$) in the TTT domain. As expected, random features do not generalize, while
-additional spectral features computed from both the affinity and gameplay
-graphs improve prediction accuracy.}
+1.0$) in the TTT domain. These features are added to the set of raw, flattened-
+grid features used to construct the affinity graph. As expected, random
+features do not generalize, while additional spectral features computed from
+both the affinity and gameplay graphs improve prediction accuracy.}
 \end{figure}
 
 \Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
 random features to predict the values of TTT states, with the true value
-function computed against the optimal opponent. It is clear that spectral
+function computed via value iteration under the optimal opponent. Prediction
+accruacy improves with the number of basis vectors: it is clear that spectral
 features computed from the either gameplay or affinity graphs do capture
 relevant aspects of the game.
 
 \subsection{Evaluation in a Tic-Tac-Toe Policy}
 
 \begin{figure}
-<<vs.tabular.first,fig=T,height=4,sanitize=T>>=
-data <- read.csv("../results/specmine-static/learning_curve.200games.alpha=0.001.gpe=200.csv")
-data$name <- paste(data$method, data$features)
-plot <- 
-    ggplot(data, aes(games, mean_reward, colour = name, shape = name)) +
+<<ttt.regression,fig=T,height=3,sanitize=T>>=
+data <- read.csv("../results/ttt_action.csv")
+plot <-
+    ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
     geom_point() +
-    geom_line() +
-    labs(colour = "Method", shape = "Method")
+    geom_smooth(span = 0.2) +
+    labs(x = "Number of Features", y = "Mean Reward", colour = "Feature Set", shape = "Feature Set")
 
 print(plot)
 @
-\caption{\label{fig:vs.tabular}XXX}
+\caption{\label{fig:ttt.action}The mean $R^2$ score of value function
+prediction versus the number of feature vectors added from the specified
+feature set, under $10$-fold cross validation using ridge regression ($alpha =
+1.0$) in the TTT domain. These features are added to the set of raw, flattened-
+grid features used to construct the affinity graph. As expected, random
+features do not generalize, while additional spectral features computed from
+both the affinity and gameplay graphs improve prediction accuracy.}
 \end{figure}
+
+The important test of a value-function representation, however, comes when the
+value function is used inside a policy---a mapping from states to actions---to
+operate in a domain. \Cref{fig:ttt.performance} plots the performance of such a
+policy using various numbers of types of state features.
+
+%\begin{figure}
+%<<vs.tabular.first,fig=T,height=4,sanitize=T>>=
+%data <- read.csv("../results/specmine-static/learning_curve.200games.alpha=0.001.gpe=200.csv")
+%data$name <- paste(data$method, data$features)
+%plot <- 
+%    ggplot(data, aes(games, mean_reward, colour = name, shape = name)) +
+%    geom_point() +
+%    geom_line() +
+%    labs(colour = "Method", shape = "Method")
+%
+%print(plot)
+%@
+%\caption{\label{fig:vs.tabular}XXX}
+%\end{figure}
 
