@@ -14,11 +14,11 @@ class QFunctionPolicy(object):
                 )
 
 class LinearValueFunction:
-    def __init__(self,features,weights = None):
+    def __init__(self, features, weights = None):
         self.features = features
         self.weights = weights
 
-    def __getitem__(self,state):
+    def __getitem__(self, state):
         # TODO add interpolation to unseen states
         phi = self.features[state] # returns a vector of feature values
 
@@ -28,7 +28,7 @@ class LinearValueFunction:
         return numpy.dot(phi, self.weights)
 
 class StateValueFunctionPolicy:
-    def __init__(self,domain,value_function,epsilon=0):
+    def __init__(self, domain, value_function, epsilon = 0.0):
         self.domain = domain
         self.values = value_function 
         self.epsilon = epsilon

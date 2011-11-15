@@ -57,3 +57,47 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
     # ...
     return (numpy.mean(scores), numpy.var(scores))
 
+def score_features_regress_act(
+    feature_map,
+    values,
+    opponent_policy,
+    folds = 10,
+    alpha = 1.0,
+    games_for_testing = 1000,
+    ):
+    """Score a feature map on policy performance using least-squares weights."""
+
+    # construct domain
+    domain = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
+
+    # prepare features and targets
+    states = list(values)
+
+    state_features = numpy.array([feature_map[s] for s in states])
+    state_values = numpy.array([values[s] for s in states])
+
+    # run the experiment
+    ridge = sklearn.linear_model.Ridge(alpha = alpha)
+    k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
+    rewards = []
+
+    for (train, _) in k_fold_cv:
+        # learn a value function
+        ridge.fit(state_features[train], state_values[train])
+
+        value_function = specmine.rl.LinearValueFunction(feature_map, ridge.coef_)
+        policy = specmine.rl.StateValueFunctionPolicy(domain, value_function)
+
+        # evaluate the policy
+        rewards = []
+
+        logger.info("evaluating TTT policy over %i games", games_for_testing)
+
+        for i in xrange(games_for_testing):
+            (s, r) = specmine.rl.generate_episode(domain, policy)
+
+            rewards.append(r[-1])
+
+    # ...
+    return (numpy.mean(rewards), numpy.var(rewards))
+
