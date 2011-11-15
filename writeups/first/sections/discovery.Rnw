@@ -190,7 +190,7 @@ While constructing an affinity graph requires defining a simple state feature
 set by hand, the following sections show that the features mined from this
 graph are much more useful than the features used to construct the graph.
 
-\subsection{Evaluation in Value Function Regression}
+\subsection{\label{sec:eval.regression}Evaluation in Value Function Regression}
 
 The goal of this work is to construct features that are useful for linear
 approximations of the \emph{state value function}; that is, a linear
@@ -203,11 +203,11 @@ V(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
 \end{equation}
 %
 where $V(x)$ is the value of state $x$, $\mathcal{A}_x$ is the set of possible
-actions in $x$, $R(x)$ is the reward given by transitioning to $x$, $T(x, a)$
-is the state that results from taking action $a$ in $x$.
+actions in $x$, $R(x)$ is the reward given by transitioning to $x$, and $T(x,
+a)$ is the state that results from taking action $a$ in $x$.
 
 \begin{figure}
-<<ttt.regression,fig=T,height=3,sanitize=T>>=
+<<ttt.regression,fig=T,height=2.5,sanitize=T>>=
 data <- read.csv("../results/ttt_prediction.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
@@ -219,26 +219,36 @@ print(plot)
 @
 \caption{\label{fig:ttt.regression}The mean $R^2$ score of value function
 prediction versus the number of feature vectors added from the specified
-feature set, under $10$-fold cross validation using ridge regression ($alpha =
+feature set, under $10$-fold cross validation using ridge regression ($\alpha =
 1.0$) in the TTT domain. These features are added to the set of raw, flattened-
 grid features used to construct the affinity graph. As expected, random
 features do not generalize, while additional spectral features computed from
 both the affinity and gameplay graphs improve prediction accuracy.}
 \end{figure}
 
-% XXX methodology
-
 \Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
-random features to predict the values of TTT states, with the true value
-function computed via value iteration under the optimal opponent. Prediction
-accruacy improves with the number of basis vectors: it is clear that spectral
-features computed from the either gameplay or affinity graphs do capture
-relevant aspects of the game.
+random features to predict the values of TTT states. This experiment proceeds by
+%
+\begin{itemize}
+\item computing the true value function under the optimal opponent using value
+iteration;
+\item mapping each state to a vector of real-valued features, always including
+at least the raw grid features used for affinity graph construction;
+\item splitting the state space for cross-validation;
+\item training a linear regression method on the feature vectors of the
+training states, labeled with their true value;
+\item and comparing the linear prediction of the test states' value to their
+actual states.
+\end{itemize}
+%
+The results show that prediction accuracy improves with the number of basis
+vectors: spectral features computed from the either gameplay or affinity graphs
+do capture relevant aspects of the game.
 
 \subsection{Evaluation in a Tic-Tac-Toe Policy}
 
 \begin{figure}
-<<ttt.action,fig=T,height=3,sanitize=T>>=
+<<ttt.action,fig=T,height=2.5,sanitize=T>>=
 data <- read.csv("../results/ttt_action.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
@@ -248,19 +258,27 @@ plot <-
 
 print(plot)
 @
-\caption{\label{fig:ttt.action}The mean $R^2$ score of value function
-prediction versus the number of feature vectors added from the specified
-feature set, under $10$-fold cross validation using ridge regression ($\alpha =
-1.0$) in the TTT domain. These features are added to the set of raw, flattened-
-grid features used to construct the affinity graph. As expected, random
-features do not generalize, while additional spectral features computed from
-both the affinity and gameplay graphs improve prediction accuracy.}
+\caption{\label{fig:ttt.action}The mean reward obtained by a TTT policy over
+\np{1000} games, averaged under $10$-fold cross validation, using linear
+function approximation with weights tuned via ridge regression as in
+\cref{sec:eval.regression}. Again, the eigenvector features are clearly
+informative.}
 \end{figure}
 
 The important test of a value-function representation, however, comes when the
 value function is used inside a policy---a mapping from states to actions---to
-operate in a domain. \Cref{fig:ttt.performance} plots the performance of such a
-policy using various numbers of types of state features.
+operate in a domain. \Cref{fig:ttt.action} plots the performance of such a
+policy using various numbers of state features drawn from various feature sets.
+This experiment proceeds similarly to that of \cref{sec:eval.regression},
+except that its value function is computed against a uniform-random opponent,
+and that it measures the average reward, playing against that opponent, of a
+policy whose internal value function is represented by the learned weight
+vector and associated feature set.
+
+As in our measurement of value prediction error, both the affinity and state
+graph features outperform the random baseline, and their performance improves
+with additional eigenvector features---to the point where the associated policy
+consistently wins the vast majority of its games versus a random opponent.
 
 %\begin{figure}
 %<<vs.tabular.first,fig=T,height=4,sanitize=T>>=

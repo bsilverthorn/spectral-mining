@@ -6,23 +6,34 @@
 \end{center}
 \caption{\label{fig:ttt.sampled.graph}An incomplete TTT gameplay graph
 constructed from sampled games, i.e., from repeated stochastic walks over the
-complete gameplay graph of \cref{fig:ttt.gameplay.graph}. Each vertex
-represents a board configuration, with the empty starting board at the center
-of the graph, and each edge represents a move. Green circles denote positions
-in which player 1 is to move, as do blue squares for player 2. Every path from
-the root to a leaf represents a complete possible Tic-Tac-Toe game. While the
-tree-like structure is clear, the complete gameplay graph also includes many
-nodes in which multiple game paths intersect, i.e., it remains a DAG. This
-structural complexity will largely disappear in \cref{sec:scaling}, when only
-sampled paths are available.}
+complete gameplay graph of \cref{fig:ttt.gameplay.graph}. Although some edges
+cross between game trajectories, most are isolated, and the rich topology of
+the game is not evident. This problem is likely to be even more pronounced in
+samples from a more complex game. If future work is to apply spectral analysis
+to sampled game trajectories, more informed graph construction must be
+performed.}
 \end{figure}
 
-This work moves toward the case where we do not have direct access to the full
-state space, only sample trajectories. As \cref{fig:ttt.sampled.graph}
-illustrates, these samples are often disjoint, forming long isolated chains
-that may not provide a sufficiently rich topology to apply spectral
-representation-discovery techniques directly. We also work toward approaches
-that can be applied when finding eigenvalues is computationally infeasible,
-even on the sampled Laplacian matrix. We show that clustering as a
-preprocessing step may be a viable remedy to both problems.
+The number of game states in most board games increases combinatorially with
+the size of the board. The set of all possible Go board configurations, for
+example, becomes intractably large even on only a small 9-by-9 board.
+
+This work therefore moves toward the case where we do not have direct access to
+the full state space, and instead must consider only sample trajectories of
+games already played. These trajectories are informative because they indicate
+important regions of the game space, but as \cref{fig:ttt.sampled.graph}
+illustrates, they are often also disjoint; they form long, isolated chains that
+may not provide a sufficiently rich topology to apply spectral
+representation-discovery techniques directly. State affinity information may
+allow us to join these chains---perhaps by aliasing states with an existing
+clustering method.
+
+We must also work toward approaches to apply when finding eigenvalues is
+computationally infeasible even on the sampled Laplacian matrix. Clustering as
+a preprocessing step to reduce the size of the graph may be a viable remedy to
+this problem as well.
+
+For both statistical and computational reasons, then, the development and use
+of effective state aliasing could be an important ingredient in scaling to more
+challenging domains. It will be our primary focus in future work.
 
