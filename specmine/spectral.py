@@ -77,6 +77,8 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
+# XXX use pyamg to compute the basis?
+
 def laplacian_basis(W, k, which = "SM", sparse = True):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 

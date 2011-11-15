@@ -4,6 +4,7 @@ from .util import (
     openz,
     script,
     get_logger,
+    static_path,
     annotations,
     )
 
