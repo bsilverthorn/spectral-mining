@@ -43,7 +43,7 @@ data <- read.csv("../results/two_room_features.csv")
 plot <-
     ggplot(data[data$eigen_num < 9,], aes(x, y, fill = value)) +
     geom_tile() +
-    facet_wrap(~ eigen_num) +
+    facet_wrap(~ eigen_num) 
     scale_fill_continuous(low = "#000000", high = "#ffffff")
 
 print(plot)
