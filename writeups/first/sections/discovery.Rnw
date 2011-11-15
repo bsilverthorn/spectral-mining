@@ -268,13 +268,13 @@ informative.}
 
 The important test of a value-function representation, however, comes when the
 value function is used inside a policy---a mapping from states to actions---to
-operate in a domain. \Cref{fig:ttt.performance} plots the performance of such a
+operate in a domain. \Cref{fig:ttt.action} plots the performance of such a
 policy using various numbers of state features drawn from various feature sets.
 This experiment proceeds similarly to that of \cref{sec:eval.regression},
 except that its value function is computed against a uniform-random opponent,
-and it measures the average reward versus that opponent of a policy whose
-internal value function is represented by the learned weight vector and
-associated feature set.
+and that it measures the average reward, playing against that opponent, of a
+policy whose internal value function is represented by the learned weight
+vector and associated feature set.
 
 As in our measurement of value prediction error, both the affinity and state
 graph features outperform the random baseline, and their performance improves
