@@ -25,9 +25,9 @@ eigenvalues, are shown in \cref{fig:grid.world.evs}.
 
 Because the eigenvectors with the smallest eigenvalues correspond to the
 smoothest functions over the state space, when adding features to a
-representation, the Laplacian eigenvectors are often included in the order of
-their eigenvalues. This scheme starts with a constant vector and includes
-increasingly higher-frequency components in the representation. 
+representation, the Laplacian eigenvectors are often included in increasing
+order of their eigenvalues. This scheme starts with a constant vector and 
+includes increasingly higher-frequency components in the representation. 
 
 As seen in \cref{fig:grid.world.evs}, the Laplacian eigenvectors form
 interesting functions across the rooms, capturing domain symmetries and
@@ -74,11 +74,10 @@ refers to the value of board $x$ in the $i^{th}$ row and the $j^{th}$ column.
 
 \subsection{Mining the Gameplay Graph}
 
-When choosing a graph on which to perform spectral analysis for representation
+When choosing a graph with which to perform spectral analysis for representation
 discovery in TTT, the simplest and most obvious option is the adjacency graph
 for neighboring board states. We define the gameplay adjacency graph as having
 weight-one edges between each board and all previous or subsequent boards.
-creating undirected edges with weight one between each board. 
 
 From the symmetric adjacency matrix representation of the graph, we formed the 
 normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of 
@@ -90,7 +89,7 @@ It should be noted that we are throwing out some information here as TicTacToe
 is fundamentally a directed game, but we are only considering the undirected
 connections between states. This is convenient as a symmetric matrix is 
 necessary for computing the eigenvectors, but other alternatives exist, such as
-using the directed graph Laplacian \cref{directed Laplacian}.
+using the directed graph Laplacian \cref{chung2005laplacians}.
 
 \begin{figure}
 \begin{center}
