@@ -44,15 +44,39 @@ XXX
 \end{center}
 \caption{\label{fig:ttt.gameplay.graph}The complete TTT gameplay graph. Each
 vertex represents a board configuration, with the empty starting board at the
-center of the graph, and each edge represents a move. Every path from the root
-to a leaf represents a complete game. While the tree-like structure is clear,
-the complete gameplay graph also includes many nodes in which multiple game
-paths intersect, i.e., it remains a DAG. This structural complexity will
-largely disappear in \cref{sec:scaling}, when only sampled paths are
-available.}
+center of the graph, and each edge represents a move. Green circles denote
+positions in which player 1 is to move, as do blue squares for player 2. Every
+path from the root to a leaf represents a complete possible Tic-Tac-Toe game.
+While the tree-like structure is clear, the complete gameplay graph also
+includes many nodes in which multiple game paths intersect, i.e., it remains a
+DAG. This structural complexity will largely disappear in \cref{sec:scaling},
+when only sampled paths are available.}
 \end{figure}
 
-% XXX figures for eigenvectors of TTT
+\begin{figure}
+<<ttt.evs,fig=T,sanitize=T,height=5.5>>=
+data <- read.csv("../results/ttt_move_evs.csv")
+plot <-
+    ggplot(data, aes(i, j, fill = value)) +
+    geom_tile() +
+    facet_wrap(~ number) +
+    scale_fill_continuous(low = "#000000", high = "#ffffff") +
+    opts(axis.text.x = theme_blank(), axis.text.y = theme_blank()) +
+    labs(x = "Columns", y = "Rows", fill = "Value")
+
+print(plot)
+@
+\caption{\label{fig:ttt.evs}Visualization of the nine smallest eigenvectors of
+the Laplacian of the TTT gameplay graph. Each grid is associated with an
+eigenvector, and each cell of the grid is filled according to the value of that
+eigenvector on the board state reached by the first player placing a mark in
+that cell on an empty board. The smallest eigenvector is a constant function,
+as expected, while the others capture useful aspects of the game rules;
+eigenvectors 1 and 2, and 6 and 7, for example, show that these features have
+recovered the game's symmetry over rotated board states.}
+\end{figure}
+
+XXX
 
 \subsection{Mining a State Affinity Graph}
 
@@ -91,17 +115,25 @@ is used to convert distances into affinities, when necessary.
 Given an affinity function $a(x, z)$, a graph can be constructed by placing
 edges from each games state to its $k$ most similar game states, weighting each
 edge by the affinity between the two states. \Cref{fig:ttt.affinity.graph}
-shows such a graph of TTT game states. XXX
+shows such a graph of TTT game states. While less clean than the gameplay
+graph, it nonetheless appears to encode some of the same information.
 
 \begin{figure}
 \begin{center}
-%\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
+\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
 \end{center}
-\caption{\label{fig:ttt.affinity.graph}XXX}
+\caption{\label{fig:ttt.affinity.graph}The complete TTT ``affinity'' graph: TTT
+board states connected by edges according to the Euclidean distance between
+flattened grid representations. The comparison to \cref{fig:ttt.gameplay.graph}
+(formatting is identical) shows that the affinity graph captures much of the
+same structure, but is significantly messier; for example, many more edges
+cross between distant nodes. In later experiments, we will see that spectral
+features acquired from this graph nonetheless form an effective state
+representation.}
 \end{figure}
 
 While constructing an affinity graph requires defining a simple state feature
-set by hand, the following sections will show that the features mined from this
+set by hand, the following sections show that the features mined from this
 graph are much more useful.
 
 \subsection{Evaluation in Value Function Regression}
@@ -119,6 +151,31 @@ V(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
 where $V(x)$ is the value of state $x$, $\mathcal{A}_x$ is the set of possible
 actions in $x$, $R(x)$ is the reward given by transitioning to $x$, $T(x, a)$
 is the state that results from taking action $a$ in $x$.
+
+\begin{figure}
+%<<ttt.regression,fig=T,height=2,sanitize=T>>=
+%data <- read.csv("../results/ttt_prediction.csv")
+%plot <- 
+%    ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
+%    geom_point() +
+%    geom_smooth(span = 0.2) +
+%    labs(x = "Number of Features", y = "Mean R^2", colour = "Feature Set", shape = "Feature Set")
+%
+%print(plot)
+%@
+\caption{\label{fig:ttt.regression}The mean $R^2$ score of value function
+prediction versus the number of feature vectors added from the specified
+feature set, under $10$-fold cross validation using ridge regression ($alpha =
+1.0$) in the TTT domain. As expected, random features do not generalize, while
+additional spectral features computed from both the affinity and gameplay
+graphs improve prediction accuracy.}
+\end{figure}
+
+\Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
+random features to predict the values of TTT states, with the true value
+function computed against the optimal opponent. It is clear that spectral
+features computed from the either gameplay or affinity graphs do capture
+relevant aspects of the game.
 
 \subsection{Evaluation in Temporal Difference Learning}
 
