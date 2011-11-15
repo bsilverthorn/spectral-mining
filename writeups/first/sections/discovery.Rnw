@@ -14,7 +14,31 @@ in particular. The standard two-room domain is therefore a good first test of
 our implementation, and a good example of the value of spectral methods for
 uncovering useful representations of the state space.
 
-XXX
+The domain consists of two (approximately) equally sized rooms connected by a
+single door. We form the adjacency graph where each grid point is connected to 
+its neighbors by an edge with weight one; the walls between the rooms are not 
+included in the state space. Using this symmetric adjacency graph as $W$, we 
+form the normalized graph Laplacian as described in \cref{eqn:norm.laplacian}. 
+The first ten eigenvectors, ordered from smallest to largest eigenvalues are 
+shown in \cref{fig:grid.world.evs}. 
+
+The eigenvectors with the smallest eigenvalues correspond to the smoothest 
+functions over the state space. Thus, when adding features to a representation,
+the Laplacian eigenvectors are often included in order of their eigenvalues. 
+This starts with the constant vector and includes increasingly higher-frequency
+components to the representation. 
+
+The Laplacian eigenvectors form interesting functions across the state
+space and are adapted to the connectivity of the states: the second eigenvector
+separates the two rooms, being positive in one and negative in the other; the
+third and fourth are (nearly) zero in one room while partitioning the other room
+into positive and negative values; and the fifth eigenvector separates the doorway
+from the corners of the room. 
+
+Linear combinations of these functions would obviously be useful for
+approximating smooth functions in the two-room domain. This visual example
+motivates our use of the eigenvectors of the graph Laplacian in other domains
+with rich topology, such as game state graphs.
 
 \begin{figure}
 <<grid.world.evs,fig=T,sanitize=T>>=
