@@ -154,7 +154,8 @@ d_{H}(x, z) = \sum_{i = 1}^3 \sum_{j = 1}^3 (1 - \delta_{x_{ij}z_{ij}})
 \end{equation}
 %
 where $\delta$ is the Kronecker delta. An ideal distance measure, however,
-would be compatible with methods such as $k$-means clustering. We therefore
+would be compatible with methods such as $k$-means clustering, and with the
+ball tree structure we employ for efficient graph construction. We therefore
 first map each board state to a vector of hand-selected state features, then
 use a vector norm to measure distance; we can approximate the Hamming distance
 by simply flattening our board representation into a vector, then using, e.g.,
@@ -225,6 +226,8 @@ grid features used to construct the affinity graph. As expected, random
 features do not generalize, while additional spectral features computed from
 both the affinity and gameplay graphs improve prediction accuracy.}
 \end{figure}
+
+% XXX methodology
 
 \Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
 random features to predict the values of TTT states, with the true value
