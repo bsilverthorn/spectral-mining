@@ -10,31 +10,32 @@ source("../writeup_base.R")
 
 Existing work on spectral methods for feature discovery has focused on domains
 where the state graph has a simple spatial interpretation, and on grid worlds
-in particular. The standard two-room domain is therefore a good first test of
-our implementation, and a good example of the value of spectral methods for
-uncovering useful representations of the state space.
+in particular. The standard two-room domain used by \citet{Mahadevan2006Value}
+is therefore a good first test of our implementation, and a good example of the
+value of spectral methods for uncovering useful representations of the state
+space.
 
 The domain consists of two (approximately) equally sized rooms connected by a
-single door. We form the adjacency graph where each grid point is connected to 
-its neighbors by an edge with weight one; the walls between the rooms are not 
-included in the state space. Using this symmetric adjacency graph as $W$, we 
-form the normalized graph Laplacian as described in \cref{eqn:norm.laplacian}. 
-The first ten eigenvectors, ordered from smallest to largest eigenvalues are 
-shown in \cref{fig:grid.world.evs}. 
+single door. The adjacency graph is formed by connecting each grid point to its
+neighbors by an edge with weight one; the walls between the rooms are not
+included in the state space. Using this symmetric adjacency graph as $W$, we
+form the normalized graph Laplacian as described in \cref{eqn:norm.laplacian}.
+The first ten eigenvectors, ordered from the smallest to the largest
+eigenvalues, are shown in \cref{fig:grid.world.evs}. 
 
-The eigenvectors with the smallest eigenvalues correspond to the smoothest 
-functions over the state space. Thus, when adding features to a representation,
-the Laplacian eigenvectors are often included in order of their eigenvalues. 
-This starts with the constant vector and includes increasingly higher-frequency
-components to the representation. 
+Because the eigenvectors with the smallest eigenvalues correspond to the
+smoothest functions over the state space, when adding features to a
+representation, the Laplacian eigenvectors are often included in the order of
+their eigenvalues. This scheme starts with a constant vector and includes
+increasingly higher-frequency components in the representation. 
 
-As can be seen in \label{fig:grid.world.evs} the Laplacian eigenvectors form 
-interesting functions across the rooms that capture many of the domain's 
-symmetries and are adapted to the connectivity of the states. Linear 
-combinations of these functions would obviously be useful for approximating 
-smooth functions in the two-room domain. This visual example motivates our use 
-of the eigenvectors of the graph Laplacian in other domains with rich topology, 
-such as game state graphs.
+As seen in \cref{fig:grid.world.evs}, the Laplacian eigenvectors form
+interesting functions across the rooms, capturing domain symmetries and
+adapting to the spatial connectivity of the states. Linear combinations of
+these functions are clearly capable of approximating smooth functions in the
+two-room domain. This visual example motivates our application of the
+eigenvectors of the graph Laplacian to game state graphs---although the richer
+topology of such graphs makes it difficult to predict its effectiveness.
 
 \begin{figure}
 <<grid.world.evs,fig=T,sanitize=T>>=
@@ -48,35 +49,36 @@ plot <-
 print(plot)
 @
 \caption{\label{fig:grid.world.evs}Visualization of the first nine eigenvectors
-of the graph Laplacian in the two-room domain. A vertical wall separates the 
+of the graph Laplacian in the two-room domain. A vertical wall separates the
 two rooms with a single-space door connecting them in the middle. Note that the
-functions are adapted to the state space connectivity:  the second eigenvector
-separates the two rooms; the third and fourth are (nearly) zero in one room 
-while partitioning the other room; and the fifth eigenvector separates the 
-doorway from the corners of the room. }
+functions are adapted to the state space connectivity: the second eigenvector
+separates the two rooms, the third and fourth are near zero in one room while
+partitioning the other room, and the fifth eigenvector separates the doorway
+from the corners of the room.}
 \end{figure}
 
 \section{Tic-Tac-Toe Domain}
 
-With the goal of scaling up to Go, we chose TicTacToe as our second toy domain
-as it has many similar properties including a similar tree-like state space 
-and discrete board representation. It is also small enough to be able to build
-an optimal player, solve for the optimal value function, and find the 
-Laplacian eigenvalues on the full state-space graph.
+With the goal of scaling up to larger board games, and Go in particular, we
+choose Tic-Tac-Toe (TTT) as our second domain. Its properties are similar to
+Go, including a tree-like state space and a discrete, grid-based board
+representation. It is also small enough that we can compute optimal play, solve
+for the optimal value function, and find the Laplacian eigenvalues on the full
+state-space graph.
 
-In the following sections, the state values are defined as 1 for all winning
-states, -1 for all losing states, and 0 for draws. Similarly, the two players, 
-as well as their pieces on the board are denoted by 1 and -1 with zero being an
-empty space. $x_{ij}$ refers to the value of board $x$ in the $i^{th}$ row and 
-the $j^{th}$ column.
+In the following sections, state rewards are defined as 1 for all winning
+states, -1 for all losing states, and 0 for draws. Similarly, the two players,
+as well as their pieces on the board, are denoted by 1 (for the first player)
+and -1 (for the second player), with 0 representing an empty space. $x_{ij}$
+refers to the value of board $x$ in the $i^{th}$ row and the $j^{th}$ column.
 
 \subsection{Mining the Gameplay Graph}
 
 When choosing a graph on which to perform spectral analysis for representation
-discovery in TicTacToe, the simplest and most obvious option is the adjacency 
-graph for neighboring board states. We define the gameplay adjacency graph as 
-having weight one edges between each board and all previous or subsequent boards.
-created undirected edges with weight one between each board. 
+discovery in TTT, the simplest and most obvious option is the adjacency graph
+for neighboring board states. We define the gameplay adjacency graph as having
+weight-one edges between each board and all previous or subsequent boards.
+creating undirected edges with weight one between each board. 
 
 From the symmetric adjacency matrix representation of the graph, we formed the 
 normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of 

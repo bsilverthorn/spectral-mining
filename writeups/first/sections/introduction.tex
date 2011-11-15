@@ -69,26 +69,18 @@ Using this state adjacency graph $W$, we can form the (normalized) graph
 Laplacian and use the eigenvectors as a basis for performing linear value 
 function approximation.
 
-Recent work \citep{Wang2009Multiscale,Mahadevan2006Value,Coifman06Diffusion} has 
-begun to examine the use of harmonic analysis of graphs in this framework, but 
-have primarily focused on domains that are small enough for direct application 
-of the approaches described above. However, as the state space grows large, 
-representing the full adjacency graph and finding the eigenvalues becomes 
-prohibitively expensive. 
+Recent work \citep{Wang2009Multiscale,Mahadevan2006Value,Coifman06Diffusion}
+has begun to examine the use of harmonic analysis of graphs in this framework,
+but have focused on domains small enough for direct application of the
+approaches described above. As the state space grows, however, representing the
+full adjacency graph and finding its eigenvectors becomes prohibitively
+expensive. 
 
-This work examines the case where we do not have direct access to the full state
-space, only sample trajectories. These samples are often disjoint, forming long
-isolated chains, and may not provide a rich enough topology to apply spectral 
-representation discovery techniques directly. Additionally we explore approaches
-that can be used when finding eigenvalues, even on the sampled Laplacian matrix,
-is computationally infeasible. We show that clustering as a preprocessing step
-may be a viable remedy to both problems.
-
-We focus on three domains: first, a simple two-room grid world to display the 
-desirable properties that the Laplacian eigenvectors have in terms of adapting 
-the representation to the topology of the state space; second, we explore the 
-game of tic-tac-toe as a toy domain where we can analyze the effects of certain
-approximation techniques in comparison with optimal and full-information 
-approaches; and third, we choose the board game Go as a full-scale application
-domain.
+We focus on two domains in this preliminary submission: first, a simple
+two-room grid world that highlights the desirable properties of the Laplacian
+eigenvectors in terms of representing the topology of a state space; and
+second, a classic game, Tic-Tac-Toe (TTT), that serves as an easily-understood
+domain in which to develop and evaluate techniques for applying spectral
+methods to the unusual state graphs of board games. Both domains lead us toward
+future work on the larger, more challenging board game of Go.
 

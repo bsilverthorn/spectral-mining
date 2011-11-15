@@ -1,0 +1,28 @@
+\section{Future Work}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{results/ttt_graph.sampled.pdf}
+\end{center}
+\caption{\label{fig:ttt.sampled.graph}An incomplete TTT gameplay graph
+constructed from sampled games, i.e., from repeated stochastic walks over the
+complete gameplay graph of \cref{fig:ttt.gameplay.graph}. Each vertex
+represents a board configuration, with the empty starting board at the center
+of the graph, and each edge represents a move. Green circles denote positions
+in which player 1 is to move, as do blue squares for player 2. Every path from
+the root to a leaf represents a complete possible Tic-Tac-Toe game. While the
+tree-like structure is clear, the complete gameplay graph also includes many
+nodes in which multiple game paths intersect, i.e., it remains a DAG. This
+structural complexity will largely disappear in \cref{sec:scaling}, when only
+sampled paths are available.}
+\end{figure}
+
+This work moves toward the case where we do not have direct access to the full
+state space, only sample trajectories. As \cref{fig:ttt.sampled.graph}
+illustrates, these samples are often disjoint, forming long isolated chains
+that may not provide a sufficiently rich topology to apply spectral
+representation-discovery techniques directly. We also work toward approaches
+that can be applied when finding eigenvalues is computationally infeasible,
+even on the sampled Laplacian matrix. We show that clustering as a
+preprocessing step may be a viable remedy to both problems.
+
