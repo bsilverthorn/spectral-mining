@@ -208,7 +208,7 @@ data <- read.csv("../results/ttt_prediction.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
     geom_point() +
-    geom_smooth(span = 0.2) +
+    geom_line() +
     labs(x = "Number of Features", y = "Mean R^2", colour = "Feature Set", shape = "Feature Set")
 
 print(plot)
@@ -232,7 +232,7 @@ relevant aspects of the game.
 \subsection{Evaluation in a Tic-Tac-Toe Policy}
 
 \begin{figure}
-<<ttt.regression,fig=T,height=3,sanitize=T>>=
+<<ttt.action,fig=T,height=3,sanitize=T>>=
 data <- read.csv("../results/ttt_action.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
@@ -244,7 +244,7 @@ print(plot)
 @
 \caption{\label{fig:ttt.action}The mean $R^2$ score of value function
 prediction versus the number of feature vectors added from the specified
-feature set, under $10$-fold cross validation using ridge regression ($alpha =
+feature set, under $10$-fold cross validation using ridge regression ($\alpha =
 1.0$) in the TTT domain. These features are added to the set of raw, flattened-
 grid features used to construct the affinity graph. As expected, random
 features do not generalize, while additional spectral features computed from
