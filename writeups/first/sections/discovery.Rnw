@@ -43,8 +43,9 @@ data <- read.csv("../results/two_room_features.csv")
 plot <-
     ggplot(data[data$eigen_num < 9,], aes(x, y, fill = value)) +
     geom_tile() +
-    facet_wrap(~ eigen_num) 
-    scale_fill_continuous(low = "#000000", high = "#ffffff")
+    facet_wrap(~ eigen_num) +
+    scale_fill_continuous(low = "#000000", high = "#ffffff") +
+    labs(x = "X Position", y = "Y Position", fill = "Value")
 
 print(plot)
 @
@@ -208,13 +209,13 @@ actions in $x$, $R(x)$ is the reward given by transitioning to $x$, and $T(x,
 a)$ is the state that results from taking action $a$ in $x$.
 
 \begin{figure}
-<<ttt.regression,fig=T,height=2.5,sanitize=T>>=
+<<ttt.regression,fig=T,height=2.5>>=
 data <- read.csv("../results/ttt_prediction.csv")
 plot <-
     ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
     geom_point() +
     geom_line() +
-    labs(x = "Number of Features", y = "Mean R^2", colour = "Feature Set", shape = "Feature Set")
+    labs(x = "Number of Features", y = "Mean $R^2$", colour = "Feature Set", shape = "Feature Set")
 
 print(plot)
 @
@@ -235,11 +236,11 @@ random features to predict the values of TTT states. This experiment proceeds by
 iteration;
 \item mapping each state to a vector of real-valued features, always including
 at least the raw grid features used for affinity graph construction;
-\item splitting the state space for cross-validation;
+\item splitting the state space for cross validation;
 \item training a linear regression method on the feature vectors of the
 training states, labeled with their true value;
 \item and comparing the linear prediction of the test states' value to their
-actual states.
+computed true value.
 \end{itemize}
 %
 The results show that prediction accuracy improves with the number of basis
@@ -267,14 +268,14 @@ informative.}
 \end{figure}
 
 The important test of a value-function representation, however, comes when the
-value function is used inside a policy---a mapping from states to actions---to
-operate in a domain. \Cref{fig:ttt.action} plots the performance of such a
-policy using various numbers of state features drawn from various feature sets.
-This experiment proceeds similarly to that of \cref{sec:eval.regression},
-except that its value function is computed against a uniform-random opponent,
-and that it measures the average reward, playing against that opponent, of a
-policy whose internal value function is represented by the learned weight
-vector and associated feature set.
+value function is used inside a policy---a mapping from states to
+actions---that operates in a domain. \Cref{fig:ttt.action} plots the
+performance of such a policy using a range of numbers of state features drawn
+from various feature sets. This experiment proceeds similarly to that of
+\cref{sec:eval.regression}, except that its value function is computed against
+a uniform-random opponent, and that it measures the average reward, playing
+against that opponent, of a policy whose internal value function is represented
+by the learned weight vector and associated feature set.
 
 As in our measurement of value prediction error, both the affinity and state
 graph features outperform the random baseline, and their performance improves
