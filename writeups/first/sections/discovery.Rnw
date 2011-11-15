@@ -155,11 +155,12 @@ d_{H}(x, z) = \sum_{i = 1}^3 \sum_{j = 1}^3 (1 - \delta_{x_{ij}z_{ij}})
 %
 where $\delta$ is the Kronecker delta. An ideal distance measure, however,
 would be compatible with methods such as $k$-means clustering, and with the
-ball tree structure we employ for efficient graph construction. We therefore
-first map each board state to a vector of hand-selected state features, then
-use a vector norm to measure distance; we can approximate the Hamming distance
-by simply flattening our board representation into a vector, then using, e.g.,
-Euclidean distance. The Gaussian kernel
+balltree structure \citep{Omohundro89Five} employed for efficient graph
+construction. We therefore first map each board state to a vector of
+hand-selected state features, then use a vector norm to measure distance; we
+can approximate the Hamming distance by simply flattening our board
+representation into a vector, then using, e.g., Euclidean distance. The
+Gaussian kernel
 %
 \begin{equation}
 g(x) = \exp(-\frac{x^2}{2 \sigma^2})
@@ -167,9 +168,8 @@ g(x) = \exp(-\frac{x^2}{2 \sigma^2})
 is used to convert distances into affinities, when necessary.
 
 Given an affinity function $a(x, z)$, a graph can be constructed by placing
-edges from each games state to its $k$ most similar game states, weighting each
-edge by the affinity between the two states. We use a ball tree \citep{XXX}
-to efficiently construct th \Cref{fig:ttt.affinity.graph}
+edges from each game state to its $k$ most similar game states, weighting each
+edge by the affinity between the two states. \Cref{fig:ttt.affinity.graph}
 shows such a graph of TTT game states. While less clean than the gameplay
 graph, it nonetheless appears to encode some of the same information.
 
