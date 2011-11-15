@@ -35,8 +35,7 @@ class StateValueFunctionPolicy:
 
     def __getitem__(self,state):
         if numpy.random.random() < self.epsilon:
-            moves = list(self._domain.actions_in(state))
-            return choice(moves)
+            best_moves = list(self.domain.actions_in(state))
         else:
             max_value = None
             for action in self.domain.actions_in(state):
@@ -48,9 +47,9 @@ class StateValueFunctionPolicy:
                     max_value = value
                 elif value == max_value:
                     best_moves.append(action) 
-        
-            # choose randomly among the moves of highest value
-            return choice(best_moves)
+
+        # choose randomly among the moves of highest value
+        return choice(best_moves)
 
 class RandomPolicy:
     def __init__(self, domain):

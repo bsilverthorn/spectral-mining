@@ -1,15 +1,14 @@
-import plac
 import specmine.tools.write_ttt_states
 
 if __name__ == '__main__':
-    plac.call(specmine.tools.write_ttt_states.main)
+    specmine.script(specmine.tools.write_ttt_states.main)
 
 import json
 import cPickle as pickle
 import numpy
 import specmine
 
-@plac.annotations(
+@specmine.annotations(
     out_path = ("path to write states pickle",),
     start = ("start state", "option", None, json.loads),
     cutoff = ("move limit", "option", None, int),

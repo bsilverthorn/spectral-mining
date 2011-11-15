@@ -1,10 +1,12 @@
-import specmine.experiments.cluster_ttt
+import specmine.experiments.ttt_affinity_act
 
 if __name__ == "__main__":
-    specmine.script(specmine.experiments.cluster_ttt.main)
+    specmine.script(specmine.experiments.ttt_affinity_act.main)
 
 import csv
 import numpy
+import random
+import cPickle as pickle
 import scipy.sparse
 import sklearn.cluster
 import sklearn.neighbors
@@ -15,9 +17,6 @@ logger = specmine.get_logger(__name__)
 
 def raw_state_features((board, player)):
     return [1] + list(board.grid.flatten())
-
-def xxx_feature_map(adict):
-    pass
 
 def affinity_graph(vectors_ND, neighbors):
     """Build the k-NN affinity graph from state feature vectors."""
@@ -34,15 +33,22 @@ def affinity_graph(vectors_ND, neighbors):
     # construct the affinity graph
     logger.info("constructing the affinity graph")
 
-    affinity_lil_NN = scipy.sparse.lil_matrix((N, N))
+    coo_is = []
+    coo_js = []
+    coo_distances = []
 
     for n in xrange(N):
         for g in xrange(G):
             m = neighbor_indices_NG[n, g]
 
-            affinity_lil_NN[n, m] = affinity_lil_NN[m, n] = neighbor_distances_NG[n, g]
+            coo_is.append(n)
+            coo_js.append(m)
+            coo_distances.append(neighbor_distances_NG[n, g])
 
-    return affinity_lil_NN
+    coo_distances = numpy.array(2 * coo_distances)
+    coo_affinities = numpy.exp(-coo_distances**2 / 2.0)
+
+    return scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
 
     ## cluster states
     #logger.info("aliasing states with spectral clustering")
@@ -57,7 +63,11 @@ def affinity_graph(vectors_ND, neighbors):
 
     #clustering.fit(features_ND)
 
-def evaluate_vs_b(B, vectors_ND, affinity_NN):
+def evaluate_vs_b_td(B, vectors_ND, affinity_NN, index):
+    if condor.get_task() is not None:
+        numpy.random.seed(hash(condor.get_task().key))
+        random.seed(2 * hash(condor.get_task().key))
+
     if B > 0:
         affinity_basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
         all_features_NF = numpy.hstack([vectors_ND, affinity_basis_NB])
@@ -71,29 +81,36 @@ def evaluate_vs_b(B, vectors_ND, affinity_NN):
 
 @specmine.annotations(
     out_path = ("path to write CSV",),
-    clusters = ("number of clusters", "option", None, int),
+    values_path = ("path to value function",),
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     )
-def main(out_path, clusters = 16, neighbors = 8, workers = 0):
+def main(out_path, values_path, neighbors = 8, workers = 0):
     """Run TTT state-clustering experiment(s)."""
+
+    # load the value function
+    with specmine.openz(values_path) as values_file:
+        values = pickle.load(values_file)
 
     # convert states to their vector representations
     states = list(specmine.tictac.load_adjacency_dict())
 
     logger.info("converting states to their vector representation")
 
+    index = dict(zip(states, xrange(len(states))))
     vectors_ND = numpy.array(map(raw_state_features, states))
+
+    # build the affinity graph
     affinity_NN = affinity_graph(vectors_ND, neighbors)
 
     def yield_jobs():
-        for B in numpy.r_[0:200:16j].astype(int):
-            yield (evaluate_vs_b, [B, vectors_ND, affinity_NN])
+        for B in numpy.r_[0:500:16j].astype(int):
+            yield (evaluate_vs_b_regression, [B, vectors_ND, affinity_NN, index, values])
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
 
-        writer.writerow(["basis_vectors", "mean_reward", "reward_variance"])
+        writer.writerow(["basis_vectors", "reward_mean", "reward_variance"])
 
         condor.do_or_distribute(yield_jobs(), workers, lambda _, r: writer.writerow(r))
 

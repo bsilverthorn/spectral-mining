@@ -11,6 +11,8 @@ import subprocess
 import numpy
 import specmine
 
+logger = specmine.get_logger(__name__)
+
 def write_dot_file(out_file, states, directed = False, coloring = None):
     # prepare
     names = dict((s, "s{0}".format(i)) for (i, s) in enumerate(states))
@@ -34,16 +36,21 @@ def write_dot_file(out_file, states, directed = False, coloring = None):
     out_file.write("node [label=\"\",shape=point,color=\"#00002299\"];\n")
     out_file.write("edge [color=\"#00000022\"];\n")
     out_file.write("splines=true;\n")
-
-    #import tictac
-    #out_file.write("root={0};\n".format(names[tictac.BoardState()]))
+    out_file.write("root={0};\n".format(names[(specmine.tictac.BoardState(), 1)]))
 
     # write the nodes
     for (i, state) in enumerate(states):
+        (board, player) = state
+
+        #if player == 1:
+        shape = "point"
+        #else:
+            #shape = "triangle"
+
         values = colorsys.hsv_to_rgb(hues[coloring[state]], 0.85, 0.85)
         string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
 
-        out_file.write("{0} [color=\"{1}\"];\n".format(names[state], string))
+        out_file.write("{0} [color=\"{1}\",shape={2}];\n".format(names[state], string, shape))
 
     # write the edges
     for (state, next_states) in states.iteritems():
@@ -69,17 +76,15 @@ def render_dot_file(out_path, dot_path, tool_name):
 
 @plac.annotations(
     out_path = ("path to write graphviz dot file",),
-    states_path = ("path to state space pickle",),
     render_with = ("graphviz rendering tool", "option", "r"),
     coloring_path = ("path to vertex-color map", "option", "c"),
     )
-def main(out_path, states_path, render_with = None, coloring_path = None):
+def main(out_path, render_with = None, coloring_path = None):
     """Visualize a state space graph."""
 
-    with specmine.util.openz(states_path) as pickle_file:
-        boards = pickle.load(pickle_file)
+    states = specmine.tictac.load_adjacency_dict()
 
-    print "writing {1}-vertex graph to {0}".format(out_path, len(boards))
+    logger.info("writing %i-vertex graph to %s", len(states), out_path)
 
     if coloring_path is None:
         coloring = None
@@ -87,14 +92,14 @@ def main(out_path, states_path, render_with = None, coloring_path = None):
         with specmine.util.openz(coloring_path) as pickle_file:
             coloring = pickle.load(pickle_file)
 
-        assert len(coloring) == len(boards)
+        assert len(coloring) == len(states)
 
     if render_with is None:
         with open(out_path, "wb") as out_file:
-            write_dot_file(out_file, boards, coloring = coloring)
+            write_dot_file(out_file, states, coloring = coloring)
     else:
         with tempfile.NamedTemporaryFile(suffix = ".dot") as dot_file:
-            write_dot_file(dot_file, boards, coloring = coloring)
+            write_dot_file(dot_file, states, coloring = coloring)
 
             dot_file.flush()
 

@@ -1,40 +1,92 @@
 \section{Introduction}
 
-The choice of representation is often critical to the success of a
-reinforcement learning (RL) agent, just as feature engineering is often
-critical to the success of a supervised learning method. This representation is
-usually constructed by hand, and requires an understanding of the peculiarities
-of a given domain.
+Reinforcement learning (RL) is concerned with situations where an agent is
+trying to learn from interactions with an environment. Value-based approaches 
+to RL try to estimate the value function across the state space of the 
+environment, and typically use that value function to produce a value-greedy
+policy.
 
-Many domains, however, are naturally represented as a discrete state space
-graph: the game of Tic-Tac-Toe, for example, is easily described as a set of
-boards (3x3 grids), with the possible moves linking boards with directed edges.
-This type of representation is verbose, and not directly amenable to
-well-studied standard RL methods, but may serve as a useful starting point---an
-initial representation, to which data mining tools can be applied to extract
-useful lower-dimensional state descriptions.
+Just as feature engineering is often critical to the success of supervised 
+learning methods, the success of value-based RL depends heavily on the quality
+of the represenation used to estimate the value function. This work aims to 
+explore methods for automatically generating such a represenation with a focus 
+on approaches that scale to large discrete domains.
+
+\subsection{Linear Value Function Approximation}
+
+In environments where the number of states is too large to enumerate and store 
+a tabular representation of the value function, some form of approximation must
+be used. For simplicity and ease of analysis, a linear architecture is often 
+chosen. In such a representation, the value of a state $s$ is estimated as a 
+linear combination of features $\phi(s)$ of that state.
+
+\begin{equation}
+V(s) = w^{T}\phi(s)
+\end{equation}
+
+As a linear architecture is very concise, the quality of the resulting value
+function and the performance of the resulting policy depends critically on the 
+basis functions or state features $\phi(s)$. These features are typically 
+constructed by hand, which can be a very labor-intensive process and require
+extensive domain knowledge. 
+
+The goal of this work is to leverage results from spectral graph theory to aid 
+in discovering useful representations for linear value function approximation
+in reinforcement learning. 
+
+\subsection{Spectral Representation discovery}
+
+Spectral graph theory provides many useful tools for performing analysis of a 
+graph and functions on that graph \citep{TODO-chung}. The graph Laplacian $L$ 
+and its normalized variants play a central role in the harmonic analysis of 
+graphs. Given a weighted graph $W$, the graph laplacian is defined as:
+
+\begin{equation}
+L = D-W
+\end{equation}
+
+Where $D$ is defined as as the row sums of $W$:
+
+\begin{equation}
+D = \sum_{i} W_{ij}
+\end{equation}
+
+The normalized graph laplacian is defined to be
+
+\begin{equation}
+\mathcal{L} = D^{-1/2}LD^{-1/2}
+\end{equation}
+
+A particularly ineteresting property of the graph Laplacian is that is that the
+eigenvectors form a good basis for representing smooth functions on the graph
+\citep{TODO-needed?}.
+
+The state space of a finite Markov Decision Process (MDP) can be represented
+as a graph where each vertex is a state and edges represent state transitions.
+Using this state adjacency graph $W$, we can form the (normalized) graph 
+Laplacian and use the eigenvectors as a basis for performing linear value 
+function approximation.
 
 Recent work \citep{Wang2009Multiscale,Mahadevan2006Value,Coifman06Diffusion} has 
-begun to examine the use of harmonic analysis of graphs in this framework, 
-focusing on diffusion wavelets and the eigenvectors of the graph Laplacian, but 
-important questions remain: how can this approach be scaled to large state spaces? 
-Can it be made to work given only sampled walks through the state space (e.g., data 
-from human gameplay)? Which methods generate state descriptions suitable for which 
-RL algorithms?
+begun to examine the use of harmonic analysis of graphs in this framework, but 
+have primarily focused on domains that are small enough for direct application 
+of the approaches described above. However, as the state space grows large, 
+representing the full adjacency graph and finding the eigenvalues becomes 
+prohibitively expensive. 
 
-To address scalability, one possible research direction would be to apply a
-multilevel graph clustering algorithm, such as graclus
-\citep{Dhillon07weightedgraph}, then perform harmonic state space analysis on
-the clusters separately or on a coarsened representation of the state graph. It
-may also be worthwhile to use the clusters directly as binary functions; many
-RL algorithms become simple and efficient in the binary-feature case.  
+This work examines the case where we do not have direct access to the full state
+space, only sample trajectories. These samples are often disjoint, forming long
+isolated chains, and may not provide a rich enough topology to apply spectral 
+representation discovery techniques directly. Additionally we explore approaches
+that can be used when finding eigenvalues, even on the sampled Laplacian matrix,
+is computationally infeasible. We show that clustering as a preprocessing step
+may be a viable remedy to both problems.
 
-Our project will tackle these questions in applying data mining tools to
-automatically derive state representations for two complex, large-scale
-domains: the board game of Go, using state trajectories extracted from expert
-human games; and the operation of a modern satisfiability (SAT) solver,
-\texttt{MiniSat}, on standard benchmark collections. The success of our
-approach will be measured against current state-of-the-art handcrafted template
-features \citep{Silver2007Shape} in the case of Go, and against default solver
-configurations in the SAT domain. 
+We focus on three domains: first, a simple two-room grid world to display the 
+desirable properties that the Laplacian eigenvectors have in terms of adapting 
+the representation to the topology of the state space; second, we explore the 
+game of tic-tac-toe as a toy domain where we can analyze the effects of certain
+approximation techniques in comparison with optimal and full-information 
+approaches; and third, we choose the board game Go as a full-scale application
+domain.
 
