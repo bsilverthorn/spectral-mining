@@ -102,7 +102,7 @@ positions in which player 1 is to move, as do blue squares for player 2. Every
 path from the root to a leaf represents a complete possible Tic-Tac-Toe game.
 While the tree-like structure is clear, the complete gameplay graph also
 includes many nodes in which multiple game paths intersect, i.e., it remains a
-DAG. This structural complexity will largely disappear in \cref{sec:scaling},
+DAG. This structural complexity will largely disappear in future work,
 when only sampled paths are available.}
 \end{figure}
 
@@ -135,7 +135,7 @@ A complete graph represention of the rules of a game, a \emph{gameplay graph}, i
 clearly a rich source of information from which to extract representation
 information. The graph representation of a nontrivial game, however, is often
 intractably large. Approaches to larger games will be explored in
-\cref{sec:scaling}; for now, we will focus on alternative graph representations
+future work; for now, we will focus on alternative graph representations
 that may be useful in these contexts.
 
 If we can construct a measure of the similarity or ``affinity'' between
@@ -267,13 +267,13 @@ informative.}
 
 The important test of a value-function representation, however, comes when the
 value function is used inside a policy---a mapping from states to actions---to
-operate in a domain. \Cref{fig:ttt.action} plots the performance of such a
-policy using various numbers of state features drawn from various feature sets.
-This experiment proceeds similarly to that of \cref{sec:eval.regression},
-except that its value function is computed against a uniform-random opponent,
-and that it measures the average reward, playing against that opponent, of a
-policy whose internal value function is represented by the learned weight
-vector and associated feature set.
+operate in a domain. \Cref{fig:ttt.action} plots the performance of a
+policy which is greedy with respect to its value function using various numbers
+of state features drawn from various feature sets. This experiment proceeds 
+similarly to that of \cref{sec:eval.regression}, except that its value function
+is computed against a uniform-random opponent, and that it measures the average
+reward, playing against that opponent, of a policy whose internal value function
+is represented by the learned weight vector and associated feature set.
 
 As in our measurement of value prediction error, both the affinity and state
 graph features outperform the random baseline, and their performance improves
