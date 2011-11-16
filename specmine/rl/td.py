@@ -29,7 +29,7 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
         deltas.append(delta)
 
-        inner = numpy.dot(z_old, curr_phi)
+        inner = numpy.dot(z, curr_phi)
 
         if inner > 0.0:
             beta += delta * z * alpha / inner
@@ -43,24 +43,28 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
     return beta
 
-def lstd_episode(S, R, phqi, lam=0.9, A=None, b=None):
+def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
+    next_phi = phi[S[0]]
+    z = next_phi
 
-    k = phi.shape[1] # number of features
-    if A == None:
-        A = np.zeros((k,k))
     if b == None:
-        b = np.zeros((k,1))
-    z = phi[S[0],:] # eligibility trace initialized to first state features
+        b = numpy.zeros_like(next_phi)
+    if A == None:
+        A = numpy.zeros((b.shape[0],b.shape[0]))
+    
     for t in xrange(len(R)):
-        A += np.dot(z[:,None],(phi[S[t],:]-phi[S[t+1],:])[None,:])
-        b += R[t]*z[:,None]
-        z = lam*z+phi[S[t+1],:]
+        z = lam*z+phi[S[t]]
+
+        if t != (len(R)-1):
+            A += numpy.dot(z,(phi[S[t]]-phi[S[t+1]]))
+
+        b += R[t]*z
 
     return A, b
 
 def lstd_solve(A,b):
 
-    beta = np.linalg.solve(A,b) # solve for feature parameters
+    beta = numpy.linalg.solve(A,b) # solve for feature parameters
     return beta
 
 def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,**kwargs):
@@ -75,7 +79,7 @@ def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,
         A = None; b = None   
         for j in xrange(games_per_eval):
             s, r = specmine.rl.generate_episode(domain, lvf_policy)        
-            A, b = lstd_episode(s, r, phqi, lam=0.9, A=A, b=b)
+            A, b = lstd_episode(s, r, features, lam=0.9, A=A, b=b)
         
         weights = lstd_solve(A,b)
 
