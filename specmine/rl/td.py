@@ -43,7 +43,7 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
     return beta
 
-def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
+def lstd_episode(S, R, phqi, lam=0.9, A=None, b=None):
 
     k = phi.shape[1] # number of features
     if A == None:
@@ -62,6 +62,27 @@ def lstd_solve(A,b):
 
     beta = np.linalg.solve(A,b) # solve for feature parameters
     return beta
+
+def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,**kwargs):
+    '''Run num_iters phases of policy evaluation/improvement and return the policy'''
+    epsilon = kwargs.get('epsilon',0.1)
+    epsilon_dec = kwargs.get('epsilon_dec',1)
+    
+    for i in xrange(num_iters):
+        value_function = specmine.rl.LinearValueFunction(features,weights)
+        lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function,epsilon = epsilon) 
+        
+        A = None; b = None   
+        for j in xrange(games_per_eval):
+            s, r = specmine.rl.generate_episode(domain, lvf_policy)        
+            A, b = lstd_episode(s, r, phqi, lam=0.9, A=A, b=b)
+        
+        weights = lstd_solve(A,b)
+
+    value_function = specmine.rl.LinearValueFunction(features,weights)
+    lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function) 
+
+    return lvf_policy
 
 def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
     """Learn a linear TD policy starting with the given weights."""
@@ -87,5 +108,5 @@ def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwa
 
     value_function = specmine.rl.LinearValueFunction(features, weights)
     lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function)
-
+    
     return lvf_policy
