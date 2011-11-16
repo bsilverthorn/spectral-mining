@@ -5,7 +5,7 @@ import specmine
 
 logger = specmine.get_logger(__name__)
 
-def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_testing = 2000):
+def evaluate_feature_map(feature_map, games_for_learning = 5000, games_for_testing = 500, **kwargs):
     # construct domain
     opponent_domain = specmine.rl.TicTacToeDomain(player = -1)
     opponent_policy = specmine.rl.RandomPolicy(opponent_domain)
@@ -20,7 +20,7 @@ def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_tes
             domain,
             feature_map,
             episodes = games_for_learning,
-            )
+            **kwargs)
 
     # evaluate the policy
     rewards = []

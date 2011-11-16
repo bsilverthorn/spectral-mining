@@ -27,14 +27,12 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
         z *= gamma * lam
         z += curr_phi
 
-        beta += delta * alpha * z
-
         deltas.append(delta)
 
-        #inner = numpy.dot(z_old, curr_phi)
+        inner = numpy.dot(z_old, curr_phi)
 
-        #if inner > 0.0:
-            #beta += delta * alpha / inner
+        if inner > 0.0:
+            beta += delta * z * alpha / inner
 
     print ",".join(map(str, [
         alpha,
@@ -69,10 +67,11 @@ def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwa
     """Learn a linear TD policy starting with the given weights."""
 
     print "alpha,change,mean_error,reward"
-
-    #alpha = 1e-1
-    alpha = 1e-2
-    epsilon = 1.0
+    
+    alpha = kwargs.get('alpha',1e-2)
+    alpha_dec = kwargs.get('alpha_dec',1)
+    epsilon = kwargs.get('epsilon',0.1)
+    epsilon_dec = kwargs.get('epsilon_dec',1)
 
     for i in xrange(episodes):
         if i % 1000 == 0:
@@ -81,14 +80,12 @@ def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwa
         value_function = specmine.rl.LinearValueFunction(features, weights)
         lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function, epsilon = epsilon)
         S, R = specmine.rl.generate_episode(domain, lvf_policy)
-        #weights = specmine.rl.td_episode(S, R, features, beta = weights, **kwargs)
         weights = specmine.rl.td_episode(S, R, features, beta = weights, alpha = alpha, **kwargs)
 
-        #alpha *= 1.0 - 1e-4
-        epsilon *= 1.0 - 1e-3
+        alpha *= alpha_dec
+        epsilon *= epsilon_dec
 
     value_function = specmine.rl.LinearValueFunction(features, weights)
     lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function)
 
     return lvf_policy
-
