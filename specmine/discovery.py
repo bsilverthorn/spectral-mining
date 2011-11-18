@@ -10,6 +10,10 @@ class TabularFeatureMap(object):
 
     def __init__(self, basis_matrix, index):
         self.basis = basis_matrix # number of states x number of features
+        u, s, v = numpy.linalg.svd(basis_matrix)
+        rank = numpy.sum(s > 1e-10)
+        print 'rank of basis: ', rank
+        assert rank == basis_matrix.shape[1]
         self.index = index
 
     def __getitem__(self, state):

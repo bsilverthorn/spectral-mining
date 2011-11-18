@@ -10,21 +10,24 @@ import condor
 import specmine
 
 def run_laplacian_evaluation(k, adj_matrix, index):
+    print 'learning with ',k,' laplacian features'
     laplacian_basis = specmine.spectral.laplacian_basis(adj_matrix,k, sparse=True)        
     laplacian_feature_map = specmine.discovery.TabularFeatureMap(laplacian_basis, index)    
-    reward, variance = specmine.science.evaluate_feature_map_lstd(laplacian_feature_map)
+    reward, variance = specmine.science.evaluate_feature_map_td(laplacian_feature_map)
 
     return ["laplacian", k, reward, variance]
 
 def run_random_evaluation(k, adj_matrix, index):
+    print 'learning with ',k,' random features'
     num_states = len(index)
-    random_basis = numpy.hstack((numpy.ones((num_states,1)),numpy.random.standard_normal((num_states,k-1))))        
+    #random_basis = numpy.hstack((numpy.ones((num_states,1)),numpy.random.standard_normal((num_states,k-1))))        
+    random_basis = numpy.random.standard_normal((num_states,k))        
     random_feature_map = specmine.discovery.TabularFeatureMap(random_basis, index) 
-    reward, variance = specmine.science.evaluate_feature_map_lstd(random_feature_map)
+    reward, variance = specmine.science.evaluate_feature_map_td(random_feature_map)
 
     return ["random", k, reward, variance]
 
-def main(workers=0):
+def main(workers=20):
 
     print 'creating domain and opponent'
 
@@ -34,7 +37,7 @@ def main(workers=0):
     adj_matrix, index = specmine.discovery.adjacency_dict_to_matrix(adj_dict)    
 
     w = csv.writer(file(specmine.util.static_path( \
-        'feature_number_test_lstd.csv'),'wb'))
+        'feature_number_test_td.csv'),'wb'))
     w.writerow(['method','features','reward_mean','reward_variance'])
 
     def yield_jobs():
