@@ -32,7 +32,7 @@ def get_lstd_learning_curve(domain, features,games_per_iter, num_iters, games_pe
     weights = None
     A = None; b = None
     for i in xrange(1,num_iters):
-        policy, A, b = specmine.rl.lstd_learn_policy(domain, features, games_per_iter, 1, weights=weights, epsilon = 0.1, A=A, b=b,reg=0.2)
+        policy, A, b = specmine.rl.lstd_learn_policy(domain, features, games_per_iter, 1, weights=weights, epsilon = 0.1, A=A, b=b,reg=0.2,decay=1-2e-5)
         
         weights = policy.values.weights
         
@@ -42,7 +42,7 @@ def get_lstd_learning_curve(domain, features,games_per_iter, num_iters, games_pe
     return reward, variance
 
 #def main(K=[100], num_evals = 250, games_per_eval = 500, games_between = 2, alpha = 0.001):
-def main(K=[100], games_per_iter=500, num_iters = 20, games_per_eval = 200):
+def main(K=[100], games_per_iter=500, num_iters = 20, games_per_eval = 500):
 
     print 'creating domain and opponent'
 
@@ -57,7 +57,6 @@ def main(K=[100], games_per_iter=500, num_iters = 20, games_per_eval = 200):
     with specmine.util.openz(pickle_path) as pickle_file:
             adj_dict = pickle.load(pickle_file)
     adj_matrix, index = specmine.discovery.adjacency_dict_to_matrix(adj_dict)
-    num_states = len(index)
 
     w = csv.writer(file(specmine.util.static_path( \
         #'learning_curve.'+str(num_evals*games_between)+'games.alpha='+str(alpha)+'.gpe='+str(games_per_eval)+'.csv'),'wb'))

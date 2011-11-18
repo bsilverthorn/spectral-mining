@@ -43,7 +43,7 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
     return beta
 
-def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
+def lstd_episode(S, R, phi, lam=0.9, A=None, b=None, decay = 1):
     
     if b == None:
         b = numpy.zeros_like(phi[S[0]])
@@ -55,16 +55,15 @@ def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
         z = lam*z+phi[S[t]]
 
         if t != (len(R)-1):
-            A += numpy.outer(z,(phi[S[t]]-phi[S[t+1]]))
+            A = numpy.outer(z,(phi[S[t]]-phi[S[t+1]])) + decay*A
         
-        b += R[t]*z
+        b = R[t]*z + decay*b
 
     return A, b
 
 def lstd_solve(A,b,reg=0):
     if reg > 0:
         A = A+reg*numpy.eye(A.shape[0])
-        print 'using regularization in lstd, parameter: ',reg
     beta = numpy.linalg.solve(A,b) # solve for feature parameters
     return beta
 
@@ -75,6 +74,7 @@ def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,
     reg = kwargs.get('reg',0.1)
     A = kwargs.get('A',None)
     b = kwargs.get('b',None)
+    decay = kwargs.get('decay',1) # decay of sum of samples from previous episodes
 
     for i in xrange(num_iters):
         value_function = specmine.rl.LinearValueFunction(features,weights)
@@ -83,7 +83,7 @@ def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,
 
         for j in xrange(games_per_eval):
             s, r = specmine.rl.generate_episode(domain, lvf_policy)        
-            A, b = lstd_episode(s, r, features, lam=0.9, A=A, b=b)
+            A, b = lstd_episode(s, r, features, lam=0.9, A=A, b=b, decay=decay)
 
 #            # singularity test
 #            u, s, v = numpy.linalg.svd(A)
