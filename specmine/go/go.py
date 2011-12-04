@@ -10,21 +10,17 @@ import gnugo_engine as gge
 class BoardState(object):
     """Go board."""
 
-    def __init__(self, grid = None, size = 9):
-        if grid is None:
-            grid = numpy.zeros((size, size))
-    # TODO - initial nonzero grid not handled yet
-
-        self._string = str(grid)
+    def __init__(self, size = 9):
+        ''' currently no way to start with nonzero grid'''
+        grid = numpy.zeros((size, size))
         self._grid = grid
+        self._string = str(self._grid)
         gge.gg_init()
 
     def __hash__(self):
-    # TODO - account for symmetries
         return hash(self._string)
 
     def __eq__(self, other):
-    # TODO - account for symmetries here also
         return self._string == other._string
 
     def __str__(self):
@@ -38,8 +34,9 @@ class BoardState(object):
         assert gge.gg_is_legal(player,(i,j))
         
         gge.gg_play_move((i,j),player)
-        self._grid = gge.gg_get_board()
-
+        self._grid = cannonical_board(gge.gg_get_board())
+        self._string = str(self._grid)
+        
         return self
 
     def get_winner(self):
@@ -69,6 +66,17 @@ class BoardState(object):
     @property
     def grid(self):
         return self._grid
+
+    def cannonical_board(grid):
+
+        grids = [].append(grid)
+        for i in xrange(1,4):
+            grids.append(numpy.rot90(grid,i))
+        grids.append(numpy.fliplr(grid))
+        grids.append(numpy.flipud(grid))
+
+        return max(grids,key = lambda x: hash(str(x)))
+
 
 
 def sgf_game_reader(path, min_moves=10, rating_thresh=1800):

@@ -109,19 +109,19 @@ class GoDomain(object):
         else:
             return 0
 
-    def outcome_of(self, player, (i, j)):
+    def outcome_of(self, (player,board), (i, j)):
         
         if player == self._player:
-            self.board = self.board.make_move(player, i, j) 
-            return (self._player*-1, self.board)
+            self.board = board.make_move(player, i, j) 
+            return (self._player*-1, self.board.copy())
 
         else:
             assert i is None and j is None
 
             (opponent_i, opponent_j) = self._opponent[state]
-            self.board = self.board.make_move(player, opponent_i, opponent_j) 
+            self.board = board.make_move(player, opponent_i, opponent_j) 
 
-            return (self._player, self.board)
+            return (self._player, self.board.copy())
 
     def check_end(self, (player,board)):
         return board.check_end()
