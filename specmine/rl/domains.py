@@ -85,10 +85,10 @@ class GoDomain(object):
         self.size = size
         self.board = specmine.go.BoardState()
 
-        if GoDomain.states is None:
-            GoDomain.states = specmine.go.load_adjacency_dict() # TODO - implement this method
+#        if GoDomain.states is None:
+#            GoDomain.states = specmine.go.load_adjacency_dict() # TODO - implement this method
 
-        self.initial_state = (specmine.Go.BoardState(), 1)
+        self.initial_state = (specmine.go.BoardState(), 1)
 
     def actions_in(self, player):
         ''' return the available actions for player for current board config '''
@@ -109,22 +109,19 @@ class GoDomain(object):
         else:
             return 0
 
-    def outcome_of(self, player, i, j):
+    def outcome_of(self, player, (i, j)):
         
         if player == self._player:
             self.board = self.board.make_move(player, i, j) 
-            gge.gg_undo_move(1) # kind of hackish
-
-            return (player*-1, self.board.copy())
+            return (self._player*-1, self.board)
 
         else:
             assert i is None and j is None
 
             (opponent_i, opponent_j) = self._opponent[state]
             self.board = self.board.make_move(player, opponent_i, opponent_j) 
-            gge.gg_undo_move(1)
 
-            return (self._player, self.board.copy())
+            return (self._player, self.board)
 
-    def check_end(self, board):
-        return self.board.check_end()
+    def check_end(self, (player,board)):
+        return board.check_end()

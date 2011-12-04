@@ -2,6 +2,7 @@ import tarfile
 import re
 import glob
 import shutil
+import numpy
 import specmine
 import gnugo_engine as gge
 
@@ -12,6 +13,7 @@ class BoardState(object):
     def __init__(self, grid = None, size = 9):
         if grid is None:
             grid = numpy.zeros((size, size))
+    # TODO - initial nonzero grid not handled yet
 
         self._string = str(grid)
         self._grid = grid
@@ -32,17 +34,18 @@ class BoardState(object):
         return repr(self._grid)
 
     def make_move(self, player, i, j):
+    #mutable - returns this rather than making new object
         assert gge.gg_is_legal(player,(i,j))
         
         gge.gg_play_move((i,j),player)
-        new_grid = gge.gg_get_board()
+        self._grid = gge.gg_get_board()
 
-        return BoardState(new_grid)
+        return self
 
     def get_winner(self):
         """Return the winner of the game, if any."""
-        move1 = gge.gg_genmove(player)        
-        move2 = gge.gg_genmove(-1*player)
+        move1 = gge.gg_genmove(1)        
+        move2 = gge.gg_genmove(-1)
         if move1 == move2 == (-1,-1):
             (score,up,low) = gge.gg_get_score()
             if score > 0:
@@ -52,12 +55,12 @@ class BoardState(object):
 
         return None
 
-    def check_end(self,player):
+    def check_end(self):
         """Is this board state an end state? ask Gnugo if it would pass on
         both turns."""
-        move1 = gge.gg_genmove(player)
+        move = gge.gg_genmove(1)
         if move == (-1,-1): # if gnugo thinks we should pass
-            move = gge.gg_genmove(player*-1)
+            move = gge.gg_genmove(-1)
             if move == (-1,-1):
                 return True
 
@@ -68,7 +71,7 @@ class BoardState(object):
         return self._grid
 
 
-def sgf_game_reader(path, reverse=False, min_moves=10, rating_thresh=1800):
+def sgf_game_reader(path, min_moves=10, rating_thresh=1800):
     
     ''' ex: game_gen = sgf_game_reader(static_path)
             player, move = game_gen.next()'''
@@ -144,10 +147,14 @@ def main(clean_up = True):
         archive = tarfile.open(af)
         archive.extractall(games_dir)
         sgf_files = glob.glob(games_dir+'*/*/*/*.sgf')
+         
         for f in sgf_files:
-            move_gen = sgf_game_reader(f)
-            for mov in move_gen:
-                print mov
+
+            expert = specmine.rl.ExpertGoPolicy(f,1)
+            opponent = specmine.rl.ExpertGoPolicy(f,-1)
+            go_domain = specmine.rl.GoDomain(opponent=opponent)
+            s,r = specmine.rl.generate_episode(go_domain,expert)
+            print s,r
 
         if clean_up:
             cleanup_files = glob.glob(games_dir+'*[!.tar.bz2]')
