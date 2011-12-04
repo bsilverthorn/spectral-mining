@@ -1,0 +1,11 @@
+To get the GnuGo wrapper to (sort of) run:
+
+1) install gnugo from their website into specmine/go/ (or something fancy)
+    - be sure to use -fPIC
+2) run install.sh in specmine/go/
+3) try:
+
+import gnugo_engine as gge
+gge.gg_init()
+gge.gg_play_move((1,1),1)
+gge.gg_showboard()
