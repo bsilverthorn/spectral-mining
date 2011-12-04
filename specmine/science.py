@@ -44,7 +44,7 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
     state_values = numpy.array([values[s] for s in states])
 
     # run the experiment
-    ridge = sklearn.linear_model.Ridge(alpha = alpha)
+    ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
     k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
     scores = \
         sklearn.cross_validation.cross_val_score(
@@ -60,7 +60,6 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
 def score_features_regress_act(
     feature_map,
     values,
-    opponent_policy,
     folds = 10,
     alpha = 1.0,
     games_for_testing = 1000,
@@ -68,6 +67,8 @@ def score_features_regress_act(
     """Score a feature map on policy performance using least-squares weights."""
 
     # construct domain
+    opponent_domain = specmine.rl.TicTacToeDomain(player = -1)
+    opponent_policy = specmine.rl.RandomPolicy(opponent_domain)
     domain = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
 
     # prepare features and targets

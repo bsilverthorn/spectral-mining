@@ -29,7 +29,8 @@ def main(out_path, opponent_path = None):
     domain = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
 
     # compute the value function
-    values = specmine.rl.compute_state_values_table(domain)
+    #values = specmine.rl.compute_state_values_table(domain)
+    values = specmine.rl.compute_state_values_table_nondet(domain)
 
     # and store it
     with specmine.openz(out_path, "wb") as out_file:

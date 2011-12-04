@@ -70,6 +70,29 @@ class TicTacToeDomain(object):
 
             return (board.make_move(-1 * self._player, opponent_i, opponent_j), self._player)
 
+    def outcomes_of(self, state, (i, j)):
+        (board, player) = state
+
+        if player == self._player:
+            yield ((board.make_move(self._player, i, j), -1 * self._player), 1.0)
+        else:
+            assert i is None and j is None
+            assert isinstance(self._opponent, specmine.rl.RandomPolicy)
+
+            moves = []
+
+            for oi in xrange(3):
+                for oj in xrange(3):
+                    if board._grid[oi, oj] == 0:
+                        moves.append((oi, oj))
+
+            p = 1.0 / len(moves)
+
+            for (oi, oj) in moves:
+                next_state = (board.make_move(-1 * self._player, oi, oj), self._player)
+
+                yield (next_state, p)
+
     def check_end(self, (board, player)):
         # XXX alternatively, terminal states are simply states with no actions
 
