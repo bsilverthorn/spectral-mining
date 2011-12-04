@@ -1,10 +1,10 @@
 import tarfile
 import re
 import glob
-import shutil
+import fnmatch
 import numpy
 import specmine
-import gnugo_engine as gge
+#import gnugo_engine as gge
 
 
 class BoardState(object):
@@ -34,7 +34,7 @@ class BoardState(object):
         assert gge.gg_is_legal((i,j),player)
         
         gge.gg_play_move((i,j),player)
-        self._grid = cannonical_board(gge.gg_get_board())
+        self._grid = self.canonical_board(gge.gg_get_board())
         self._string = str(self._grid)
         
         return self
@@ -67,7 +67,7 @@ class BoardState(object):
     def grid(self):
         return self._grid
 
-    def cannonical_board(grid):
+    def canonical_board(grid):
 
         grids = [].append(grid)
         for i in xrange(1,4):
@@ -147,29 +147,28 @@ def sgf_game_reader(path, min_moves=10, rating_thresh=1800):
             move = (move_dict[m[3]],move_dict[m[2]])
         yield (player,move)
 
-def main(clean_up = True):
+def main():
     games_dir = specmine.util.static_path('go_games/')
     archive_files = glob.glob(games_dir+'*.tar.bz2')
     
     for af in archive_files:
         print 'opening archive: ', af
         archive = tarfile.open(af)
-        archive.extractall(games_dir)
-        sgf_files = glob.glob(games_dir+'*/*/*/*.sgf')
-         
-        for f in sgf_files:
-            print 'generating episode: ', f
+        names = archive.getnames()
+
+        for name in names:
+            if not fnmatch.fnmatch(name, '*/*/*/*.sgf'):
+                continue
+
+            f = archive.extractfile(name)
             expert = specmine.rl.ExpertGoPolicy(f,1)
             opponent = specmine.rl.ExpertGoPolicy(f,-1)
             go_domain = specmine.rl.GoDomain(opponent=opponent)
             s,r = specmine.rl.generate_episode(go_domain,expert)
             print s,r
 
-        if clean_up:
-            cleanup_files = glob.glob(games_dir+'*[!.tar.bz2]')
-            print 'deleting: ', cleanup_files
-            for cf in cleanup_files:
-                shutil.rmtree(cf)
+            f.close()
 
 if __name__ == "__main__":
     main()
+

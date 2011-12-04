@@ -19,11 +19,7 @@ def raw_state_features((board, player)):
 def run_features(map_name, B, all_features_NF, index, values):
     feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
     #(mean, variance) = specmine.science.score_features_predict(feature_map, values)
-
-    with specmine.openz(specmine.static_path("ttt_optimal.player2.pickle.gz")) as in_file:
-        opponent = pickle.load(in_file)
-
-    (mean, variance) = specmine.science.score_features_regress_act(feature_map, values, opponent)
+    (mean, variance) = specmine.science.score_features_regress_act(feature_map, values)
 
     logger.info("with %i %s features, mean score is %.4f", B, map_name, mean)
 
@@ -48,6 +44,7 @@ def run_random_features(B, vectors_ND, index, values):
 
 @specmine.annotations(
     out_path = ("path to write CSV",),
+    states_path = ("path to adjacency dict", "option",),
     values_path = ("path to value function",),
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
