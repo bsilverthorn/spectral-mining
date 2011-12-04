@@ -150,7 +150,7 @@ def gg_remove_stone(move):
     ''' removes stone at position pos '''
     remove_stone(xy2pos(move[0], move[1]))
 
-def gg_is_legal(int player, move):
+def gg_is_legal(move, int player):
     ''' checks if move is legal (not sure if this includes suicides) '''
     player = 1 if player == -1 else 2
     legal = is_legal(xy2pos(move[0], move[1]), player)

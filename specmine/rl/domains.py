@@ -88,7 +88,7 @@ class GoDomain(object):
 #        if GoDomain.states is None:
 #            GoDomain.states = specmine.go.load_adjacency_dict() # TODO - implement this method
 
-        self.initial_state = (specmine.go.BoardState(), 1)
+        self.initial_state = (1,specmine.go.BoardState())
 
     def actions_in(self, player):
         ''' return the available actions for player for current board config '''

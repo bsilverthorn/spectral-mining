@@ -31,7 +31,7 @@ class BoardState(object):
 
     def make_move(self, player, i, j):
     #mutable - returns this rather than making new object
-        assert gge.gg_is_legal(player,(i,j))
+        assert gge.gg_is_legal((i,j),player)
         
         gge.gg_play_move((i,j),player)
         self._grid = cannonical_board(gge.gg_get_board())
@@ -152,12 +152,13 @@ def main(clean_up = True):
     archive_files = glob.glob(games_dir+'*.tar.bz2')
     
     for af in archive_files:
+        print 'opening archive: ', af
         archive = tarfile.open(af)
         archive.extractall(games_dir)
         sgf_files = glob.glob(games_dir+'*/*/*/*.sgf')
          
         for f in sgf_files:
-
+            print 'generating episode: ', f
             expert = specmine.rl.ExpertGoPolicy(f,1)
             opponent = specmine.rl.ExpertGoPolicy(f,-1)
             go_domain = specmine.rl.GoDomain(opponent=opponent)
