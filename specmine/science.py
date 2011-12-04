@@ -5,7 +5,10 @@ import specmine
 
 logger = specmine.get_logger(__name__)
 
-def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_testing = 2000):
+def evaluate_feature_map_rl(learn_policy, feature_map, games_for_testing = 500):
+    """learns a policy using the learn_policy method and then tests against
+    a random player, returning average reward"""
+
     # construct domain
     opponent_domain = specmine.rl.TicTacToeDomain(player = -1)
     opponent_policy = specmine.rl.RandomPolicy(opponent_domain)
@@ -13,14 +16,7 @@ def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_tes
     domain = specmine.rl.TicTacToeDomain(player = 1, opponent = opponent_policy)
 
     # learn a policy
-    logger.info("learning TTT policy over %i games", games_for_learning)
-
-    policy = \
-        specmine.rl.linear_td_learn_policy(
-            domain,
-            feature_map,
-            episodes = games_for_learning,
-            )
+    policy = learn_policy(domain, feature_map)
 
     # evaluate the policy
     rewards = []
@@ -33,6 +29,29 @@ def evaluate_feature_map(feature_map, games_for_learning = 200000, games_for_tes
         rewards.append(r[-1])
 
     return (numpy.mean(rewards), numpy.var(rewards))
+
+def evaluate_feature_map_td(feature_map, games_for_learning = 5000, games_for_testing = 500, **kwargs):
+    def learn_td(domain, feature_map):
+        return \
+            specmine.rl.linear_td_learn_policy(
+                domain,
+                feature_map,
+                games_for_learning,
+                **kwargs)
+
+    return evaluate_feature_map_rl(learn_td, feature_map, games_for_testing = games_for_testing)
+
+def evaluate_feature_map_lstd(feature_map, games_per_eval = 1000, num_iters=10, games_for_testing = 500, **kwargs):
+    def learn_lstd(domain, feature_map):
+        return \
+            specmine.rl.lstd_learn_policy(
+                domain,
+                feature_map,
+                games_per_eval,
+                num_iters,
+                **kwargs)
+
+    return evaluate_feature_map_rl(learn_lstd, feature_map, games_for_testing = games_for_testing)
 
 def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
     """Score a feature map on value-function prediction."""

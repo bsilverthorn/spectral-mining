@@ -1,5 +1,6 @@
 from random import choice
 import numpy
+import specmine
 
 class QFunctionPolicy(object):
     def __init__(self, domain, q_values):
@@ -58,3 +59,20 @@ class RandomPolicy:
     def __getitem__(self,state):
         return choice(list(self.domain.actions_in(state)))
 
+class ExpertGoPolicy:
+    def __init__(self,sgf_path,player):
+        self.gen = specmine.go.sgf_game_reader(sgf_path) 
+        self.player = player
+        if self.player == -1:
+            self.gen.next()
+
+    def __getitem__(self,state):
+        move = (None,None)
+        try:
+            move = self.gen.next()
+            self.gen.next() # skip opponents move (inefficient?)
+            return move
+
+        except StopIteration:
+            return move
+        

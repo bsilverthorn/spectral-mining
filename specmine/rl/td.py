@@ -27,14 +27,12 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
         z *= gamma * lam
         z += curr_phi
 
-        beta += delta * alpha * z
-
         deltas.append(delta)
 
-        #inner = numpy.dot(z_old, curr_phi)
+        inner = numpy.dot(z, curr_phi)
 
-        #if inner > 0.0:
-            #beta += delta * alpha / inner
+        if inner > 0.0:
+            beta += delta * z * alpha / inner
 
     print ",".join(map(str, [
         alpha,
@@ -45,34 +43,70 @@ def td_episode(S, R, features, beta = None, lam = 0.9, gamma = 1.0, alpha = 1e-3
 
     return beta
 
-def lstd_episode(S, R, phi, lam=0.9, A=None, b=None):
-
-    k = phi.shape[1] # number of features
-    if A == None:
-        A = np.zeros((k,k))
+def lstd_episode(S, R, phi, lam=0.9, A=None, b=None, decay = 1):
+    
     if b == None:
-        b = np.zeros((k,1))
-    z = phi[S[0],:] # eligibility trace initialized to first state features
+        b = numpy.zeros_like(phi[S[0]])
+    if A == None:
+        A = numpy.zeros((b.shape[0],b.shape[0]))
+    
+    z = numpy.zeros(b.shape[0])
     for t in xrange(len(R)):
-        A += np.dot(z[:,None],(phi[S[t],:]-phi[S[t+1],:])[None,:])
-        b += R[t]*z[:,None]
-        z = lam*z+phi[S[t+1],:]
+        z = lam*z+phi[S[t]]
+
+        if t != (len(R)-1):
+            A = numpy.outer(z,(phi[S[t]]-phi[S[t+1]])) + decay*A
+        
+        b = R[t]*z + decay*b
 
     return A, b
 
-def lstd_solve(A,b):
-
-    beta = np.linalg.solve(A,b) # solve for feature parameters
+def lstd_solve(A,b,reg=0):
+    if reg > 0:
+        A = A+reg*numpy.eye(A.shape[0])
+    beta = numpy.linalg.solve(A,b) # solve for feature parameters
     return beta
+
+def lstd_learn_policy(domain, features, games_per_eval, num_iters, weights=None,**kwargs):
+    '''Run num_iters phases of policy evaluation/improvement and return the policy'''
+    epsilon = kwargs.get('epsilon',0.1)
+    epsilon_dec = kwargs.get('epsilon_dec',1)
+    reg = kwargs.get('reg',0.1)
+    A = kwargs.get('A',None)
+    b = kwargs.get('b',None)
+    decay = kwargs.get('decay',1) # decay of sum of samples from previous episodes
+
+    for i in xrange(num_iters):
+        value_function = specmine.rl.LinearValueFunction(features,weights)
+        lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function,epsilon = epsilon) 
+        
+
+        for j in xrange(games_per_eval):
+            s, r = specmine.rl.generate_episode(domain, lvf_policy)        
+            A, b = lstd_episode(s, r, features, lam=0.9, A=A, b=b, decay=decay)
+
+#            # singularity test
+#            u, s, v = numpy.linalg.svd(A)
+#            rank = numpy.sum(s > 1e-10)
+#            print 'size of A: ', A.shape[0]
+#            print 'rank of A: ', rank
+        weights = lstd_solve(A,b,reg=reg)
+        epsilon *= epsilon_dec        
+
+    value_function = specmine.rl.LinearValueFunction(features,weights)
+    lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function) 
+
+    return lvf_policy, A, b
 
 def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwargs):
     """Learn a linear TD policy starting with the given weights."""
 
     print "alpha,change,mean_error,reward"
-
-    #alpha = 1e-1
-    alpha = 1e-2
-    epsilon = 1.0
+    
+    alpha = kwargs.get('alpha',1e-2)
+    alpha_dec = kwargs.get('alpha_dec',1)
+    epsilon = kwargs.get('epsilon',0.1)
+    epsilon_dec = kwargs.get('epsilon_dec',1)
 
     for i in xrange(episodes):
         if i % 1000 == 0:
@@ -81,14 +115,12 @@ def linear_td_learn_policy(domain, features, episodes = 1, weights = None, **kwa
         value_function = specmine.rl.LinearValueFunction(features, weights)
         lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function, epsilon = epsilon)
         S, R = specmine.rl.generate_episode(domain, lvf_policy)
-        #weights = specmine.rl.td_episode(S, R, features, beta = weights, **kwargs)
         weights = specmine.rl.td_episode(S, R, features, beta = weights, alpha = alpha, **kwargs)
 
-        #alpha *= 1.0 - 1e-4
-        epsilon *= 1.0 - 1e-3
+        alpha *= alpha_dec
+        epsilon *= epsilon_dec
 
     value_function = specmine.rl.LinearValueFunction(features, weights)
     lvf_policy = specmine.rl.StateValueFunctionPolicy(domain, value_function)
-
+    
     return lvf_policy
-
