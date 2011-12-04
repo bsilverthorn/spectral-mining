@@ -75,3 +75,56 @@ class TicTacToeDomain(object):
 
         return board.check_end()
 
+class GoDomain(object):
+    states = None # should be an iterator through all possible states or just 
+                  # sampled ones?
+
+    def __init__(self, player = 1, opponent = None, size = 9):
+        self._player = player
+        self._opponent = opponent
+        self.size = size
+        self.board = specmine.go.BoardState()
+
+        if GoDomain.states is None:
+            GoDomain.states = specmine.go.load_adjacency_dict() # TODO - implement this method
+
+        self.initial_state = (specmine.Go.BoardState(), 1)
+
+    def actions_in(self, player):
+        ''' return the available actions for player for current board config '''
+        if self.board.get_winner() is None:
+            if player == self._player:
+                for i in xrange(self.size):
+                    for j in xrange(self.size):
+                        if gge.gg_is_legal(player, (i,j)):
+                            yield (i, j)
+
+        yield (None, None)
+
+    def reward_in(self, player):
+        winner = self.board.get_winner()
+
+        if winner != None:
+            return winner
+        else:
+            return 0
+
+    def outcome_of(self, player, i, j):
+        
+        if player == self._player:
+            self.board = self.board.make_move(player, i, j) 
+            gge.gg_undo_move(1) # kind of hackish
+
+            return (player*-1, self.board.copy())
+
+        else:
+            assert i is None and j is None
+
+            (opponent_i, opponent_j) = self._opponent[state]
+            self.board = self.board.make_move(player, opponent_i, opponent_j) 
+            gge.gg_undo_move(1)
+
+            return (self._player, self.board.copy())
+
+    def check_end(self, board):
+        return self.board.check_end()
