@@ -1,14 +1,20 @@
 import nose
 import specmine
 
+example_directed = {
+    "a": ["b", "c"],
+    "b": ["c"],
+    "c": ["a"],
+    }
+example_undirected = {
+    "a": ["b", "c"],
+    "b": ["a", "c"],
+    "c": ["a", "b"],
+    }
+
 def test_adjacency_dict_to_matrix():
     # build the matrix
-    adict = {
-        "a": ["b", "c"],
-        "b": ["c"],
-        "c": ["a"],
-        }
-    (amatrix, index) = specmine.discovery.adjacency_dict_to_matrix(adict)
+    (amatrix, index) = specmine.discovery.adjacency_dict_to_matrix(example_directed)
 
     # hand-construct the expected matrix
     alist = [[0] * 3 for _ in xrange(3)]
@@ -23,4 +29,14 @@ def test_adjacency_dict_to_matrix():
 
     # compare
     nose.tools.assert_equal(amatrix.todense().tolist(), alist)
+
+def test_adjacency_matrix_to_dict():
+    (amatrix, index) = specmine.discovery.adjacency_dict_to_matrix(example_directed)
+    rindex = dict((v, k) for (k, v) in index.iteritems())
+    adict = specmine.discovery.adjacency_matrix_to_dict(amatrix, rindex)
+
+    for key in adict:
+        adict[key] = sorted(adict[key])
+
+    nose.tools.assert_equal(adict, example_undirected)
 
