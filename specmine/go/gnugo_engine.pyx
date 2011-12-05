@@ -67,7 +67,6 @@ cdef extern from "gnugo-3.8/engine/gnugo.h":
 
 global board
 
-
 def gg_white_captured():
     return white_captured
     
@@ -158,6 +157,12 @@ def gg_is_legal(int player, move):
     player = 1 if player == -1 else 2
     legal = is_legal(xy2pos(move[0], move[1]), player)
     return legal
+
+def gg_legal_moves(player):
+    for i in xrange(9):
+        for j in xrange(9):
+            if gg_is_legal(player, (i, j)):
+                yield (i, j)
 
 def gg_estimate_score():
     ''' get gnugo's current estimate of the board score along with upper and lower bounds
