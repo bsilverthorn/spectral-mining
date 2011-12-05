@@ -6,10 +6,10 @@ import condor
 logger = specmine.get_logger(__name__)
 
 def find_values(name, game):
-    logger.info("computing values over game %s", name)
-
     (M, _) = game.moves.shape
     values = []
+
+    logger.info("evaluating all %i positions in game %s", M, name)
 
     for m in xrange(M):
         state = game.get_state(m)
@@ -42,12 +42,12 @@ def main(out_path, games_path, name = None, workers = 0):
         for name in names:
             yield (find_values, [name, games[name]])
 
-    evaluated = []
+    evaluated = {}
 
     for (job, values) in condor.do(yield_jobs(), workers = workers):
-        (game,) = job.args
+        (name, _) = job.args
 
-        evaluated.append((game, values))
+        evaluated[name] = values
 
     with specmine.util.openz(out_path, "wb") as out_file:
         pickle.dump(evaluated, out_file, protocol = -1)

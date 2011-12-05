@@ -136,24 +136,28 @@ def gg_genmove(player):
     """Return the best move according to gnugo."""
 
     player = 1 if player == -1 else 2
-    #cdef float* v = None
-    #cdef int* r = None
+
     move = genmove(player, NULL, NULL)
     #move = genmove_conservative(player, v)
 
     return pos2xy(move)
 
-def gg_play_move(player, move_x, move_y):
+def gg_play_move(int player, int move_x, int move_y):
     """Update game state to reflect specified move."""
 
-    player = 1 if player == -1 else 2
+    assert move_x >= 0
+    assert move_x <= 8
+    assert move_y >= 0
+    assert move_y <= 8
 
-    play_move(xy2pos(move_x, move_y), player)
+    player12 = 1 if player == -1 else 2
+
+    play_move(xy2pos(move_x, move_y), player12)
 
 def gg_undo_move(int num):
     ''' undo the last num moves '''
-    sucess = undo_move(num)
-    return sucess
+
+    return undo_move(num)
 
 def gg_add_stone( int player, move):
     ''' add stone at position move, different than play_move in that it just changes
@@ -211,14 +215,9 @@ def gg_get_winner():
     move2 = gg_genmove(-1)
 
     if move1 == move2 == (-1,-1):
-        (score, up, low) = gg_estimate_score()
-
-        if score > 0:
-            return 1
-        else:
-            return -1
-
-    return None
+        return gg_get_winner_assumed()
+    else:
+        return None
 
 #
 # ADDED FUNCTIONALITY
