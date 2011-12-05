@@ -1,6 +1,7 @@
 import tarfile
 import re
 import glob
+import random
 import fnmatch
 import numpy
 import specmine
@@ -26,7 +27,7 @@ class BoardState(object):
 
         #self._grid = self.canonical_board(grid)
         self.grid = grid
-        self._string = str(self._grid)
+        self._string = str(grid)
 
     def __hash__(self):
         return hash(self._string)
@@ -156,44 +157,61 @@ def read_expert_episode(sgf_file):
 
     moves, winner = out
 
+    moves_list = []
+
     if moves is not None:
-        for (player,move) in moves:
+        for (n, (player,move)) in enumerate(moves):
             assert gge.gg_is_legal(player, move)
 
             gge.gg_play_move(player, move)
 
-            S.append(GameState(list(moves), BoardState.from_gge()))
+            moves_list.append(move)
+
+            S.append(GameState(list(moves_list), BoardState.from_gge()))
             R.append(0)
 
         R[-1] = winner
 
     return S, R
 
-def estimate_value(game_state, num_rollouts):
-    
-    value = 0
+def estimate_value(game_state, num_rollouts, epsilon = 0.2):
+    value = 0.0
+    gge.gg_set_level(1)
+
     for i in xrange(num_rollouts):
-        gge.init()
+        gge.gg_clear_board(9)
+
         player = 1
+
         for (color,move) in game_state.moves:
             gge.gg_play_move(color,move)
-            player = -1*color
-        
-        done = False
-        while !done:
-            move = gge.gg_genmove(player)
-            if move == (-1,-1):
-                player = -1*player
+            player = -1 * color
+
+        while True:
+            print BoardState.from_gge().grid
+
+            if numpy.random.rand() >= epsilon:
                 move = gge.gg_genmove(player)
+            else:
+                options = list(gge.gg_legal_moves(player))
+                move = random.choice(options)
+
+            if move == (-1, -1):
+                move = gge.gg_genmove(-1 * player)
+
                 if move == (-1,-1):
-                    done = True
+                    break
+            else:
+                gge.gg_play_move(player, move)
 
-            gge.gg_play_move(move)
+            player = -1 * player
 
-        winner = gge.gg_get_winner()
-        value+= winner
-        
-    return value/float(num_rollouts)
+        winner = gge.gg_get_winner())
+        value += winner
+
+    gge.gg_set_level(10) 
+
+    return value / float(num_rollouts)
 
 def main():
     games_dir = specmine.util.static_path('go_games/')
