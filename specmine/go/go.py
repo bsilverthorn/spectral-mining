@@ -194,9 +194,6 @@ def estimate_value(game_state, num_rollouts):
         value+= winner
         
     return value/float(num_rollouts)
-        
-
-
 
 def main():
     games_dir = specmine.util.static_path('go_games/')
