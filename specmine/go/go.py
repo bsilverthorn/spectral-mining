@@ -59,10 +59,10 @@ class BoardState(object):
         self.key = key
 
     def __hash__(self):
-        return hash(self._key)
+        return hash(self.key)
 
     def __eq__(self, other):
-        return self._key == other._key
+        return self.key == other.key
 
     def __str__(self):
         return str(self.grid)
