@@ -107,14 +107,17 @@ def gg_get_board():
     b = np.array(b, int)
     b = b.reshape(9,9+1)
     b = b[:,:-1]
-    return b
+    c = cp.deepcopy(b)
+    c[(b==2).nonzero()] = 1
+    c[(b==1).nonzero()] = -1
+    return c
 
 def gg_get_inverse_board():
     ''' get the current board with all black stone white and white stones black '''
     b = gg_get_board()
     c = cp.deepcopy(b)
-    c[(b==3).nonzero()] = 2
-    c[(b==2).nonzero()] = 3
+    c[(b==-1).nonzero()] = 1
+    c[(b==1).nonzero()] = -1
     return c
 
 def gg_genmove(player):
@@ -150,7 +153,7 @@ def gg_remove_stone(move):
     ''' removes stone at position pos '''
     remove_stone(xy2pos(move[0], move[1]))
 
-def gg_is_legal(move, int player):
+def gg_is_legal(int player, move):
     ''' checks if move is legal (not sure if this includes suicides) '''
     player = 1 if player == -1 else 2
     legal = is_legal(xy2pos(move[0], move[1]), player)

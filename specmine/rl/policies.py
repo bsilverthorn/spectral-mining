@@ -60,8 +60,8 @@ class RandomPolicy:
         return choice(list(self.domain.actions_in(state)))
 
 class ExpertGoPolicy:
-    def __init__(self,sgf_path,player):
-        self.gen = specmine.go.sgf_game_reader(sgf_path) 
+    def __init__(self,sgf_file,player):
+        self.gen = specmine.go.sgf_game_reader(sgf_file) 
         self.player = player
         if self.player == -1:
             self.gen.next()
