@@ -2,6 +2,7 @@ import numpy
 import scipy.sparse
 import sklearn.neighbors
 import specmine
+import sklearn.neighbors
 
 logger = specmine.get_logger(__name__)
 
@@ -28,6 +29,24 @@ class RandomFeatureMap(TabularFeatureMap):
             numpy.random.random((len(index), count)),
             index,
             )
+
+class InterpolationMap(object):
+    def __init__(self, basis_matrix, affinity_vectors, index, affinity_func,k=5):
+        self.basis = basis_matrix
+        self.index = index
+        self.affinity_vectors = affinity_vectors
+        self.ball_tree = sklearn.neighbors.neighbors.BallTree(affinity_vectors)
+        self.affinity_func = affinity_func
+        self.k = k
+
+    def __getitem__(self,state):
+        ind = self.index.get(state)
+        if not ind == None:
+            return self.basis[ind,:]
+        else:
+            (d,i) = self.ball_tree.query(self.affinity_func(state), k=self.k, return_distance=True)
+            return numpy.dot(d/sum(d),self.basis[i,:]) # simple nearest neighbor averaging
+
 
 def adjacency_dict_to_matrix(adict):
     """

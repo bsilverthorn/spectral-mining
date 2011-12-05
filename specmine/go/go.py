@@ -206,7 +206,7 @@ def estimate_value(game_state, num_rollouts, epsilon = 0.2):
 
             player = -1 * player
 
-        winner = gge.gg_get_winner()
+        winner = gge.gg_get_winner())
         value += winner
 
     gge.gg_set_level(10) 
