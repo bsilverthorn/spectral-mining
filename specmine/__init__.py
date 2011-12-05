@@ -13,6 +13,7 @@ from . import tictac
 from . import spectral
 from . import discovery
 from . import rl
+from . import go
 from . import science
 from . import tools
 from . import experiments
