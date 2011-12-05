@@ -34,8 +34,6 @@ class BoardState(object):
         assert gge.gg_is_legal(player,(i,j))
         
         gge.gg_play_move(player,(i,j))
-        print 'get board: ', gge.gg_get_board()
-        print type(gge.gg_get_board())
         self._grid = self.canonical_board(gge.gg_get_board())
         self._string = str(self._grid)
         
@@ -57,7 +55,7 @@ class BoardState(object):
     def check_end(self):
         """Is this board state an end state? ask Gnugo if it would pass on
         both turns."""
-        move = gge.gg_genmove(1)
+        move = gge.gg_genmove(1) 
         if move == (-1,-1): # if gnugo thinks we should pass
             move = gge.gg_genmove(-1)
             if move == (-1,-1):
@@ -71,7 +69,8 @@ class BoardState(object):
 
     def canonical_board(self,grid):
 
-        grids = [].append(grid)
+        grids = []
+        grids.append(grid)
         for i in xrange(1,4):
             grids.append(numpy.rot90(grid,i))
         grids.append(numpy.fliplr(grid))
@@ -165,16 +164,12 @@ def generate_expert_episode(sgf_file):
         return S,R
     moves,winner = out
     moves = list(moves)
-    print 'moves: ', moves
-    print 'winner: ',winner
     if moves != None:
         for (player,move) in moves:
             board = board.make_move(player,move[0],move[1])
             S.append(board)
             R.append(0)
         
-        print len(R)
-        print R
         R[-1] = winner
 
     return S,R
@@ -191,7 +186,7 @@ def main():
         for name in names:
             if not fnmatch.fnmatch(name, '*/*/*/*.sgf'):
                 continue
-
+            print 'playing game: ', name
             f = archive.extractfile(name)
             s,r = generate_expert_episode(f)
             print s,r
