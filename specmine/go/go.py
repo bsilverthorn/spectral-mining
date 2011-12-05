@@ -36,6 +36,13 @@ class GameState(object):
         self.moves = numpy.asarray(moves, numpy.int8)
         self.board = board
 
+    # hash and equality only rely on the board state, not the list of moves (?)
+    def __hash__(self):
+        return hash(self.board._string)
+
+    def __eq__(self,other):
+        return self.board._string == other.board._string
+
 class BoardState(object):
     """Go board."""
 
@@ -72,6 +79,8 @@ class BoardState(object):
 
         #grids.append(numpy.fliplr(grid))
         #grids.append(numpy.flipud(grid))
+        #grids.append(numpy.fliplr(numpy.rot90(grid,1)))
+        #grids.append(numpy.flipud(numpy.rot90(grid,1)))
 
         #return BoardState(max(grids, key = lambda x: hash(str(x))))
 
@@ -230,7 +239,16 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
         winner = gge.gg_get_winner_assumed()
         value += winner
 
+<<<<<<< HEAD
         logger.info("player %i won rollout %i of %i", winner, i + 1, rollouts)
+=======
+        for name in names:
+            if not fnmatch.fnmatch(name, '*/*/*/*.sgf'):
+                continue
+            print 'playing game: ', name
+            f = archive.extractfile(name)
+            s,r = read_expert_episode(f)
+>>>>>>> f24488198470ecb7e8d831aea938228f08bee621
 
     gge.gg_set_level(10) 
 
