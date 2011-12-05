@@ -47,7 +47,6 @@ class InterpolationMap(object):
             (d,i) = self.ball_tree.query(self.affinity_func(state), k=self.k, return_distance=True)
             return numpy.dot(d/sum(d),self.basis[i,:]) # simple nearest neighbor averaging
 
-
 def adjacency_dict_to_matrix(adict):
     """
     Create a symmetric adjacency matrix from a {state: [state]} dict.
@@ -77,6 +76,19 @@ def adjacency_dict_to_matrix(adict):
         scipy.sparse.coo_matrix((coo_values, (coo_is + coo_js, coo_js + coo_is))),
         index,
         )
+
+def adjacency_matrix_to_dict(amatrix, rindex):
+    """Create an affinity dict from a sparse adjacency matrix."""
+
+    (N, _) = amatrix.shape
+    adict = {}
+
+    for n in xrange(N):
+        (_, nonzero) = amatrix.getrow(n).nonzero()
+
+        adict[rindex[n]] = [rindex[m] for m in nonzero if m != n]
+
+    return adict
 
 def affinity_graph(vectors_ND, neighbors):
     """Build the k-NN affinity graph from state feature vectors."""
