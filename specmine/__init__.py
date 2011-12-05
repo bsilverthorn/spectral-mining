@@ -12,6 +12,7 @@ from . import graclus
 from . import tictac
 from . import spectral
 from . import discovery
+from . import graphviz
 from . import rl
 from . import go
 from . import science

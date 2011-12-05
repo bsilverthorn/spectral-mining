@@ -77,11 +77,14 @@ def adjacency_dict_to_matrix(adict):
         index,
         )
 
-def adjacency_matrix_to_dict(amatrix, rindex):
+def adjacency_matrix_to_dict(amatrix, rindex = None):
     """Create an affinity dict from a sparse adjacency matrix."""
 
     (N, _) = amatrix.shape
     adict = {}
+
+    if rindex is None:
+        rindex = numpy.arange(N)
 
     for n in xrange(N):
         (_, nonzero) = amatrix.getrow(n).nonzero()

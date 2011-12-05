@@ -23,17 +23,17 @@ def main(num_games=10, num_samples=1e4):
     print 'subsampling states'
     affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:,:]
     affinity_vectors = affinity_vectors[:num_samples,:,:]
-    boards = affinity_vectors.copy()
     affinity_vectors = numpy.reshape(affinity_vectors,(num_samples,81))
 
     print 'building affinity graph'
     graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=5)
-    # save this graph if it gets big?
-    rindex = dict(zip(xrange(boards.shape[0]),
-                      zip(numpy.ones(boards.shape[0]),boards)))
 
-    graph_dict = specmine.discovery.adjacency_matrix_to_dict(graph_mat,rindex)
-    specmine.graphviz.write_dot_file('go_graph_test',graph_dict) 
+    # save this graph if it gets big?
+    print "..."
+    graph_dict = specmine.discovery.adjacency_matrix_to_dict(graph_mat)
+
+    #specmine.graphviz.visualize_graph("go_graph_test.pdf", graph_dict, "twopi")
+    specmine.graphviz.visualize_graph("go_graph_test.neato.pdf", graph_dict, "neato")
 
     # what to do with this graph?
 
