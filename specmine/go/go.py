@@ -157,12 +157,12 @@ def read_expert_episode(sgf_file):
     moves, winner = out
 
     if moves is not None:
-        for (player,move) in moves:
+        for (n, (player,move)) in enumerate(moves):
             assert gge.gg_is_legal(player, move)
 
             gge.gg_play_move(player, move)
 
-            S.append(GameState(list(moves), BoardState.from_gge()))
+            S.append(GameState(moves[:n], BoardState.from_gge()))
             R.append(0)
 
         R[-1] = winner
