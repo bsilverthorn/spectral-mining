@@ -24,6 +24,8 @@ cdef extern from "gnugo-3.8/engine/board.h":
     void play_move(int pos, int color)
     int undo_move(int n)
     int is_legal(int pos, int color)
+    int trymove(int pos, int color, char *message, int str)
+    void popgo()
 
 cdef extern from "gnugo-3.8/sgf/sgftree.h":
 
@@ -142,14 +144,22 @@ def gg_genmove(player):
 
     return pos2xy(move)
 
+def gg_try_move(int player, int move_x, int move_y):
+    """play a temporary move"""
+
+    assert gg_is_legal(player, move_x, move_y)
+    player12 = 1 if player == -1 else 2
+    # not sure what to put for the last two values here
+    trymove(xy2pos(move_x, move_y), player12, 'None', 1)
+
+def gg_popgo():
+    "pop temporary moves off the game stack"
+    popgo()
+
 def gg_play_move(int player, int move_x, int move_y):
     """Update game state to reflect specified move."""
 
-    assert move_x >= 0
-    assert move_x <= 8
-    assert move_y >= 0
-    assert move_y <= 8
-
+    assert gg_is_legal(player, move_x, move_y)
     player12 = 1 if player == -1 else 2
 
     play_move(xy2pos(move_x, move_y), player12)

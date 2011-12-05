@@ -1,25 +1,42 @@
+import cPickle as pickle
 import numpy
-import sklearn.neighbors
 import specmine
-import go
+import specmine.go
 
-def main(num_games=10, num_samples=1e5):
+def main(num_games=10, num_samples=1e4):
     
-    game_dict = specmine.util.openz(specmine.util.satic_path('go_games/2010-01.pickle.gz'))
-    
+    with specmine.util.openz(specmine.util.static_path\
+      ('go_games/2010-01.pickle.gz')) as games_file:
+
+        game_dict = pickle.load(games_file)
+        print 'num_games: ', len(game_dict.values())
     # build the affinity representation
 
-    affinity_vectors = numpy.zeros((0,9,9))
-    for game in game_dict.values():
-        numpy.vstack(affinity_vectors,game.grids)
+    all_grids = [game.grids for game in game_dict.itervalues()]
+    affinity_vectors = numpy.vstack(all_grids)
 
     num_boards = affinity_vectors.shape[0]
     print 'number of boards: ', num_boards
 
-    affinity_vectors = numpy.reshape(affinity_vectors,(num_boards,81))
-    affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:]
-    affinity_vectors = affinity_vectors[:num_samples]
+    print 'affinity vector shape: ', affinity_vectors.shape
+    print 'total num boards: ', num_boards
+    print 'subsampling states'
+    affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:,:]
+    affinity_vectors = affinity_vectors[:num_samples,:,:]
+    boards = affinity_vectors.copy()
+    affinity_vectors = numpy.reshape(affinity_vectors,(num_samples,81))
 
-    graph = specmine.discovery.affinity_graph(affinity_vectors)
+    print 'building affinity graph'
+    graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=5)
+    # save this graph if it gets big?
+    rindex = dict(zip(xrange(boards.shape[0]),
+                      zip(numpy.ones(boards.shape[0]),boards)))
+
+    graph_dict = specmine.discovery.adjacency_matrix_to_dict(graph_mat,rindex)
+    specmine.graphviz.write_dot_file('go_graph_test',graph_dict) 
+
     # what to do with this graph?
+
+if __name__ == "__main__":
+    specmine.script(main)
 

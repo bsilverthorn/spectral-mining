@@ -99,7 +99,9 @@ def affinity_graph(vectors_ND, neighbors):
     # find nearest neighbors
     logger.info("finding nearest neighbors in affinity space")
 
+    print 'constructing the ball tree'
     tree = sklearn.neighbors.BallTree(vectors_ND)
+    print 'querying nearest neighbors'
     (neighbor_distances_NG, neighbor_indices_NG) = tree.query(vectors_ND, k = G)
 
     # construct the affinity graph

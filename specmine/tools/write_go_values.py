@@ -14,7 +14,7 @@ def find_values(name, game):
 
     for m in xrange(M):
         state = game.get_state(m)
-        value = specmine.go.estimate_value(state, 32)
+        value = specmine.go.estimate_value(state, 1)
 
         values.append(value)
 
@@ -40,7 +40,7 @@ def main(out_path, games_path, name = None, sample = None, workers = 0):
             names = sorted(games, key = lambda _: random.random())[:sample]
     else:
         names = [name]
-
+    
     def yield_jobs():
         logger.info("distributing jobs for %i games", len(names))
 
