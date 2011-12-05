@@ -169,6 +169,35 @@ def read_expert_episode(sgf_file):
 
     return S, R
 
+def estimate_value(game_state, num_rollouts):
+    
+    value = 0
+    for i in xrange(num_rollouts):
+        gge.init()
+        player = 1
+        for (color,move) in game_state.moves:
+            gge.gg_play_move(color,move)
+            player = -1*color
+        
+        done = False
+        while !done:
+            move = gge.gg_genmove(player)
+            if move == (-1,-1):
+                player = -1*player
+                move = gge.gg_genmove(player)
+                if move == (-1,-1):
+                    done = True
+
+            gge.gg_play_move(move)
+
+        winner = gge.gg_get_winner()
+        value+= winner
+        
+    return value/float(num_rollouts)
+        
+
+
+
 def main():
     games_dir = specmine.util.static_path('go_games/')
     archive_files = glob.glob(games_dir+'*.tar.bz2')
