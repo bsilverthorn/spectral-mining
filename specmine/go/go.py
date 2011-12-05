@@ -206,7 +206,8 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
         player = -1
 
         for (player, move_x, move_y) in game_state.moves:
-            gge.gg_play_move(player, move_x, move_y)
+            if move_x != -1:
+                gge.gg_play_move(player, move_x, move_y)
 
         passed = 0
 
@@ -239,7 +240,7 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
         winner = gge.gg_get_winner_assumed()
         value += winner
 
-        logger.info("player %i won rollout %i of %i", winner, i + 1, rollouts)
+        logger.debug("player %i won rollout %i of %i", winner, i + 1, rollouts)
 
     gge.gg_set_level(10) 
 
