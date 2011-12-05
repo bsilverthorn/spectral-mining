@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 rm gnugo_engine.c
 rm gnugo_engine.so
 rm go_loops.c

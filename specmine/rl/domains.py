@@ -112,7 +112,7 @@ class GoDomain(object):
             if player == self._player:
                 for i in xrange(self.size):
                     for j in xrange(self.size):
-                        if gge.gg_is_legal(player, (i,j)):
+                        if gge.gg_is_legal(player, i, j):
                             yield (i, j)
 
         yield (None, None)

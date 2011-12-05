@@ -1,83 +1,103 @@
-import tarfile
 import re
-import glob
 import random
-import fnmatch
+import hashlib
 import numpy
 import specmine
 import gnugo_engine as gge
 
 logger = specmine.get_logger(__name__)
 
+class Game(object):
+    """A single Go game in its entirety."""
+
+    def __init__(self, moves, grids, winner):
+        """
+        Initialize.
+
+        moves: Mx3 array of (player, i, j) rows;
+        grids: Mx9x9 array of stone grids
+        """
+
+        self.moves = moves
+        self.grids = grids
+        self.winner = winner
+
+    def get_state(self, m):
+        """Get the game state after a particular move."""
+
+        board = BoardState(self.grids[m])
+
+        return GameState(self.moves[:m + 1], board)
+
 class GameState(object):
-    """Full go game history."""
+    """Instantaneous state of a Go game."""
 
     def __init__(self, moves, board):
-        self.moves = moves
+        self.moves = numpy.asarray(moves, numpy.int8)
         self.board = board
 
 class BoardState(object):
     """Go board."""
 
-    def __init__(self, grid = None, size = 9):
-        ''' currently no way to start with nonzero grid'''
-
+    def __init__(self, grid = None, key = None):
         if grid is None:
-            grid = numpy.zeros((size, size))
+            grid = numpy.zeros((9, 9), numpy.int8)
+        else:
+            grid = numpy.asarray(grid, numpy.int8)
 
-        #self._grid = self.canonical_board(grid)
+        if key is None:
+            key = hashlib.md5(grid).digest()
+
         self.grid = grid
-        self._string = str(grid)
+        self.key = key
 
     def __hash__(self):
-        return hash(self._string)
+        return hash(self._key)
 
     def __eq__(self, other):
-        return self._string == other._string
+        return self._key == other._key
 
     def __str__(self):
-        return self._string
+        return str(self.grid)
 
     def __repr__(self):
         return repr(self.grid)
 
-    def canonical_board(self,grid):
-        grids = []
-        grids.append(grid)
+    #def canonical(self):
+        #grids = []
+        #grids.append(grid)
 
-        for i in xrange(1,4):
-            grids.append(numpy.rot90(grid,i))
+        #for i in xrange(1,4):
+            #grids.append(numpy.rot90(grid,i))
 
-        grids.append(numpy.fliplr(grid))
-        grids.append(numpy.flipud(grid))
+        #grids.append(numpy.fliplr(grid))
+        #grids.append(numpy.flipud(grid))
 
-        return max(grids,key = lambda x: hash(str(x)))
+        #return BoardState(max(grids, key = lambda x: hash(str(x))))
 
     @staticmethod
     def from_gge():
         return BoardState(gge.gg_get_board())
 
 def convert_sgf_moves(moves): 
-    ''' ex: game_gen = sgf_game_reader(static_path)
-            player, move = game_gen.next()'''
+    ord_a = ord("a")
 
-    move_dict = {'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,'i':8}
     for m in moves:
         if m[0] == 'B':
             player = 1
         elif m[0] == 'W':
             player = -1
         else:
-            raise RuntimeError("color error")
-    
-        if m[1:] == '[]': # represents a pass
-            move = (-1,-1)
-        else:
-            move = (move_dict[m[3]],move_dict[m[2]])
-        
-        yield (player,move)
+            raise RuntimeError("unrecognized player color")
 
-def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
+        if m[1:] == '[]':
+            # player passed
+            yield (player, -1, -1)
+        else:
+            # player moved
+            yield (player, ord(m[3]) - ord_a, ord(m[2]) - ord_a)
+
+def read_sgf_game_moves(sgf_file, min_moves=10, rating_thresh=1800):
     ''' check if sgf has enough moves and minimum rating, etc 
     return move generator if so'''
 
@@ -87,151 +107,132 @@ def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
     brating = re.compile("BR\[([0-9]+)\]")
     result = re.compile("RE\[([W|B]).*\]")
     move = re.compile("[BW]\[[a-z]{0,2}\]") 
+
     sgf_string = sgf_file.read() 
 
     # parse all moves
     moves = move.findall(sgf_string)
+
     if len(moves) < min_moves:
         return None
  
     # check board is the right size
     match = size.findall(sgf_string)
+
     if len(match) > 0:
         board_size = match[0]
+
         if board_size != '9':
-            logger.warning('SGF file is not a 9x9 game')
+            logger.debug('SGF file is not a 9x9 game')
+
             return None
     else: 
-        logger.warning('no size given')
+        logger.debug('SGF file does not specify size')
+
         return None
 
-    # check that the handicap is zero
-    # assumed zero if none given
+    # check that the handicap is zero (assumed zero if none given)
     match = hand.findall(sgf_string)
+
     if len(match) > 0:
         handicap = match[0]
+
         if handicap != '0':
-            logger.warning('SGF file has nonzero handicap')
+            logger.debug('SGF file has nonzero handicap')
+
             return None
 
     # check that both players have rating above the threshold 
     match1 = wrating.findall(sgf_string)
     match2 = brating.findall(sgf_string)
+
     if (len(match1) > 0) & (len(match2) > 0):
         white_rating = int(match1[0])
         black_rating = int(match2[0])
+
         if not ((white_rating>rating_thresh)&(black_rating>rating_thresh)):
-            logger.warning('one of the players is below threshold skill')
+            logger.debug('one of the players is below threshold skill')
+
             return None
     else: 
-        logger.warning('one player ratings were not given')
+        logger.debug('one player ratings were not given')
+
         return None
     
     winner = result.findall(sgf_string)
+
     if len(winner)>0:
         winner = winner[0]
         winner = 1 if winner == 'B' else -1
 
-    return convert_sgf_moves(moves), winner
+    return (list(convert_sgf_moves(moves)), winner)
 
-#def check_end(self):
-    #"""Is this board state an end state? ask Gnugo if it would pass on
-    #both turns."""
-    #move = gge.gg_genmove(1) 
-    #if move == (-1,-1): # if gnugo thinks we should pass
-        #move = gge.gg_genmove(-1)
-        #if move == (-1,-1):
-            #return True
+def read_sgf_game(sgf_file):
+    """
+    Read a Go game from an SGF file.
 
-    #return False
+    Returns an instance of specmine.go.Game.
+    """
 
-def read_expert_episode(sgf_file):
-    gge.gg_clear_board(9)
+    game_raw = read_sgf_game_moves(sgf_file)
 
-    S = []; R = []
+    if game_raw is None:
+        return None
 
-    out = sgf_game(sgf_file)
+    (raw_moves, winner) = game_raw
 
-    if out is None:
-        return S,R
+    moves = numpy.array(raw_moves, dtype = numpy.int8)
+    grids = gge.replay_game(moves)
 
-    moves, winner = out
+    return Game(moves, grids, winner)
 
-    moves_list = []
-
-    if moves is not None:
-        for (n, (player,move)) in enumerate(moves):
-            assert gge.gg_is_legal(player, move)
-
-            gge.gg_play_move(player, move)
-
-            moves_list.append(move)
-
-            S.append(GameState(list(moves_list), BoardState.from_gge()))
-            R.append(0)
-
-        R[-1] = winner
-
-    return S, R
-
-def estimate_value(game_state, num_rollouts, epsilon = 0.2):
+def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
     value = 0.0
+
     gge.gg_set_level(1)
 
-    for i in xrange(num_rollouts):
+    for i in xrange(rollouts):
         gge.gg_clear_board(9)
 
-        player = 1
+        player = -1
 
-        for (color,move) in game_state.moves:
-            gge.gg_play_move(color,move)
-            player = -1 * color
+        for (player, move_x, move_y) in game_state.moves:
+            gge.gg_play_move(player, move_x, move_y)
 
-        while True:
-            print BoardState.from_gge().grid
+        passed = 0
+
+        while passed < 2:
+            player *= -1
+
+            #print BoardState.from_gge().grid
 
             if numpy.random.rand() >= epsilon:
-                move = gge.gg_genmove(player)
+                (move_x, move_y) = gge.gg_genmove(player)
             else:
-                options = list(gge.gg_legal_moves(player))
-                move = random.choice(options)
+                options = list(gge.legal_moves(player))
 
-            if move == (-1, -1):
-                move = gge.gg_genmove(-1 * player)
+                if len(options) > 0:
+                    (move_x, move_y) = random.choice(options)
+                else:
+                    move_x = -1
 
-                if move == (-1,-1):
-                    break
+            #print move_x, move_y
+
+            if move_x == -1:
+                passed += 1
+
+                continue
             else:
-                gge.gg_play_move(player, move)
+                passed = 0
 
-            player = -1 * player
+                gge.gg_play_move(player, move_x, move_y)
 
-        winner = gge.gg_get_winner())
+        winner = gge.gg_get_winner_assumed()
         value += winner
+
+        logger.info("player %i won rollout %i of %i", winner, i + 1, rollouts)
 
     gge.gg_set_level(10) 
 
-    return value / float(num_rollouts)
-
-def main():
-    games_dir = specmine.util.static_path('go_games/')
-    archive_files = glob.glob(games_dir+'*.tar.bz2')
-    
-    for af in archive_files:
-        print 'opening archive: ', af
-        archive = tarfile.open(af)
-        names = archive.getnames()
-
-        for name in names:
-            if not fnmatch.fnmatch(name, '*/*/*/*.sgf'):
-                continue
-            print 'playing game: ', name
-            f = archive.extractfile(name)
-            s,r = read_expert_episode(f)
-            print s,r
-
-            f.close()
-
-if __name__ == "__main__":
-    main()
+    return value / float(rollouts)
 

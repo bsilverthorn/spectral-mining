@@ -1,49 +1,43 @@
 import cPickle as pickle
 import tarfile
+import contextlib
 import specmine
 
 logger = specmine.get_logger(__name__)
+
+def read_sgf_archive(archive_path):
+    logger.info("opening archive %s", archive_path)
+
+    games = {}
+
+    with contextlib.closing(tarfile.open(archive_path)) as archive:
+        names = [s for s in archive.getnames() if s.endswith(".sgf")]
+
+        for (n, name) in enumerate(names):
+            logger.info("extracting game %s (%i of %i); %i retained", name, n + 1, len(names), len(games))
+
+            with contextlib.closing(archive.extractfile(name)) as game_file:
+                game = specmine.go.read_sgf_game(game_file)
+
+                if game is not None:
+                    games[name] = game
+
+    logger.info("finished extracting games from %s", archive_path)
+
+    return games
 
 @specmine.annotations(
     track_boards = ("track unique board count?", "flag"),
     )
 def main(out_path, track_boards = False, *archive_paths):
-    games = []
-    boards = set()
-    boards_seen = 0
+    """Extract games from SGF archives."""
+
+    games = {}
 
     for archive_path in archive_paths:
-        logger.info('opening archive: %s', archive_path)
+        these = read_sgf_archive(archive_path)
 
-        archive = tarfile.open(archive_path)
-        names = [s for s in archive.getnames() if s.endswith(".sgf")]
-
-        for (n, name) in enumerate(names):
-            logger.info('playing game %s (%i of %i)', name, n + 1, len(names))
-
-            f = archive.extractfile(name)
-            s,r = specmine.go.read_expert_episode(f)
-
-            if len(s) > 0:
-                boards_seen += len(s)
-
-                games.append((s, r))
-
-            logger.info("stored %i games and %i boards", len(games), boards_seen)
-
-            if track_boards:
-                boards.update(s)
-
-                logger.info(
-                    "of %i boards seen, %i are unique (%.2f%%)",
-                    boards_seen,
-                    len(boards),
-                    100.0 * len(boards) / (float(boards_seen) + 1e-16),
-                    )
-
-            f.close()
-
-        archive.close()
+        games.update(these)
 
     logger.info("pickling %i games to %s", len(games), out_path)
 
