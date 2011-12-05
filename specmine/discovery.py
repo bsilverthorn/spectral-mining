@@ -35,7 +35,7 @@ class InterpolationMap(object):
         self.basis = basis_matrix
         self.index = index
         self.affinity_vectors = affinity_vectors
-        self.ball_tree = sklearn.neighbors.neighbors.BallTree(affinity_vectors)
+        self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)
         self.affinity_func = affinity_func
         self.k = k
 

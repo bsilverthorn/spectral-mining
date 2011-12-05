@@ -204,7 +204,8 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
         gge.gg_clear_board(9)
 
         player = -1
-
+        
+        # get to current board state
         for (player, move_x, move_y) in game_state.moves:
             gge.gg_play_move(player, move_x, move_y)
 
@@ -239,16 +240,7 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
         winner = gge.gg_get_winner_assumed()
         value += winner
 
-<<<<<<< HEAD
         logger.info("player %i won rollout %i of %i", winner, i + 1, rollouts)
-=======
-        for name in names:
-            if not fnmatch.fnmatch(name, '*/*/*/*.sgf'):
-                continue
-            print 'playing game: ', name
-            f = archive.extractfile(name)
-            s,r = read_expert_episode(f)
->>>>>>> f24488198470ecb7e8d831aea938228f08bee621
 
     gge.gg_set_level(10) 
 
