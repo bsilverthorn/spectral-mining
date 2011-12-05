@@ -3,7 +3,7 @@ import numpy
 import specmine
 import specmine.go
 
-def main(num_games=10, num_samples=1e5):
+def main(num_games=10, num_samples=1e4):
     
     with specmine.util.openz(specmine.util.static_path\
       ('go_games/2010-01.pickle.gz')) as games_file:
@@ -18,18 +18,25 @@ def main(num_games=10, num_samples=1e5):
     num_boards = affinity_vectors.shape[0]
     print 'number of boards: ', num_boards
 
-    affinity_vectors = numpy.reshape(affinity_vectors,(num_boards,81))
     print 'affinity vector shape: ', affinity_vectors.shape
     print 'total num boards: ', num_boards
     print 'subsampling states'
-    affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:]
-    affinity_vectors = affinity_vectors[:num_samples]
+    affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:,:]
+    affinity_vectors = affinity_vectors[:num_samples,:,:]
+    boards = affinity_vectors.copy()
+    affinity_vectors = numpy.reshape(affinity_vectors,(num_samples,81))
 
     print 'building affinity graph'
-    graph = specmine.discovery.affinity_graph(affinity_vectors,neighbors=5)
-    print graph[0]
-    print graph.shape
+    graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=5)
+    # save this graph if it gets big?
+    rindex = dict(zip(xrange(boards.shape[0]),
+                      zip(numpy.ones(boards.shape[0]),boards)))
+
+    graph_dict = specmine.discovery.adjacency_matrix_to_dict(graph_mat,rindex)
+    specmine.graphviz.write_dot_file('go_graph_test',graph_dict) 
+
     # what to do with this graph?
 
 if __name__ == "__main__":
-    main()
+    specmine.script(main)
+
