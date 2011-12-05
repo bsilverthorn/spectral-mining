@@ -1,4 +1,5 @@
 import cPickle as pickle
+import random
 import numpy
 import specmine
 import condor
@@ -24,15 +25,19 @@ def find_values(name, game):
 @specmine.annotations(
     workers = ("number of Condor workers", "option", "w", int),
     name = ("only analyze one game", "option"),
+    sample = ("number of games to sample", "option", None, int),
     )
-def main(out_path, games_path, name = None, workers = 0):
+def main(out_path, games_path, name = None, sample = None, workers = 0):
     logger.info("reading games from %s", games_path)
 
     with specmine.util.openz(games_path) as games_file:
         games = pickle.load(games_file)
 
     if name is None:
-        names = games
+        if sample is None:
+            names = games
+        else:
+            names = sorted(games, key = lambda _: random.random())[:sample]
     else:
         names = [name]
 

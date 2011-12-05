@@ -37,13 +37,14 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
 
     # write the nodes
     for (i, state) in enumerate(states):
-        (board, player) = state
-        attributes = []
+        #(board, player) = state
+        #attributes = []
 
-        if player == 1:
-            attributes.append("shape=point,color=\"#00ff00\"")
-        else:
-            attributes.append("shape=square,color=\"#0000ff\",style=filled")
+        #if player == 1:
+            #attributes.append("shape=point,color=\"#00ff00\"")
+        #else:
+        attributes = []
+        attributes.append("shape=square,color=\"#0000ff\",style=filled")
 
         h = coloring.get(state)
 
