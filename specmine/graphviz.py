@@ -1,4 +1,5 @@
 import colorsys
+import tempfile
 import subprocess
 import numpy
 import specmine
@@ -75,4 +76,16 @@ def render_dot_file(out_path, dot_path, tool_name):
     logger.info("running: %s", command)
 
     subprocess.check_call(command)
+
+def visualize_graph(out_path, states, render_with = None, coloring = None):
+    if render_with is None:
+        with open(out_path, "wb") as out_file:
+            write_dot_file(out_file, states, coloring = coloring)
+    else:
+        with tempfile.NamedTemporaryFile(suffix = ".dot") as dot_file:
+            write_dot_file(dot_file, states, coloring = coloring)
+
+            dot_file.flush()
+
+            render_dot_file(out_path, dot_file.name, render_with)
 
