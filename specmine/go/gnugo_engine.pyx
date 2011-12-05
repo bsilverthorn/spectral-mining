@@ -169,7 +169,7 @@ def gg_estimate_score():
     score = gnugo_estimate_score(up, low);
 
     return (-score, -upper, -lower)
-    
+
 def gg_aftermath_score(int player):
     ''' compute the aftermath score if the game were to be played out to completion
     (for use after both players have passed) '''
@@ -178,7 +178,26 @@ def gg_aftermath_score(int player):
     cdef SGFTree* tree_p = &tree
     after_score = aftermath_compute_score(player, tree_p)
     return after_score
-    
+
+def gg_get_winner():
+    """Return the winner of the game, if any."""
+
+    move1 = gg_genmove(1)        
+    move2 = gg_genmove(-1)
+
+    if move1 == move2 == (-1,-1):
+        (score,up,low) = gg_estimate_score()
+
+        if score > 0:
+            return 1
+        else:
+            return -1
+
+    return None
+
 cdef int xy2pos(int x, int y):
     ''' convert from xy position to linear gnugo board position assuming board_size is 9 and MAX_BOARD in gnugo.h is set to 9'''
     return ((9 + 2) + x * (9 + 1) + y)
+
+gg_init()
+

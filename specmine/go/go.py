@@ -6,16 +6,27 @@ import numpy
 import specmine
 import gnugo_engine as gge
 
+logger = specmine.get_logger(__name__)
+
+class GameState(object):
+    """Full go game history."""
+
+    def __init__(self, moves, board):
+        self.moves = moves
+        self.board = board
 
 class BoardState(object):
     """Go board."""
 
-    def __init__(self, size = 9):
+    def __init__(self, grid = None, size = 9):
         ''' currently no way to start with nonzero grid'''
-        grid = numpy.zeros((size, size))
-        self._grid = grid
+
+        if grid is None:
+            grid = numpy.zeros((size, size))
+
+        #self._grid = self.canonical_board(grid)
+        self.grid = grid
         self._string = str(self._grid)
-        gge.gg_init()
 
     def __hash__(self):
         return hash(self._string)
@@ -27,79 +38,42 @@ class BoardState(object):
         return self._string
 
     def __repr__(self):
-        return repr(self._grid)
-
-    def make_move(self, player, i, j):
-    #mutable - returns this rather than making new object
-        assert gge.gg_is_legal(player,(i,j))
-        
-        gge.gg_play_move(player,(i,j))
-        self._grid = self.canonical_board(gge.gg_get_board())
-        self._string = str(self._grid)
-        
-        return self
-
-    def get_winner(self):
-        """Return the winner of the game, if any."""
-        move1 = gge.gg_genmove(1)        
-        move2 = gge.gg_genmove(-1)
-        if move1 == move2 == (-1,-1):
-            (score,up,low) = gge.gg_get_score()
-            if score > 0:
-                return 1
-            else:
-                return -1
-
-        return None
-
-    def check_end(self):
-        """Is this board state an end state? ask Gnugo if it would pass on
-        both turns."""
-        move = gge.gg_genmove(1) 
-        if move == (-1,-1): # if gnugo thinks we should pass
-            move = gge.gg_genmove(-1)
-            if move == (-1,-1):
-                return True
-
-        return False
-
-    @property
-    def grid(self):
-        return self._grid
+        return repr(self.grid)
 
     def canonical_board(self,grid):
-
         grids = []
         grids.append(grid)
+
         for i in xrange(1,4):
             grids.append(numpy.rot90(grid,i))
+
         grids.append(numpy.fliplr(grid))
         grids.append(numpy.flipud(grid))
 
         return max(grids,key = lambda x: hash(str(x)))
 
-def generate_sgf(sgf_string):
-    
+    @staticmethod
+    def from_gge():
+        return BoardState(gge.gg_get_board())
+
+def convert_sgf_moves(moves): 
     ''' ex: game_gen = sgf_game_reader(static_path)
             player, move = game_gen.next()'''
 
     move_dict = {'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,'i':8}
-    move = re.compile("[BW]\[[a-z]{0,2}\]") 
-    
-    # parse all moves
-    moves = move.findall(sgf_string)
     for m in moves:
         if m[0] == 'B':
             player = 1
         elif m[0] == 'W':
             player = -1
         else:
-            print 'color error'
+            raise RuntimeError("color error")
     
         if m[1:] == '[]': # represents a pass
             move = (-1,-1)
         else:
             move = (move_dict[m[3]],move_dict[m[2]])
+        
         yield (player,move)
 
 def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
@@ -111,27 +85,32 @@ def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
     wrating = re.compile("WR\[([0-9]+)\]")
     brating = re.compile("BR\[([0-9]+)\]")
     result = re.compile("RE\[([W|B]).*\]")
+    move = re.compile("[BW]\[[a-z]{0,2}\]") 
+    sgf_string = sgf_file.read() 
 
-    
-    sgf_string = sgf_file.read()  
+    # parse all moves
+    moves = move.findall(sgf_string)
+    if len(moves) < min_moves:
+        return None
+ 
     # check board is the right size
     match = size.findall(sgf_string)
     if len(match) > 0:
         board_size = match[0]
         if board_size != '9':
-            print 'SGF file is not a 9x9 game'
+            logger.warning('SGF file is not a 9x9 game')
             return None
     else: 
-        print 'no size given'
+        logger.warning('no size given')
         return None
-    
+
     # check that the handicap is zero
     # assumed zero if none given
     match = hand.findall(sgf_string)
     if len(match) > 0:
         handicap = match[0]
         if handicap != '0':
-            print 'SGF file has nonzero handicap'
+            logger.warning('SGF file has nonzero handicap')
             return None
 
     # check that both players have rating above the threshold 
@@ -141,10 +120,10 @@ def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
         white_rating = int(match1[0])
         black_rating = int(match2[0])
         if not ((white_rating>rating_thresh)&(black_rating>rating_thresh)):
-            print 'one of the players is below threshold skill'
+            logger.warning('one of the players is below threshold skill')
             return None
     else: 
-        print 'one player ratings were not given'
+        logger.warning('one player ratings were not given')
         return None
     
     winner = result.findall(sgf_string)
@@ -152,27 +131,43 @@ def sgf_game(sgf_file,min_moves=10,rating_thresh=1800):
         winner = winner[0]
         winner = 1 if winner == 'B' else -1
 
-    return generate_sgf(sgf_string), winner
+    return convert_sgf_moves(moves), winner
 
+#def check_end(self):
+    #"""Is this board state an end state? ask Gnugo if it would pass on
+    #both turns."""
+    #move = gge.gg_genmove(1) 
+    #if move == (-1,-1): # if gnugo thinks we should pass
+        #move = gge.gg_genmove(-1)
+        #if move == (-1,-1):
+            #return True
 
-def generate_expert_episode(sgf_file):
+    #return False
+
+def read_expert_episode(sgf_file):
+    gge.gg_clear_board(9)
+
     S = []; R = []
-    board = BoardState()
-    
+
     out = sgf_game(sgf_file)
-    if out == None:
+
+    if out is None:
         return S,R
-    moves,winner = out
-    moves = list(moves)
-    if moves != None:
+
+    moves, winner = out
+
+    if moves is not None:
         for (player,move) in moves:
-            board = board.make_move(player,move[0],move[1])
-            S.append(board)
+            assert gge.gg_is_legal(player, move)
+
+            gge.gg_play_move(player, move)
+
+            S.append(GameState(list(moves), BoardState.from_gge()))
             R.append(0)
-        
+
         R[-1] = winner
 
-    return S,R
+    return S, R
 
 def main():
     games_dir = specmine.util.static_path('go_games/')
@@ -188,7 +183,7 @@ def main():
                 continue
             print 'playing game: ', name
             f = archive.extractfile(name)
-            s,r = generate_expert_episode(f)
+            s,r = read_expert_episode(f)
             print s,r
 
             f.close()
