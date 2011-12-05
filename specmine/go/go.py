@@ -16,17 +16,22 @@ class GameState(object):
         self.moves = moves
         self.board = board
 
+    # hash and equality only rely on the board state, not the list of moves (?)
+    def __hash__(self):
+        return hash(self.board._string)
+
+    def __eq__(self,other):
+        return self.board._string == other.board._string
+
 class BoardState(object):
     """Go board."""
 
     def __init__(self, grid = None, size = 9):
-        ''' currently no way to start with nonzero grid'''
 
         if grid is None:
             grid = numpy.zeros((size, size))
 
-        #self._grid = self.canonical_board(grid)
-        self.grid = grid
+        self.grid = self.canonical_board(grid) 
         self._string = str(grid)
 
     def __hash__(self):
@@ -50,6 +55,8 @@ class BoardState(object):
 
         grids.append(numpy.fliplr(grid))
         grids.append(numpy.flipud(grid))
+        grids.append(numpy.fliplr(numpy.rot90(grid,1)))
+        grids.append(numpy.flipud(numpy.rot90(grid,1)))
 
         return max(grids,key = lambda x: hash(str(x)))
 
@@ -228,7 +235,6 @@ def main():
             print 'playing game: ', name
             f = archive.extractfile(name)
             s,r = read_expert_episode(f)
-            print s,r
 
             f.close()
 
