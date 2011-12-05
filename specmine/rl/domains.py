@@ -104,7 +104,7 @@ class GoDomain(object):
         self._opponent = opponent
         self.size = size
         self.board = specmine.go.BoardState()
-        self.initial_state = (specmine.go.BoardState(), 1)
+        self.initial_state = (1,specmine.go.BoardState())
 
     def actions_in(self, player):
         ''' return the available actions for player for current board config '''

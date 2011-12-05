@@ -107,14 +107,17 @@ def gg_get_board():
     b = np.array(b, int)
     b = b.reshape(9,9+1)
     b = b[:,:-1]
-    return b
+    c = cp.deepcopy(b)
+    c[(b==2).nonzero()] = 1
+    c[(b==1).nonzero()] = -1
+    return c
 
 def gg_get_inverse_board():
     ''' get the current board with all black stone white and white stones black '''
     b = gg_get_board()
     c = cp.deepcopy(b)
-    c[(b==3).nonzero()] = 2
-    c[(b==2).nonzero()] = 3
+    c[(b==-1).nonzero()] = 1
+    c[(b==1).nonzero()] = -1
     return c
 
 def gg_genmove(player):
