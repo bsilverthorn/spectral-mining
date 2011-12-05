@@ -29,16 +29,7 @@ def main(out_path, states_path = None, render_with = None, coloring_path = None)
 
         assert len(coloring) == len(states)
 
-    if render_with is None:
-        with open(out_path, "wb") as out_file:
-            write_dot_file(out_file, states, coloring = coloring)
-    else:
-        with tempfile.NamedTemporaryFile(suffix = ".dot") as dot_file:
-            write_dot_file(dot_file, states, coloring = coloring)
-
-            dot_file.flush()
-
-            render_dot_file(out_path, dot_file.name, render_with)
+    specmine.graphviz.visualize_graph(out_path, states, render_with, coloring)
 
 if __name__ == "__main__":
     specmine.script(main)
