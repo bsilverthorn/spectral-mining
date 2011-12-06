@@ -101,7 +101,7 @@ def adjacency_matrix_to_dict(amatrix, rindex = None, make_directed = True):
 
     return adict
 
-def affinity_graph(vectors_ND, neighbors):
+def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
     """Build the k-NN affinity graph from state feature vectors."""
 
     G = neighbors
@@ -130,7 +130,7 @@ def affinity_graph(vectors_ND, neighbors):
             coo_distances.append(neighbor_distances_NG[n, g])
 
     coo_distances = numpy.array(2 * coo_distances)
-    coo_affinities = numpy.exp(-coo_distances**2 / 2.0)
+    coo_affinities = numpy.exp(-coo_distances**2 / sigma)
 
     adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
 

@@ -76,8 +76,15 @@ def main(out_path, games_path, values_path, neighbors = 8, workers = 0, samples 
 
     index = dict(zip(boards,xrange(num_boards)))
     avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
-    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
-    
+    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors, sigmas = 2.0)
+    print affinity_NN
+    import sklearn.cluster
+    spectral = sklearn.cluster.SpectralClustering(mode = "arpack")
+    spectral.fit(affinity_NN)
+    spectral = sklearn.cluster.SpectralClustering(mode = "amg")
+    spectral.fit(affinity_NN)
+    print "!!!"
+    raise SystemExit()
     #basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = 32)
     #feature_map = specmine.discovery.InterpolationFeatureMap(basis_NB, avectors_ND, specmine.go.board_to_affinity)
 #    feature_map = specmine.discovery.TabularFeatureMap(basis_NB, index)

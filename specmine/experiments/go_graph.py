@@ -25,7 +25,7 @@ def main(
 
     boards = specmine.go.boards_from_games(games, samples = samples)
     avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
-    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
+    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors, sigma = 16.0)
     graph_dict = specmine.discovery.adjacency_matrix_to_dict(affinity_NN, make_directed = True)
 
     if eigenvector is None:

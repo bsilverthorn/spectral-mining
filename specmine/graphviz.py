@@ -71,12 +71,18 @@ def render_dot_file(out_path, dot_path, tool_name):
 
 def continuous_to_coloring(values, hue_min = 0.0, hue_max = 0.9):
     values = numpy.array(values)
-    values -= numpy.min(values)
-    values /= numpy.max(values)
+    values -= numpy.min(values[values > numpy.min(values)])
+    values /= numpy.max(values[values < numpy.max(values)])
+
+    print values
 
     def value_to_color(value):
-        rgbs = colorsys.hsv_to_rgb(value, 0.85, 0.85)
-        #rgbs = colorsys.hsv_to_rgb(0.0, 0.0, value)
+        #rgbs = colorsys.hsv_to_rgb(value, 0.85, 0.85)
+        if value > 1.0:
+            value = 1.0
+        elif value < 0.0:
+            value = 0.0
+        rgbs = colorsys.hsv_to_rgb(0.0, 0.0, value)
         string = "#{0}".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in rgbs))
 
         return string

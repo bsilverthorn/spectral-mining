@@ -81,7 +81,7 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
 def laplacian_basis(W, k, largest = False, method = "arpack"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
-    logger.info("solving for %i eigenvectors of the Laplacian", k)
+    logger.info("solving for %i eigenvector(s) of the Laplacian", k)
 
     L = laplacian_operator(W) 
 
