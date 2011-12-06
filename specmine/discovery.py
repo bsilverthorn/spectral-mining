@@ -107,15 +107,15 @@ def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
     G = neighbors
     (N, D) = vectors_ND.shape
 
-    logger.info("building balltree in affinity space")
+    logger.info("building balltree in %i-dimensional affinity space", D)
 
     tree = sklearn.neighbors.BallTree(vectors_ND)
 
-    logger.info("retrieving nearest neighbors")
+    logger.info("retrieving %i nearest neighbors", G)
 
     (neighbor_distances_NG, neighbor_indices_NG) = tree.query(vectors_ND, k = G)
 
-    logger.info("constructing the affinity graph")
+    logger.info("constructing the affinity graph over %i vertices", N)
 
     coo_is = []
     coo_js = []
@@ -134,7 +134,7 @@ def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
 
     adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
 
-    logger.info("done creating affinity graph adjacency matrix")
+    logger.info("affinity graph has %i unique edges", coo_affinities.shape[0])
 
     return adjacency
 
