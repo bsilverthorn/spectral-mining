@@ -1,9 +1,9 @@
 import numpy
 import math
 import csv
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
+#from matplotlib import cm
 import specmine
 
 def expand_columns(v,n):
@@ -41,21 +41,25 @@ def two_room_adjacency(size):
 
     return W
 
-def main(num_eigs = 10, size = 20):
+@specmine.annotations(
+    num_eigs = ("evs", "positional", None, int),
+    method = ("eigensolver method", "option"),
+    largest = ("largest eigenvectors?", "flag"),
+    )
+def main(out_path, num_eigs = 10, size = 20, method = "arpack", largest = False):
     
     W = two_room_adjacency(size)
-    basis = specmine.spectral.laplacian_basis(W,k = num_eigs)
+    basis = specmine.spectral.laplacian_basis(W,k = num_eigs, method = method, largest = largest)
     
-    fig = plt.figure()
+    #fig = plt.figure()
     #ax = fig.add_subplot(111, projection='3d')
-    ax = Axes3D(fig)
+    #ax = Axes3D(fig)
 
     v = basis[:,:num_eigs+1]
     # add walls (with zero values) back to eigenvectors before plotting 
     V = expand_columns(v,size)
 
-    w = csv.writer(file(specmine.util.static_path( \
-        'two_room_features.csv'),'wb'))
+    w = csv.writer(file(out_path, "wb"))
     w.writerow(['eigen_num', 'x', 'y', 'value'])
     for e in xrange(num_eigs):
         Z = numpy.reshape(V[:,e],[size,size])
@@ -67,4 +71,5 @@ def main(num_eigs = 10, size = 20):
 #    plt.show()
 
 if __name__ == '__main__':
-    main()
+    specmine.script(main)
+
