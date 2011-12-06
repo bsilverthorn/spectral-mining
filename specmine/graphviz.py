@@ -76,9 +76,8 @@ def continuous_to_coloring(values, hue_min = 0.0, hue_max = 0.9):
 
     def value_to_color(value):
         rgbs = colorsys.hsv_to_rgb(value, 0.85, 0.85)
+        #rgbs = colorsys.hsv_to_rgb(0.0, 0.0, value)
         string = "#{0}".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in rgbs))
-
-        print value, string
 
         return string
 
@@ -98,13 +97,13 @@ def categorical_to_coloring(XXX):
 
         attributes.append("color=" + string)
 
-def visualize_graph(out_path, states, render_with = None, coloring = None):
+def visualize_graph(out_path, states, render_with = None, coloring = None, root = None):
     if render_with is None:
         with open(out_path, "wb") as out_file:
-            write_dot_file(out_file, states, coloring = coloring)
+            write_dot_file(out_file, states, coloring = coloring, root = root)
     else:
         with tempfile.NamedTemporaryFile(suffix = ".dot") as dot_file:
-            write_dot_file(dot_file, states, coloring = coloring)
+            write_dot_file(dot_file, states, coloring = coloring, root = root)
 
             dot_file.flush()
 

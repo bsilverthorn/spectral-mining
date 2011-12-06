@@ -19,7 +19,7 @@ class TabularFeatureMap(object):
         self.index = index
 
     def __getitem__(self, state):
-        print 'state: ',state
+        #print 'state: ',state
         return self.basis[self.index[state], :]
 
 class RandomFeatureMap(TabularFeatureMap):
@@ -132,7 +132,11 @@ def affinity_graph(vectors_ND, neighbors):
     coo_distances = numpy.array(2 * coo_distances)
     coo_affinities = numpy.exp(-coo_distances**2 / 2.0)
 
-    return scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
+    adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
+
+    logger.info("done creating affinity graph adjacency matrix")
+
+    return adjacency
 
     ## cluster states
     #logger.info("aliasing states with spectral clustering")

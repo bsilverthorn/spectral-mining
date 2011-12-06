@@ -78,19 +78,40 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-def laplacian_basis(W, k, largest = False):
+def laplacian_basis(W, k, largest = False, method = "amg"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
     logger.info("solving for %i eigenvectors of the Laplacian", k)
 
     L = laplacian_operator(W) 
-    solver = pyamg.smoothed_aggregation_solver(L)
-    M = solver.aspreconditioner()
-    X = scipy.rand(L.shape[0], k)
 
-    (W, V) = scipy.sparse.linalg.lobpcg(L, X, M = M, tol = 1e-8, largest = largest)
+    assert isinstance(L, scipy.sparse.csr_matrix)
+    assert k > 0
+    assert k < L.shape[0]
 
-    return V
+    if method == "amg":
+        solver = pyamg.smoothed_aggregation_solver(L)
+        pre = solver.aspreconditioner()
+        initial = scipy.rand(L.shape[0], k)
+        (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-12, largest = largest)
+    elif method == "arpack":
+        if largest:
+            which = "LM"
+        else:
+            which = "SM"
+
+        if hasattr(scipy.sparse.linalg, "eigsh"):
+            (_, basis) = scipy.sparse.linalg.eigsh(L, k, which = which)
+        else: 
+            (_, basis) = scipy.sparse.linalg.eigen_symmetric(L, k, which = which)
+    elif method == "dense":
+        (_, full_basis) = np.linalg.eigh(L.todense())
+
+        basis = full_basis[:, :k]
+    else:
+        raise ValueError("unrecognized eigenvector method name")
+
+    return basis
 
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     ''' build diffusion wavelet basis matrix with k bases from weighted adjacency matrix W '''
