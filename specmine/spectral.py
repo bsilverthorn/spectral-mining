@@ -78,7 +78,7 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-def laplacian_basis(W, k, which = "SM"):
+def laplacian_basis(W, k, largest = False):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
     logger.info("solving for %i eigenvectors of the Laplacian", k)
@@ -88,7 +88,7 @@ def laplacian_basis(W, k, which = "SM"):
     M = solver.aspreconditioner()
     X = scipy.rand(L.shape[0], k)
 
-    (W, V) = scipy.sparse.linalg.lobpcg(L, X, M = M, tol = 1e-8, largest = False)
+    (W, V) = scipy.sparse.linalg.lobpcg(L, X, M = M, tol = 1e-8, largest = largest)
 
     return V
 

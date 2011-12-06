@@ -1,29 +1,27 @@
 import numpy
 import specmine
 
+logger = specmine.get_logger(__name__)
+
+def grid_to_affinity(grid):
+    return grid.flat
+
+def board_to_affinity(board):
+    return grid_to_affinity(board.grid)
+
+def boards_from_games(games, samples = 10000):
+    """Extract boards from games and return a subset."""
+
+    grids = numpy.vstack([game.grids for game in games])
+    boards = set(map(specmine.go.BoardState, grids))
+    shuffled = sorted(boards, key = lambda _: numpy.random.rand())
+
+    return shuffled[:samples]
+
 def graph_from_games(games, neighbors = 8, samples = 10000):
+    logger.info("removing duplicate boards")
 
-    # build the affinity representation
-    all_grids = [game.grids for game in games]
-    affinity_vectors = numpy.vstack(all_grids)
+    affinity_vectors = numpy.array(map(board_to_affinity, sampled_boards))
 
-    num_boards = affinity_vectors.shape[0]
-    print 'number of boards: ', num_boards
-
-    print 'affinity vector shape: ', affinity_vectors.shape
-    print 'total num boards: ', num_boards
-    print 'subsampling states'
-    # remove duplicates
-    board_states = set(map(specmine.go.BoardState, affinity_vectors))
-    affinity_vectors = numpy.array([b.grid for b in board_states])
-    #subsample
-    numpy.random.shuffle(affinity_vectors)
-
-    affinity_vectors = affinity_vectors[:samples, ...]
-    # reshape
-    affinity_vectors = numpy.reshape(affinity_vectors,(len(affinity_vectors),81))
-
-    affinity_NN = specmine.discovery.affinity_graph(affinity_vectors, neighbors=8)
-
-    return affinity_NN
+    return specmine.discovery.affinity_graph(affinity_vectors, neighbors = neighbors)
 
