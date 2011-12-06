@@ -15,20 +15,19 @@ def main(num_games=10, num_samples=1e4, num_neighbors=8):
     all_grids = [game.grids for game in game_dict.itervalues()]
     affinity_vectors = numpy.vstack(all_grids)
 
-    num_boards = affinity_vectors.shape[0]
-    print 'number of boards: ', num_boards
-
     print 'affinity vector shape: ', affinity_vectors.shape
-    print 'total num boards: ', num_boards
-    print 'subsampling states'
+
     # remove duplicates
+    print 'removing duplicates'
     board_states = set(map(specmine.go.BoardState, affinity_vectors))
     affinity_vectors = numpy.array([b.grid for b in board_states])
     #subsample
+    print 'subsampling states'
+    num_boards = affinity_vectors.shape[0]
     affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:,:]
     affinity_vectors = affinity_vectors[:num_samples,:,:]
     # reshape
-    affinity_vectors = numpy.reshape(affinity_vectors,(len(affinity_vectors),81))
+    affinity_vectors = numpy.reshape(affinity_vectors,(affinity_vectors.shape[0],81))
 
     graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=num_neighbors)
 
@@ -38,8 +37,8 @@ def main(num_games=10, num_samples=1e4, num_neighbors=8):
 
     specmine.graphviz.visualize_graph("go_graph_test.pdf", graph_dict, "twopi")
     #specmine.graphviz.visualize_graph("go_graph_test.neato.pdf", graph_dict, "neato")
+    
 
-    # what to do with this graph?
 
 if __name__ == "__main__":
     specmine.script(main)
