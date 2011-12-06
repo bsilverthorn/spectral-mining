@@ -78,7 +78,7 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-def laplacian_basis(W, k, largest = False, method = "arpack"):
+def laplacian_basis(W, k, largest = True, method = "arpack"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
     logger.info("solving for %i eigenvectors of the Laplacian", k)
@@ -90,10 +90,12 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
     assert k < L.shape[0]
 
     if method == "amg":
+        logger.info("amg being used")
         solver = pyamg.smoothed_aggregation_solver(L)
         pre = solver.aspreconditioner()
         initial = scipy.rand(L.shape[0], k)
-        (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-12, largest = largest)
+        logger.info("initial shape: %i, %i",initial.shape[0],initial.shape[1])
+        (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, tol = 1e-8, largest = largest)
     elif method == "arpack":
         if largest:
             which = "LM"
@@ -110,7 +112,8 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
         basis = full_basis[:, :k]
     else:
         raise ValueError("unrecognized eigenvector method name")
-
+    
+    logger.info("basis shape: %i", basis.shape[1])
     assert basis.shape[1] == k
 
     return basis

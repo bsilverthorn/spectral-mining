@@ -58,13 +58,13 @@ def main(out_path, games_path, values_path, neighbors = 8, workers = 0, samples 
         values = pickle.load(values_file)
 
     value_list = []
-    for game in games.keys():
+    for game in values.keys():
         try:
             vals = values[game]
             boards = list(set(map(specmine.go.BoardState, games[game].grids)))
             value_list.extend(zip(boards,vals))
         except KeyError:
-            print 'value unkown for ',game
+            print 'game unkown for ',game
 
     value_list = sorted(value_list, key = lambda _: numpy.random.rand())
     value_list = value_list[:samples]
@@ -85,7 +85,7 @@ def main(out_path, games_path, values_path, neighbors = 8, workers = 0, samples 
     #print 'score: ', score
 
     def yield_jobs():
-        for B in numpy.r_[0:100:10j].astype(int):
+        for B in numpy.r_[0:20:5j].astype(int):
             #yield (run_random_features, [B, avectors_ND, index, values])
             #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, value_dict])
             yield (run_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, value_dict])
