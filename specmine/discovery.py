@@ -13,10 +13,13 @@ class TabularFeatureMap(object):
         u, s, v = numpy.linalg.svd(basis_matrix)
         rank = numpy.sum(s > 1e-10)
         print 'rank of basis: ', rank
-        assert rank == basis_matrix.shape[1]
+        print 'full rank: ', basis_matrix.shape[1]
+        #assert rank == basis_matrix.shape[1]
+
         self.index = index
 
     def __getitem__(self, state):
+        print 'state: ',state
         return self.basis[self.index[state], :]
 
 class RandomFeatureMap(TabularFeatureMap):
@@ -32,7 +35,7 @@ class RandomFeatureMap(TabularFeatureMap):
 class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression."""
 
-    def __init__(self, basis, affinity_vectors, affinity_map, k = 5):
+    def __init__(self, basis, affinity_vectors, affinity_map, k = 8):
         self.basis = basis
         self.affinity_vectors = affinity_vectors
         self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)

@@ -6,8 +6,11 @@ import specmine
 
 logger = specmine.get_logger(__name__)
 
-def raw_state_features((board, player)):
-    return [1] + list(board.grid.flatten())
+def affinity_map(state):
+    ''' takes a Go State and returns the affinity map representation -- currently
+    the flattened board'''
+    return state.board.grid.flatten()
+
 
 def run_features(map_name, B, all_features_NF, index, values):
     feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
@@ -37,35 +40,55 @@ def run_random_features(B, vectors_ND, index, values):
 @specmine.annotations(
     out_path = ("path to write CSV",),
     games_path = ("path to adjacency dict"),
-    #values_path = ("path to value function",),
+    values_path = ("path to value function",),
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
+    samples = ("(max) number of boards to evaluate from dataset", "option", None, int)
     )
-def main(out_path, games_path, neighbors = 8, workers = 0):
+def main(out_path, games_path, values_path, neighbors = 8, workers = 0, samples = 10000):
     """Test value prediction in Go."""
+     
+    games_path = specmine.util.static_path(games_path)
+    values_path = specmine.util.static_path(values_path)
 
     with specmine.util.openz(games_path) as games_file:
-        games = pickle.load(games_file).values()
+        games = pickle.load(games_file)
 
-    B = 32
-    affinity_NN = specmine.go.graph_from_games(games, neighbors = neighbors)
-    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
-    raise SystemExit()
+    with specmine.util.openz(values_path) as values_file:
+        values = pickle.load(values_file)
 
-    logger.info("converting states to their vector representation")
+    value_list = []
+    for game in games.keys():
+        try:
+            vals = values[game]
+            boards = list(set(map(specmine.go.BoardState, games[game].grids)))
+            value_list.extend(zip(boards,vals))
+        except KeyError:
+            print 'value unkown for ',game
 
-    affinity_index = dict(zip(states, xrange(len(states))))
-    vectors_ND = numpy.array(map(raw_state_features, states))
+    value_list = sorted(value_list, key = lambda _: numpy.random.rand())
+    value_list = value_list[:samples]
+    value_dict = dict(value_list)
+    
+    boards = value_dict.keys()
+    num_boards = len(boards)
+    print 'number of samples kept: ', num_boards
 
-    # build the affinity graph
-    affinity_NN = specmine.discovery.affinity_graph(vectors_ND, neighbors)
-    (gameplay_NN, gameplay_index) = specmine.discovery.adjacency_dict_to_matrix(states_adict)
+    index = dict(zip(boards,xrange(num_boards)))
+    avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
+    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
+    
+    #basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = 32)
+    #feature_map = specmine.discovery.InterpolationFeatureMap(basis_NB, avectors_ND, specmine.go.board_to_affinity)
+#    feature_map = specmine.discovery.TabularFeatureMap(basis_NB, index)
+#    score = specmine.science.score_features_predict(feature_map, value_dict)
+    #print 'score: ', score
 
     def yield_jobs():
-        for B in numpy.r_[0:400:64j].astype(int):
-            yield (run_random_features, [B, vectors_ND, affinity_index, values])
-            yield (run_graph_features, ["gameplay", B, vectors_ND, gameplay_NN, gameplay_index, values])
-            yield (run_graph_features, ["affinity", B, vectors_ND, affinity_NN, affinity_index, values])
+        for B in numpy.r_[0:100:10j].astype(int):
+            #yield (run_random_features, [B, avectors_ND, index, values])
+            #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, value_dict])
+            yield (run_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, value_dict])
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
