@@ -1,3 +1,4 @@
 *.c
+*.cpp
 *.so
 gnugo-3.8
