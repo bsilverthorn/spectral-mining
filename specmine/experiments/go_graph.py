@@ -29,6 +29,7 @@ def main(num_games=10, num_samples=1e4, num_neighbors=8):
     # reshape
     affinity_vectors = numpy.reshape(affinity_vectors,(affinity_vectors.shape[0],81))
 
+    print 'building affinity graph'
     graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=num_neighbors)
 
     # save this graph if it gets big?
@@ -38,7 +39,6 @@ def main(num_games=10, num_samples=1e4, num_neighbors=8):
     specmine.graphviz.visualize_graph("go_graph_test.pdf", graph_dict, "twopi")
     #specmine.graphviz.visualize_graph("go_graph_test.neato.pdf", graph_dict, "neato")
     
-
 
 if __name__ == "__main__":
     specmine.script(main)

@@ -26,7 +26,8 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
 
         edge = "--"
 
-    out_file.write("node [label=\"\",width=0.15,height=0.15];\n")
+    #out_file.write("node [label=\"\",width=0.15,height=0.15];\n")
+    out_file.write("node [label=\"\"];\n")
     out_file.write("edge [color=\"#00000022\"];\n")
     out_file.write("splines=true;\n")
     out_file.write("outputorder=edgesfirst;\n")
@@ -43,8 +44,9 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
         #if player == 1:
             #attributes.append("shape=point,color=\"#00ff00\"")
         #else:
-        attributes = []
-        attributes.append("shape=square,color=\"#0000ff\",style=filled")
+            #attributes.append("shape=square,color=\"#0000ff\",style=filled")
+
+        attributes = ["shape=point,color=\"#00ff00\""]
 
         h = coloring.get(state)
 

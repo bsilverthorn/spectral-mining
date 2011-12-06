@@ -250,8 +250,8 @@ def estimate_value(game_state, rollouts = 32, epsilon = 0.2):
 
 def load_affinity_graph(path=None):
     """loads the preconstructed affinity graph for 9x9 Go"""
-
-    states_path = specmine.util.static_path("ttt_states.pickle.gz")
+    if path == None:
+        path = specmine.util.static_path("go_states.pickle.gz")
 
     logger.info("loading TTT adjacency dict from %s", states_path)
 
