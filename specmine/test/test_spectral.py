@@ -20,6 +20,7 @@ def test_laplacian_basis():
     basis_arpack = specmine.spectral.laplacian_basis(adjacency_matrix, 3, method = "arpack")
     basis_dense = specmine.spectral.laplacian_basis(adjacency_matrix, 3, method = "dense")
 
+    print
     print basis_amg
     print basis_arpack
     print basis_dense
