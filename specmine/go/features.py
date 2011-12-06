@@ -1,10 +1,10 @@
 import numpy
 import specmine
 
-def graph_from_go_games(games_path, neighbors = 8, samples = 10000):
+def graph_from_games(games, neighbors = 8, samples = 10000):
 
     # build the affinity representation
-    all_grids = [game.grids for game in game_dict.itervalues()]
+    all_grids = [game.grids for game in games]
     affinity_vectors = numpy.vstack(all_grids)
 
     num_boards = affinity_vectors.shape[0]
@@ -23,9 +23,7 @@ def graph_from_go_games(games_path, neighbors = 8, samples = 10000):
     # reshape
     affinity_vectors = numpy.reshape(affinity_vectors,(len(affinity_vectors),81))
 
-    B = 32
     affinity_NN = specmine.discovery.affinity_graph(affinity_vectors, neighbors=8)
-    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
 
-    return basis_NB
+    return affinity_NN
 

@@ -45,8 +45,11 @@ def main(out_path, games_path, neighbors = 8, workers = 0):
     """Test value prediction in Go."""
 
     with specmine.util.openz(games_path) as games_file:
-        game_dict = pickle.load(games_file)
-    graph_from_stuff(games_path, neighbors = neighbors)
+        games = pickle.load(games_file).values()
+
+    B = 32
+    affinity_NN = specmine.go.graph_from_games(games, neighbors = neighbors)
+    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B)
     raise SystemExit()
 
     logger.info("converting states to their vector representation")

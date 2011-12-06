@@ -98,7 +98,7 @@ def affinity_graph(vectors_ND, neighbors):
     G = neighbors
     (N, D) = vectors_ND.shape
 
-    logger.info("construct balltree in affinity space")
+    logger.info("building balltree in affinity space")
 
     tree = sklearn.neighbors.BallTree(vectors_ND)
 

@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
+import pyamg
 import specmine
 
 logger = specmine.get_logger(__name__)
@@ -77,35 +78,19 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-# XXX use pyamg to compute the basis?
-
-def laplacian_basis(W, k, which = "SM", sparse = True):
+def laplacian_basis(W, k, which = "SM"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
     logger.info("solving for %i eigenvectors of the Laplacian", k)
 
     L = laplacian_operator(W) 
+    solver = pyamg.smoothed_aggregation_solver(L)
+    M = solver.aspreconditioner()
+    X = scipy.rand(L.shape[0], k)
 
-    if sparse:
-        spL = scipy.sparse.csr_matrix(L)
-        
-        if hasattr(scipy.sparse.linalg, "eigsh"):
-            (eig_lam, eig_vec) = scipy.sparse.linalg.eigsh(spL, k, which = which)
-        else: 
-            (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
-        
-    else:
-        if scipy.sparse.issparse(L):
-            L = L.todense()
+    (W, V) = scipy.sparse.linalg.lobpcg(L, X, M = M, tol = 1e-8, largest = False)
 
-        (eig_lam,eig_vec) = np.linalg.eigh(L)
-
-    sort_inds = eig_lam.argsort()
-    eig_lam = eig_lam[sort_inds]
-    phi = eig_vec[:, sort_inds]
-    phi = phi[:, :k]
-
-    return phi
+    return V
 
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     ''' build diffusion wavelet basis matrix with k bases from weighted adjacency matrix W '''
