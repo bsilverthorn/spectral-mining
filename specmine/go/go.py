@@ -3,7 +3,7 @@ import random
 import hashlib
 import numpy
 import specmine
-import gnugo_engine as gge
+#import gnugo_engine as gge
 
 logger = specmine.get_logger(__name__)
 
