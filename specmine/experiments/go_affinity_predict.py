@@ -9,12 +9,9 @@ logger = specmine.get_logger(__name__)
 def raw_state_features((board, player)):
     return [1] + list(board.grid.flatten())
 
-# XXX make into an evaluate-features class, load the opponent once, etc.
-
 def run_features(map_name, B, all_features_NF, index, values):
     feature_map = specmine.discovery.TabularFeatureMap(all_features_NF, index)
-    #(mean, variance) = specmine.science.score_features_predict(feature_map, values)
-    (mean, variance) = specmine.science.score_features_regress_act(feature_map, values)
+    (mean, variance) = specmine.science.score_features_predict(feature_map, values)
 
     logger.info("with %i %s features, mean score is %.4f", B, map_name, mean)
 
@@ -39,21 +36,18 @@ def run_random_features(B, vectors_ND, index, values):
 
 @specmine.annotations(
     out_path = ("path to write CSV",),
-    states_path = ("path to adjacency dict", "option",),
-    values_path = ("path to value function",),
+    games_path = ("path to adjacency dict"),
+    #values_path = ("path to value function",),
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     )
-def main(out_path, values_path, neighbors = 8, workers = 0):
-    """Run TTT state-clustering experiment(s)."""
+def main(out_path, games_path, neighbors = 8, workers = 0):
+    """Test value prediction in Go."""
 
-    # load the value function
-    with specmine.openz(values_path) as values_file:
-        values = pickle.load(values_file)
-
-    # convert states to their vector representations
-    states_adict = specmine.tictac.load_adjacency_dict()
-    states = list(states_adict)
+    with specmine.util.openz(games_path) as games_file:
+        game_dict = pickle.load(games_file)
+    graph_from_stuff(games_path, neighbors = neighbors)
+    raise SystemExit()
 
     logger.info("converting states to their vector representation")
 
