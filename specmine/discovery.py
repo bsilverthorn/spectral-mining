@@ -42,9 +42,10 @@ class InterpolationFeatureMap(object):
     def __getitem__(self, state):
         affinity_vector = self.affinity_map(state)
 
-        (d, i) = self.ball_tree.query(affinity_vector, k=self.k, return_distance = True)
+        (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
 
-        return numpy.dot(d / numpy.sum(d), self.basis[i, :]) # simple nearest neighbor averaging
+        # simple nearest neighbor averaging
+        return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
 
 def adjacency_dict_to_matrix(adict):
     """
@@ -76,7 +77,7 @@ def adjacency_dict_to_matrix(adict):
         index,
         )
 
-def adjacency_matrix_to_dict(amatrix, rindex = None):
+def adjacency_matrix_to_dict(amatrix, rindex = None, make_directed = True):
     """Create an affinity dict from a sparse adjacency matrix."""
 
     (N, _) = amatrix.shape
@@ -88,7 +89,12 @@ def adjacency_matrix_to_dict(amatrix, rindex = None):
     for n in xrange(N):
         (_, nonzero) = amatrix.getrow(n).nonzero()
 
-        adict[rindex[n]] = [rindex[m] for m in nonzero if m != n]
+        if make_directed:
+            neighbors = [rindex[m] for m in nonzero if m > n]
+        else:
+            neighbors = [rindex[m] for m in nonzero if m != n]
+
+        adict[rindex[n]] = neighbors
 
     return adict
 

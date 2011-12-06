@@ -1,44 +1,41 @@
 import cPickle as pickle
 import numpy
 import specmine
-import specmine.go
 
-def main(num_games=10, num_samples=1e4, num_neighbors=8):
-    
-    with specmine.util.openz(specmine.util.static_path\
-      ('go_games/2010-01.pickle.gz')) as games_file:
+@specmine.annotations(
+    out_path = ("path to write visualization",),
+    games_path = ("path to adjacency dict"),
+    render_with = ("graphviz rendering tool", "option", "r"),
+    eigenvector = ("color according to an eigenvector", "option", "g", int),
+    samples = ("number of boards to sample", "option", None, int),
+    neighbors = ("number of neighbors in graph", "option", None, int),
+    )
+def main(
+    out_path,
+    games_path,
+    render_with = "neato",
+    eigenvector = None,
+    samples = 10000,
+    neighbors = 8,
+    ):
+    """Visualize a state space graph in Go."""
 
-        game_dict = pickle.load(games_file)
-        print 'num_games: ', len(game_dict.values())
-    # build the affinity representation
+    with specmine.util.openz(games_path) as games_file:
+        games = pickle.load(games_file).values()
 
-    all_grids = [game.grids for game in game_dict.itervalues()]
-    affinity_vectors = numpy.vstack(all_grids)
+    boards = specmine.go.boards_from_games(games, samples = samples)
+    avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
+    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
+    graph_dict = specmine.discovery.adjacency_matrix_to_dict(affinity_NN, make_directed = True)
 
-    print 'affinity vector shape: ', affinity_vectors.shape
+    if eigenvector is None:
+        coloring = None
+    else:
+        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = eigenvector + 1)
+        colors = specmine.graphviz.continuous_to_coloring(basis_NB[:, eigenvector])
+        coloring = dict(zip(numpy.arange(samples), colors))
 
-    # remove duplicates
-    print 'removing duplicates'
-    board_states = set(map(specmine.go.BoardState, affinity_vectors))
-    affinity_vectors = numpy.array([b.grid for b in board_states])
-    #subsample
-    print 'subsampling states'
-    num_boards = affinity_vectors.shape[0]
-    affinity_vectors = affinity_vectors[numpy.random.permutation(num_boards),:,:]
-    affinity_vectors = affinity_vectors[:num_samples,:,:]
-    # reshape
-    affinity_vectors = numpy.reshape(affinity_vectors,(affinity_vectors.shape[0],81))
-
-    print 'building affinity graph'
-    graph_mat = specmine.discovery.affinity_graph(affinity_vectors,neighbors=num_neighbors)
-
-    # save this graph if it gets big?
-    print "..."
-    graph_dict = specmine.discovery.adjacency_matrix_to_dict(graph_mat)
-
-    specmine.graphviz.visualize_graph("go_graph_test.pdf", graph_dict, "twopi")
-    #specmine.graphviz.visualize_graph("go_graph_test.neato.pdf", graph_dict, "neato")
-    
+    specmine.graphviz.visualize_graph(out_path, graph_dict, render_with, coloring = coloring)
 
 if __name__ == "__main__":
     specmine.script(main)

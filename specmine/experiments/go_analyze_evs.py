@@ -1,7 +1,6 @@
 import csv
 import numpy
 import cPickle as pickle
-import condor
 import specmine
 
 logger = specmine.get_logger(__name__)
@@ -22,8 +21,10 @@ def main(out_path, games_path, neighbors = 8, workers = 0):
     boards = specmine.go.boards_from_games(games)
     avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
     affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
-    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = 32)
+    B = 32
+    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = B)
     feature_map = specmine.discovery.InterpolationFeatureMap(basis_NB, avectors_ND, specmine.go.board_to_affinity)
+    rows = [["eigenvector", "x", "y", "value"]]
 
     for x in xrange(9):
         for y in xrange(9):
@@ -31,9 +32,15 @@ def main(out_path, games_path, neighbors = 8, workers = 0):
 
             grid[x, y] = 1
 
-            board = specmine.go.BoardState(grid)
+            features = feature_map[specmine.go.BoardState(grid)]
 
-            print board, feature_map[board]
+            for i in xrange(B):
+                rows.append([i, x, y, features[i]])
+
+    with specmine.util.openz(out_path, "wb") as out_file:
+        writer = csv.writer(out_file)
+
+        writer.writerows(rows)
 
 if __name__ == "__main__":
     specmine.script(main)

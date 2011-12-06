@@ -10,12 +10,6 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
     # prepare
     names = dict((s, "s{0}".format(i)) for (i, s) in enumerate(states))
 
-    if coloring is None:
-        coloring = {}
-    else:
-        unique = len(set(coloring.values()))
-        hues = numpy.r_[0.0:1.0 - 1.0 / unique:unique * 1j]
-
     # write general configuration
     if directed:
         out_file.write("digraph G {\n")
@@ -46,15 +40,10 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
         #else:
             #attributes.append("shape=square,color=\"#0000ff\",style=filled")
 
-        attributes = ["shape=point,color=\"#00ff00\""]
+        attributes = ["shape=point"]
 
-        h = coloring.get(state)
-
-        if h is not None:
-            values = colorsys.hsv_to_rgb(hues[h], 0.85, 0.85)
-            string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
-
-            attributes.append("color=" + string)
+        if coloring is not None:
+            attributes.append("color=\"{0}\"".format(coloring[state]))
 
         out_file.write("{0} [{1}];\n".format(names[state], ",".join(attributes)))
 
@@ -79,6 +68,35 @@ def render_dot_file(out_path, dot_path, tool_name):
     logger.info("running: %s", command)
 
     subprocess.check_call(command)
+
+def continuous_to_coloring(values, hue_min = 0.0, hue_max = 0.9):
+    values = numpy.array(values)
+    values -= numpy.min(values)
+    values /= numpy.max(values)
+
+    def value_to_color(value):
+        rgbs = colorsys.hsv_to_rgb(value, 0.85, 0.85)
+        string = "#{0}".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in rgbs))
+
+        print value, string
+
+        return string
+
+    return map(value_to_color, values)
+
+def categorical_to_coloring(XXX):
+    # XXX
+    if coloring is None:
+        coloring = {}
+    else:
+        unique = len(set(coloring.values()))
+        hues = numpy.r_[0.0:1.0 - 1.0 / unique:unique * 1j]
+
+    if h is not None:
+        values = colorsys.hsv_to_rgb(hues[h], 0.85, 0.85)
+        string = "#{0}bb".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in values))
+
+        attributes.append("color=" + string)
 
 def visualize_graph(out_path, states, render_with = None, coloring = None):
     if render_with is None:
