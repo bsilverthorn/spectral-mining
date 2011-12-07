@@ -1,4 +1,23 @@
-\section{\label{sec:scaling}Scaling to Larger Domains}
+\section{\label{sec:scaling}Scaling to 9x9 Go}
+
+Go has long been a challenge domain for AI 
+\citep{cai2007computer,bouzy2001computer}, with the best computer
+Go players only recently able to play at near-professional level. While 
+grandmaster play by computers has been achieved in the challenging games of 
+Chess and Backgammon, the approaches used to address these domains have proven
+ineffective for Go. The high branching factor of the Go game tree yields \
+classical planning techniques like minimax search intractable. Furthermore, it 
+has proven difficult to hand-craft a good evaluation heuristic for the state 
+of a board as has be done with other board games. 
+
+Despite its challenges, Go has many appealing properties for studying
+representation discovery in a large domain. It is a discrete game with simple,
+deterministic rules, making simulation cheap and effective. Also, the best 
+handcrafted programs have only proven moderately successful, making automatic 
+methods for generating a representation appealing.
+
+Go programs have become much stronger recently with the introduction of 
+Monte Carlo Tree Search algorithms to the field.
 
 % XXX figure for sampled paths in TTT gameplay graph
 
