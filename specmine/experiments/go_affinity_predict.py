@@ -42,6 +42,8 @@ def run_clustered_graph_features(map_name, evs_per_cluster, vectors_ND, affinity
     if evs_per_cluster > 0:
         basis, vectors_ND = specmine.spectral.clustered_laplacian_basis(affinity_NN, num_clusters, \
                                                     evs_per_cluster, vectors_ND, method = "arpack")
+
+        logger.info("number of laplacian features: %i", basis.shape[1])
         
         all_features_NF = numpy.hstack((vectors_ND, basis))
     else:
@@ -99,14 +101,19 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
     logger.info("number of value samples total: %i", len(value_list))
  
     def yield_jobs():
-        min_samples = 20000
-        max_samples = 35000
-        step_samples = 5000
-        num_clusters = 10
-
+        min_samples =  20000
+        max_samples = 260000
+        step_samples = 60000
+        cluster_size = 10000 #average
+ 
         shuffled_values = sorted(value_list, key = lambda _: numpy.random.rand()) 
 
         for samples in xrange(min_samples,max_samples,step_samples):
+
+            num_clusters = int(round(samples/cluster_size))
+    
+            logger.info("number of clusters used: %i", num_clusters)
+        
             # randomly sample subset of games 
             value_dict = dict(shuffled_values[:samples])
     
@@ -124,7 +131,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
             avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
             affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors, sigma = 1e6)
 
-            for B in numpy.r_[0:300:30j].round().astype(int):
+            for B in numpy.r_[0:300:10j].round().astype(int):
                 if interpolate:
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
                     yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
