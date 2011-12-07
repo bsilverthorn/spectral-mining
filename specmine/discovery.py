@@ -13,10 +13,13 @@ class TabularFeatureMap(object):
         u, s, v = numpy.linalg.svd(basis_matrix)
         rank = numpy.sum(s > 1e-10)
         print 'rank of basis: ', rank
-        assert rank == basis_matrix.shape[1]
+        print 'full rank: ', basis_matrix.shape[1]
+        #assert rank == basis_matrix.shape[1]
+
         self.index = index
 
     def __getitem__(self, state):
+        #print 'state: ',state
         return self.basis[self.index[state], :]
 
 class RandomFeatureMap(TabularFeatureMap):
@@ -28,6 +31,24 @@ class RandomFeatureMap(TabularFeatureMap):
             numpy.random.random((len(index), count)),
             index,
             )
+
+class InterpolationFeatureMap(object):
+    """Map states to features via nearest-neighbor regression."""
+
+    def __init__(self, basis, affinity_vectors, affinity_map, k = 8):
+        self.basis = basis
+        self.affinity_vectors = affinity_vectors
+        self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)
+        self.affinity_map = affinity_map
+        self.k = k
+
+    def __getitem__(self, state):
+        affinity_vector = self.affinity_map(state)
+
+        (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
+
+        # simple nearest neighbor averaging
+        return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
 
 def adjacency_dict_to_matrix(adict):
     """
@@ -59,20 +80,42 @@ def adjacency_dict_to_matrix(adict):
         index,
         )
 
-def affinity_graph(vectors_ND, neighbors):
+def adjacency_matrix_to_dict(amatrix, rindex = None, make_directed = True):
+    """Create an affinity dict from a sparse adjacency matrix."""
+
+    (N, _) = amatrix.shape
+    adict = {}
+
+    if rindex is None:
+        rindex = numpy.arange(N)
+
+    for n in xrange(N):
+        (_, nonzero) = amatrix.getrow(n).nonzero()
+
+        if make_directed:
+            neighbors = [rindex[m] for m in nonzero if m > n]
+        else:
+            neighbors = [rindex[m] for m in nonzero if m != n]
+
+        adict[rindex[n]] = neighbors
+
+    return adict
+
+def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
     """Build the k-NN affinity graph from state feature vectors."""
 
     G = neighbors
     (N, D) = vectors_ND.shape
 
-    # find nearest neighbors
-    logger.info("finding nearest neighbors in affinity space")
+    logger.info("building balltree in %i-dimensional affinity space", D)
 
     tree = sklearn.neighbors.BallTree(vectors_ND)
+
+    logger.info("retrieving %i nearest neighbors", G)
+
     (neighbor_distances_NG, neighbor_indices_NG) = tree.query(vectors_ND, k = G)
 
-    # construct the affinity graph
-    logger.info("constructing the affinity graph")
+    logger.info("constructing the affinity graph over %i vertices", N)
 
     coo_is = []
     coo_js = []
@@ -87,9 +130,13 @@ def affinity_graph(vectors_ND, neighbors):
             coo_distances.append(neighbor_distances_NG[n, g])
 
     coo_distances = numpy.array(2 * coo_distances)
-    coo_affinities = numpy.exp(-coo_distances**2 / 2.0)
+    coo_affinities = numpy.exp(-coo_distances**2 / (2.0 * sigma))
 
-    return scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
+    adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
+
+    logger.info("affinity graph has %i unique edges", coo_affinities.shape[0])
+
+    return adjacency
 
     ## cluster states
     #logger.info("aliasing states with spectral clustering")

@@ -70,25 +70,41 @@ class TicTacToeDomain(object):
 
             return (board.make_move(-1 * self._player, opponent_i, opponent_j), self._player)
 
+    def outcomes_of(self, state, (i, j)):
+        (board, player) = state
+
+        if player == self._player:
+            yield ((board.make_move(self._player, i, j), -1 * self._player), 1.0)
+        else:
+            assert i is None and j is None
+            assert isinstance(self._opponent, specmine.rl.RandomPolicy)
+
+            moves = []
+
+            for oi in xrange(3):
+                for oj in xrange(3):
+                    if board._grid[oi, oj] == 0:
+                        moves.append((oi, oj))
+
+            p = 1.0 / len(moves)
+
+            for (oi, oj) in moves:
+                next_state = (board.make_move(-1 * self._player, oi, oj), self._player)
+
+                yield (next_state, p)
+
     def check_end(self, (board, player)):
         # XXX alternatively, terminal states are simply states with no actions
 
         return board.check_end()
 
 class GoDomain(object):
-    states = None # should be an iterator through all possible states or just 
-                  # sampled ones?
-
     def __init__(self, player = 1, opponent = None, size = 9):
         self._player = player
         self._opponent = opponent
         self.size = size
         self.board = specmine.go.BoardState()
-
-#        if GoDomain.states is None:
-#            GoDomain.states = specmine.go.load_adjacency_dict() # TODO - implement this method
-
-        self.initial_state = (specmine.go.BoardState(), 1)
+        self.initial_state = (1,specmine.go.BoardState())
 
     def actions_in(self, player):
         ''' return the available actions for player for current board config '''
@@ -96,7 +112,7 @@ class GoDomain(object):
             if player == self._player:
                 for i in xrange(self.size):
                     for j in xrange(self.size):
-                        if gge.gg_is_legal(player, (i,j)):
+                        if gge.gg_is_legal(player, i, j):
                             yield (i, j)
 
         yield (None, None)
@@ -109,8 +125,7 @@ class GoDomain(object):
         else:
             return 0
 
-    def outcome_of(self, (player,board), (i, j)):
-        
+    def outcome_of(self, (player, board), (i, j)):
         if player == self._player:
             self.board = board.make_move(player, i, j) 
             return (self._player*-1, self.board.copy())
@@ -118,10 +133,11 @@ class GoDomain(object):
         else:
             assert i is None and j is None
 
-            (opponent_i, opponent_j) = self._opponent[state]
+            (opponent_i, opponent_j) = self._opponent[(player, board)]
             self.board = board.make_move(player, opponent_i, opponent_j) 
 
             return (self._player, self.board.copy())
 
     def check_end(self, (player,board)):
         return board.check_end()
+

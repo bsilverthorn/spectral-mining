@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
+import pyamg
 import specmine
 
 logger = specmine.get_logger(__name__)
@@ -77,39 +78,89 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-# XXX use pyamg to compute the basis?
-
-def laplacian_basis(W, k, which = "SM", sparse = True):
+def laplacian_basis(W, k, largest = False, method = "arpack"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
-    logger.info("solving for %i eigenvectors of the Laplacian", k)
+    logger.info(
+        "solving for %i %s eigenvector(s) of the Laplacian (using %s)",
+        k,
+        "largest" if largest else "smallest",
+        method,)
 
     L = laplacian_operator(W) 
 
-    if sparse:
-        spL = scipy.sparse.csr_matrix(L)
-        
+    assert isinstance(L, scipy.sparse.csr_matrix)
+    assert k > 0
+    assert k < L.shape[0]
+
+    if method == "amg":
+        solver = pyamg.smoothed_aggregation_solver(L)
+        pre = solver.aspreconditioner()
+        initial = scipy.rand(L.shape[0], k)
+        (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-8, largest = largest)
+    elif method == "arpack":
+        if largest:
+            which = "LM"
+        else:
+            which = "SM"
+
         if hasattr(scipy.sparse.linalg, "eigsh"):
-            (eig_lam, eig_vec) = scipy.sparse.linalg.eigsh(spL, k, which = which)
+            (_, basis) = scipy.sparse.linalg.eigsh(L, k, which = which)
         else: 
-            (eig_lam, eig_vec) = scipy.sparse.linalg.eigen_symmetric(spL, k, which = which)
-        
+            (_, basis) = scipy.sparse.linalg.eigen_symmetric(L, k, which = which)
+    elif method == "dense":
+        (_, full_basis) = np.linalg.eigh(L.todense())
+
+        basis = full_basis[:, :k]
     else:
-        if scipy.sparse.issparse(L):
-            L = L.todense()
+        raise ValueError("unrecognized eigenvector method name")
 
-        (eig_lam,eig_vec) = np.linalg.eigh(L)
+    assert basis.shape[1] == k
 
-    sort_inds = eig_lam.argsort()
-    eig_lam = eig_lam[sort_inds]
-    phi = eig_vec[:, sort_inds]
-    phi = phi[:, :k]
+    return basis
 
-    return phi
+def clustered_laplacian_basis(W, num_clusters, num_evs, affinity_vectors, method = "arpack"):
+    ''' cluster the adjacency graph before solving for laplacian eigenvectors on the subgraph 
+        reorders the indices of the graph, intended for use with interpolation feature map'''
+    
+    # adjacency graph must have integer values
+    A = scipy.sparse.csr_matrix(W); A.data[:] = 1
+    A.data = np.array(A.data,dtype=int)
+  
+    assert isinstance(A, scipy.sparse.csr_matrix)
+    assert num_clusters < A.shape[0]
+
+    clustering = specmine.graclus.cluster(A,num_clusters)
+    
+    B = np.zeros((A.shape[0],num_clusters*num_evs))
+    lef = 0; bot = 0
+    reordering = np.array([],dtype=int)
+    for c in xrange(num_clusters):
+
+        order = (clustering == c).nonzero()[0]
+        reordering = np.hstack((reordering,order))
+
+        #cluster_indxs = clustering == c
+        a = A[order,:]
+        a = a[:,order]
+        b = laplacian_basis(a, num_evs, method = method)
+        B[bot:bot+b.shape[0],lef:lef+b.shape[1]] = b
+        bot = bot + b.shape[0]
+        lef = lef + b.shape[1]
+    
+    reord_aff_vec = affinity_vectors[reordering,:]
+    #B = scipy.sparse.csr_matrix(B) 
+    assert bot == W.shape[0]
+    assert lef == num_clusters*num_evs
+    assert affinity_vectors.shape == reord_aff_vec.shape
+    assert B.shape[0] == reord_aff_vec.shape[0]
+    
+    return B, reord_aff_vec
+    
 
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     ''' build diffusion wavelet basis matrix with k bases from weighted adjacency matrix W '''
-    T = spectral.diffusion_operator(W)
+    T = specmine.spectral.diffusion_operator(W)
     n = T.shape[0] # number of states in complete space
     phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 

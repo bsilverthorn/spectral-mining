@@ -49,6 +49,8 @@ def write_graph(out_file, adjacency):
 def cluster(adjacency, clusters, extra_options = ()):
     """Cluster an undirected graph with graclus."""
 
+    clusters = int(clusters)
+
     with mkdtemp_scoped("graclus.") as working_root:
         graph_path = os.path.join(working_root, "graph")
 
@@ -58,7 +60,8 @@ def cluster(adjacency, clusters, extra_options = ()):
             graph_file.flush()
 
             command = [
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "../graclus1.2/graclus")),
+                #os.path.abspath(os.path.join(os.path.dirname(__file__), "../graclus1.2/graclus")),
+                "/v/filer4b/v20q001/ccor/documents/rep_discov/spectral-mining/graclus1.2/graclus",
                 os.path.abspath(graph_file.name),
                 str(clusters),
                 ]
