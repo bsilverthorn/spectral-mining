@@ -61,21 +61,28 @@ This approach gives good results (TODO is this true? mispl), speeding up the
 cost of computing the features on a large graph while giving similar performance
 to the full computation. However, we experienced a heavy computational bottleneck 
 when trying to create the full graph; our ball-tree implementation was not able 
-to perform nearest neighbor queries for sample sets larger than $10^{5}. 
+to perform nearest neighbor queries for sample sets larger than $10^{5}$. This 
+may be mitigated by performing the clustering in the affinity space directly using
+an iterative algorithm like k-means.
 
+\subsection{Experiments}
 
+To evaluate the performance of our feature generation approach in the large 
+state space of Go, we ran the same procedure applied to Tic-Tac-Toe to fit the 
+generated features to true board values using ridge regression. As it is 
+intractable to evalutate the true value function, we performed monte-carlo 
+estimates using Fuego \citep{Enzenberger2010Fuego} for the target values. 
+To analyze the effects of sampling on performance, we varied the sample set
+size used to learn the features. The results for both the on-graph values and 
+the held out off-graph values are shown in \cref{fig:go.regression}. 
 
+As with TicTacToe, we see that the generated features provide good generalization
+as compared to the baseline random features. It is interesting to note, however, 
+that with interpolation smoothing on the off-graph samples, the random features
+were able to generalize a little. An increase in sample size seems 
+to increase performance up to a point, but the primary constraint appears to 
+be number of eigenvalues that can be computed. 
 
-% XXX figure for sampled paths in TTT gameplay graph
-
-XXX
-
-\begin{figure}
-\begin{center}
-%\includegraphics[width=\textwidth]{results/go_graph.pdf}
-\end{center}
-\caption{\label{fig:go.hairball}XXX}
-\end{figure}
 
 \begin{figure}
 <<go.regression,fig=T,height=2.5>>=

@@ -8,12 +8,15 @@ most promising.
 First, this paper has evaluated only the most straightforward vector-space
 mapping for constructing the affinity graph. Using existing, domain-specific
 heuristic features to measure state similarity could improve the quality of
-the resulting graph.
+the resulting graph. Similarly, there is an opportunity to use learning to 
+optimize the affinity space mapping.
 
 Second, alternative approaches to scaling could be explored. Whether
 partitioning should occur on a graph representation or in the initial vector
 space, for example, is an open question. An efficient approximate method for
-constructing the nearest-neighbor graph would also be useful.
+constructing the nearest-neighbor graph would also be useful. Additionally, the computational and performance tradeoffs between number of 
+clusters, number of eigenvectors solved for per cluster, and sample size should
+be further explored.
 
 Third, value-function approximation may be most useful working alongside
 existing effective Monte Carlo methods for Go: the value function can provide
@@ -21,7 +24,7 @@ high-level strategic insight gleaned from expert examples, as a complement to
 the precise tactical judgments of MCTS. An interesting avenue for future work
 would develop such a hybrid.
 
-Overall, the direction of future work is toward refining the feature discovery
-pipeline outlined in this paper, and toward maximizing the value of applying
-it.
+Overall, the direction of future work is toward refining 
+the feature discovery pipeline outlined in this paper, and toward maximizing the
+value of applying it. 
 
