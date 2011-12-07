@@ -18,12 +18,21 @@ def main(out_path, games_path, neighbors = 8, workers = 0):
     with specmine.util.openz(games_path) as games_file:
         games = pickle.load(games_file).values()
 
-    boards = specmine.go.boards_from_games(games)
+    boards = specmine.go.boards_from_games(games, samples = 25000)
     avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
-    affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors = neighbors)
-    B = 32
-    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = B)
-    feature_map = specmine.discovery.InterpolationFeatureMap(basis_NB, avectors_ND, specmine.go.board_to_affinity)
+    affinity_NN = \
+        specmine.discovery.affinity_graph(
+            avectors_ND,
+            neighbors = neighbors,
+            sigma = 1e6,
+            )
+    basis_NB = specmine.spectral.laplacian_basis(affinity_NN, k = 32)
+    feature_map = \
+        specmine.discovery.InterpolationFeatureMap(
+            basis_NB,
+            avectors_ND,
+            specmine.go.board_to_affinity,
+            )
     rows = [["eigenvector", "x", "y", "value"]]
 
     for x in xrange(9):
@@ -34,7 +43,7 @@ def main(out_path, games_path, neighbors = 8, workers = 0):
 
             features = feature_map[specmine.go.BoardState(grid)]
 
-            for i in xrange(B):
+            for i in xrange(features.shape[0]):
                 rows.append([i, x, y, features[i]])
 
     with specmine.util.openz(out_path, "wb") as out_file:
