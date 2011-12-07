@@ -39,33 +39,35 @@ This approach results in around 1.5 million weights and suffers from enumerating
 too many irrelevant features without being able to represent the global aspects of 
 the board. 
 
-This work aims to adress these shortcomings by using representation discovery, 
-rather than enumeration, to generate useful features for a global value function. 
-To make the strongest Go player, such a value function may be best utilized 
-alongside a UCT-style program as a heuristic for search or to initialize the 
-values of leaves of the MC search tree. Such combinations of online and offline 
-learning for Go are discussed in \citet{gelly2007combining}. In this work, we 
-focus on the feature generation in large domains using 9x9 Go as a test-bed. 
-Improvements for optimizing Go performance are left for future work.
+This work aims to adress these shortcomings by using spectral techniques for 
+representation discovery, rather than enumeration, to generate useful features 
+for a global value function. To make the strongest Go player, such a value 
+function may be best utilized alongside a UCT-style program as a heuristic for 
+search or to initialize the values of leaves of the MC search tree. 
+Such combinations of online and offline learning for Go are discussed in 
+\citet{gelly2007combining}. In this work, we focus on the feature generation in
+large domains using 9x9 Go as a test-bed. Improvements for optimizing Go 
+performance are left for future work.
 
 \subsection{Scaling Challenges}
 
-The most significant of challenge to scaling is the cost of computing the desired 
+The most significant challenge to scaling is the cost of computing the desired 
 number of eigenvectors of the graph Laplacian. As our approach depends on 
 interpolating from known boards to new states, a good deal of coverage (a large
 sample set) is necessary to span the relevant state space. Simply putting all 
 samples in one large graph would result in an intractable eigenvalue computation 
-for large state spaces. Using an approach similar to \citet{savas2011clustered}, 
-we cluster the full graph using graclus \citep{Dhillon07weightedgraph} and then 
-find the eigenvectors of the graph Laplacian on each cluster's subgraph. 
+for large state spaces. To address this issue, we use an approach similar to 
+\citet{savas2011clustered}, we cluster the full graph using graclus 
+\citep{Dhillon07weightedgraph} and then find the eigenvectors of the graph 
+Laplacian on each cluster's subgraph. 
 
-This approach gives good results , speeding up the 
-cost of computing the features on a large graph while giving similar performance
-to the full computation. However, we experienced a heavy computational bottleneck 
-when trying to create the full graph; our ball-tree implementation was not able 
-to perform nearest neighbor queries for sample sets larger than $10^{5}$. This 
-may be mitigated by performing the clustering in the affinity space directly using
-an iterative algorithm like k-means.
+This approach gives good results, speeding up the cost of computing the features
+on a large graph while giving similar performance to the full computation. 
+However, we experienced a heavy computational bottleneck when trying to create 
+the full graph; our ball-tree implementation was not able to perform nearest 
+neighbor queries for sample sets larger than $10^{5}$. This may be mitigated by 
+performing the clustering in the affinity space directly using an iterative 
+algorithm like k-means.
 
 \subsection{Experiments}
 
@@ -79,9 +81,7 @@ size used to learn the features. The results for both the on-graph values and
 the held out off-graph values are shown in \cref{fig:go.regression}. 
 
 As with TicTacToe, we see that the generated features provide good generalization
-as compared to the baseline random features. It is interesting to note, however, 
-that with interpolation smoothing on the off-graph samples, the random features
-were able to generalize a little. An increase in sample size seems 
+as compared to the baseline random features. An increase in sample size seems 
 to increase performance up to a point, but the primary constraint appears to 
 be number of eigenvalues that can be computed. 
 
