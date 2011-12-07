@@ -78,7 +78,8 @@ def expand_wavelets(phi_dict, psi_dict, k, n):
     # add the constant vector and return 
     return np.hstack((np.ones((n,1))/float(n),basis[:,:k-1]))
 
-def laplacian_basis(W, k, largest = False, method = "amg"):
+
+def laplacian_basis(W, k, largest = False, method = "arpack"):
     """Build laplacian basis matrix with k bases from weighted adjacency matrix W."""
 
     logger.info(
@@ -119,9 +120,48 @@ def laplacian_basis(W, k, largest = False, method = "amg"):
 
     return basis
 
+def clustered_laplacian_basis(W, num_clusters, num_evs, affinity_vectors, method = "arpack"):
+    ''' cluster the adjacency graph before solving for laplacian eigenvectors on the subgraph 
+        reorders the indices of the graph, intended for use with interpolation feature map'''
+    
+    # adjacency graph must have integer values
+    A = scipy.sparse.csr_matrix(W); A.data[:] = 1
+    A.data = np.array(A.data,dtype=int)
+  
+    assert isinstance(A, scipy.sparse.csr_matrix)
+    assert num_clusters < A.shape[0]
+
+    clustering = specmine.graclus.cluster(A,num_clusters)
+    
+    B = np.zeros((A.shape[0],num_clusters*num_evs))
+    lef = 0; bot = 0
+    reordering = np.array([],dtype=int)
+    for c in xrange(num_clusters):
+
+        order = (clustering == c).nonzero()[0]
+        reordering = np.hstack((reordering,order))
+
+        #cluster_indxs = clustering == c
+        a = A[order,:]
+        a = a[:,order]
+        b = laplacian_basis(a, num_evs, method = method)
+        B[bot:bot+b.shape[0],lef:lef+b.shape[1]] = b
+        bot = bot + b.shape[0]
+        lef = lef + b.shape[1]
+    
+    reord_aff_vec = affinity_vectors[reordering,:]
+    #B = scipy.sparse.csr_matrix(B) 
+    assert bot == W.shape[0]
+    assert lef == num_clusters*num_evs
+    assert affinity_vectors.shape == reord_aff_vec.shape
+    assert B.shape[0] == reord_aff_vec.shape[0]
+    
+    return B, reord_aff_vec
+    
+
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     ''' build diffusion wavelet basis matrix with k bases from weighted adjacency matrix W '''
-    T = spectral.diffusion_operator(W)
+    T = specmine.spectral.diffusion_operator(W)
     n = T.shape[0] # number of states in complete space
     phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 

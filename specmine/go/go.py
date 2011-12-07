@@ -109,7 +109,8 @@ def convert_sgf_moves(moves):
 def read_sgf_game_moves(sgf_file, min_moves=10, rating_thresh=1800):
     ''' check if sgf has enough moves and minimum rating, etc 
     return move generator if so'''
-
+    
+    add = re.compile("A[W|B]") # check for added pieces prior to first move
     size = re.compile("SZ\[([0-9]+)\]") # check board size
     hand = re.compile("HA\[([0-9]+)\]") # and handicap
     wrating = re.compile("WR\[([0-9]+)\]")
@@ -150,6 +151,13 @@ def read_sgf_game_moves(sgf_file, min_moves=10, rating_thresh=1800):
             logger.debug('SGF file has nonzero handicap')
 
             return None
+    
+    #check for pieces before first move
+    match = add.findall(sgf_string)
+    if len(match) > 0:
+        logger.debug('SGF file has pieces placed before start of game')
+        return None
+
 
     # check that both players have rating above the threshold 
     match1 = wrating.findall(sgf_string)
