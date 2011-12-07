@@ -58,7 +58,7 @@ partitioning the other room, and the fifth eigenvector separates the doorway
 from the corners of the room.}
 \end{figure}
 
-\section{Tic-Tac-Toe Domain}
+\section{\label{sec:ttt}Tic-Tac-Toe Domain}
 
 Spectral methods are known to perform well on small, spatial environments like
 the two-room domain. The central contribution of this paper is their extension
@@ -139,15 +139,39 @@ recovered the game's symmetry over rotated board states.}
 
 \subsection{Mining a State Affinity Graph}
 
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{results/ttt_graph.sampled.pdf}
+\end{center}
+\caption{\label{fig:ttt.sampled.graph}An incomplete TTT gameplay graph
+constructed from sampled games, i.e., from repeated stochastic walks over the
+complete gameplay graph discussed in \cref{sec:ttt}. Although some edges cross
+between game trajectories, most are isolated, and the structure of the game is
+not evident. This problem becomes more pronounced in trajectories sampled from
+games with higher-dimensional state representations, such as Go. More informed
+graph construction is required to apply spectral analysis to sampled game
+trajectories, motivating the use of the affinity graph.}
+\end{figure}
+
 A complete graph represention of the rules of a game, a \emph{gameplay graph},
 is clearly a rich source of information from which to extract feature
-information. The graph representation of a nontrivial game, however, is often
-intractably large. In order to scale to larger games, we will need to construct
-our graph representation differently.
+information. The number of game states in most board games, however, increases
+combinatorially with the size of the board. The set of all possible Go board
+configurations, for example, becomes intractably large even in small 9-by-9
+games. To scale to larger games, we need to construct our graph representation
+differently.
 
-If we can obtain a measure of the similarity or ``affinity'' between arbitrary
-game states, that affinity function could be used to build an alternative graph
-representation of a game. This representation, which we call an \emph{affinity
+This work therefore moves toward the case where we do not have direct access to
+the full state space, and instead must consider only sample trajectories of
+games already played. These trajectories helpfully indicate important regions
+of the game space, but as \cref{fig:ttt.sampled.graph} illustrates, they are
+often also disjoint; they form long, isolated chains that may not provide a
+sufficiently rich topology to apply spectral representation-discovery
+techniques directly.
+
+Our approach uses a measure of the similarity or ``affinity'' between arbitrary
+game states to build an alternative graph representation of a game, one that
+joins these chains. This representation, which we call an \emph{affinity
 graph}, represents information differently than the gameplay graph, but may
 include enough information to allow useful features to be extracted.
 
