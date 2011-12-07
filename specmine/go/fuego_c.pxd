@@ -67,6 +67,8 @@ cdef extern from "GoBoard.h":
         void Play(SgPoint point)
         void Play(SgPoint point, SgBlackWhite player)
         bint LastMoveInfo(GoMoveInfoFlag flag)
+        void TakeSnapshot()
+        void RestoreSnapshot()
 
 cdef extern from "GoBoardUtil.h" namespace "GoBoardUtil":
     float ScoreSimpleEndPosition(GoBoard& board, float komi, bint no_check) except +

@@ -13,12 +13,11 @@ def find_values(name, game):
     logger.info("evaluating all %i positions in game %s", M, name)
 
     for m in xrange(M):
-        state = game.get_state(m)
-        value = specmine.go.estimate_value(state, 1)
+        value = specmine.go.estimate_value(game.moves[:m + 1])
 
         values.append(value)
 
-        logger.info("value is %.2f of:\n%s", value, state.board.grid)
+        logger.info("%s grid %i, below, has value %f:\n%s", name, m, value, game.grids[m])
 
     return numpy.array(values)
 
@@ -40,7 +39,7 @@ def main(out_path, games_path, name = None, sample = None, workers = 0):
             names = sorted(games, key = lambda _: random.random())[:sample]
     else:
         names = [name]
-    
+
     def yield_jobs():
         logger.info("distributing jobs for %i games", len(names))
 

@@ -67,21 +67,26 @@ def test_fuego_random_player_basic():
     nose.tools.assert_not_equal(moves_a, moves_b)
 
 def test_fuego_board_score_simple_endgame():
-    board = specmine.go.FuegoBoard()
-    player = specmine.go.FuegoRandomPlayer(board)
-    next_player = specmine.go.FuegoCapturePlayer(board)
+    scores = []
 
-    while True:
-        move = player.generate_move()
+    for i in xrange(64):
+        board = specmine.go.FuegoBoard()
+        player = specmine.go.FuegoRandomPlayer(board)
+        next_player = specmine.go.FuegoCapturePlayer(board)
 
-        (player, next_player) = (next_player, player)
+        while True:
+            move = player.generate_move()
 
-        if move is None:
-            break
-        else:
-            (row, column) = move
+            (player, next_player) = (next_player, player)
 
-            board.play(row, column)
+            if move is None:
+                break
+            else:
+                (row, column) = move
 
-    print board.score_simple_endgame()
+                board.play(row, column)
+
+        scores.append(board.score_simple_endgame())
+
+    nose.tools.assert_true(numpy.mean(scores) < 0.0)
 
