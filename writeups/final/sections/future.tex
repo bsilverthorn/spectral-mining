@@ -1,39 +1,27 @@
 \section{Future Work}
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=\textwidth]{results/ttt_graph.sampled.pdf}
-\end{center}
-\caption{\label{fig:ttt.sampled.graph}An incomplete TTT gameplay graph
-constructed from sampled games, i.e., from repeated stochastic walks over the
-complete gameplay graph of \cref{fig:ttt.gameplay.graph}. Although some edges
-cross between game trajectories, most are isolated, and the rich topology of
-the game is not evident. This problem is likely to be even more pronounced in
-samples from a more complex game. If future work is to apply spectral analysis
-to sampled game trajectories, more informed graph construction must be
-performed.}
-\end{figure}
+This paper has laid down the outline of a general approach to representation
+discovery in board games. Many areas of this outline, however, deserve to be
+further refined and explored. Broadly, three areas of possible future work seem
+most promising.
 
-The number of game states in most board games increases combinatorially with
-the size of the board. The set of all possible Go board configurations, for
-example, becomes intractably large even on only a small 9-by-9 board.
+First, this paper has evaluated only the most straightforward vector-space
+mapping for constructing the affinity graph. Using existing, domain-specific
+heuristic features to measure state similarity could improve the quality of
+the resulting graph.
 
-This work therefore moves toward the case where we do not have direct access to
-the full state space, and instead must consider only sample trajectories of
-games already played. These trajectories are informative because they indicate
-important regions of the game space, but as \cref{fig:ttt.sampled.graph}
-illustrates, they are often also disjoint; they form long, isolated chains that
-may not provide a sufficiently rich topology to apply spectral
-representation-discovery techniques directly. State affinity information may
-allow us to join these chains---perhaps by aliasing states with an existing
-clustering method.
+Second, alternative approaches to scaling could be explored. Whether
+partitioning should occur on a graph representation or in the initial vector
+space, for example, is an open question. An efficient approximate method for
+constructing the nearest-neighbor graph would also be useful.
 
-We must also work toward approaches to apply when finding eigenvalues is
-computationally infeasible even on the sampled Laplacian matrix. Clustering as
-a preprocessing step to reduce the size of the graph may be a viable remedy to
-this problem as well.
+Third, value-function approximation may be most useful working alongside
+existing effective Monte Carlo methods for Go: the value function can provide
+high-level strategic insight gleaned from expert examples, as a complement to
+the precise tactical judgments of MCTS. An interesting avenue for future work
+would develop such a hybrid.
 
-For both statistical and computational reasons, then, the development and use
-of effective state aliasing could be an important ingredient in scaling to more
-challenging domains. It will be our primary focus in future work.
+Overall, the direction of future work is toward refining the feature discovery
+pipeline outlined in this paper, and toward maximizing the value of applying
+it.
 
