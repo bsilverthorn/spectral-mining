@@ -95,8 +95,7 @@ center moves.
 It should be noted that we are discarding some information: Tic-Tac-Toe is
 fundamentally a directed game, but we consider only the undirected connections
 between states in forming the adjacency matrix. This simplification is
-convenient, since a symmetric matrix is necessary for computing the
-eigenvectors, but alternatives such as the directed graph Laplacian
+convenient, but alternatives such as the directed graph Laplacian
 \citep{chung2005laplacians} exist.
 
 %\begin{figure}
@@ -161,8 +160,8 @@ configurations, for example, becomes intractably large even in small 9-by-9
 games. To scale to larger games, we need to construct our graph representation
 differently.
 
-This work therefore moves toward the case where we do not have direct access to
-the full state space, and instead must consider only sample trajectories of
+This work therefore is concerned with the case where we do not have direct access
+to the full state space, and instead must consider only sample trajectories of
 games already played. These trajectories helpfully indicate important regions
 of the game space, but as \cref{fig:ttt.sampled.graph} illustrates, they are
 often also disjoint; they form long, isolated chains that may not provide a
@@ -212,8 +211,7 @@ is used to convert distances into affinities when necessary.
 
 Given an affinity function $a(x, z)$, a graph can be constructed by placing
 edges from each game state to its $k$ most similar game states, weighting each
-edge by the affinity between the two states. \Cref{fig:ttt.affinity.graph}
-shows such a graph of TTT game states. While less clean than the gameplay
+edge by the affinity between the two states. While less clean than the gameplay
 graph, it nonetheless appears to encode some of the same information.
 
 While constructing an affinity graph requires defining a simple state feature
@@ -229,12 +227,12 @@ states, with utility given by the fixed point of the deterministic Bellman
 equation \citep{Bellman1957Dynamic}
 %
 \begin{equation}
-V(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
+V^{*}(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
 \end{equation}
 %
-where $V(x)$ is the value of state $x$, $\mathcal{A}_x$ is the set of possible
-actions in $x$, $R(x)$ is the reward given by transitioning to $x$, and $T(x,
-a)$ is the state that results from taking action $a$ in $x$.
+where $V^{*}(x)$ is the value of state $x$ uder the optimal policy, $\mathcal{A}_x$
+is the set of possible actions in $x$, $R(x)$ is the reward given by transitioning
+to $x$, and $T(x,a)$ is the state that results from taking action $a$ in $x$.
 
 \Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
 random features to predict the values of TTT states. This experiment proceeds by
