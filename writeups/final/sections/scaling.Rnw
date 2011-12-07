@@ -1,0 +1,121 @@
+\SweaveOpts{echo=F,cache=T,external=T}
+
+<<cache=F>>=
+library(ggplot2)
+
+source("../writeup_base.R")
+@
+
+\section{\label{sec:scaling}Scaling to 9x9 Go}
+
+Go has long been a challenge domain for AI 
+\citep{cai2007computer,bouzy2001computer}, with the best computer
+Go players only recently able to play at near-professional level. While 
+grandmaster play by computers has been achieved in the challenging games of 
+Chess and Backgammon, the approaches used to address these domains have proven
+ineffective for Go. The high branching factor of the Go game tree yields \
+classical planning techniques like minimax search intractable. Furthermore, it 
+has proven difficult to hand-craft a good evaluation heuristic for the state 
+of a board as has be done with other board games. 
+
+Despite its challenges, Go has many appealing properties for studying
+representation discovery in a large domain. It is a discrete game with simple,
+deterministic rules, making simulation cheap and effective. Also, the best 
+handcrafted programs have only proven moderately successful, making automatic 
+methods for generating a representation appealing.
+
+Go programs have become much stronger recently with the introduction of 
+Monte Carlo Tree Search (MCTS) algorithms to Go \citep{brügmann1993monte}, 
+particularly UCT, an MCTS variant using upper confidence bounds to direct 
+exploration \citep{gelly2006exploration}. However, these approaches start each 
+game with no domain knowledge and do not learn across games at all. 
+
+Attemps to learn a global value function using reinforcement learning has had
+some success, but the resulting policies do not perform well compared to 
+UCT-based players. In \cite{Silver2007Shape} they enumerated all $nxm$ templates
+up to size $3x3$ and then use Temporal Difference learning and self-play. this
+approach suffers from enumerating too many irrelevant features without being 
+able to adress the global aspects of the board. 
+
+This work aims to adress these shortcomings by using representation discovery, 
+rather than enumeration, to generate useful features for a global value function. 
+To make the strongest Go player, such a value function may be best utilized 
+alongside a UCT-style program as a heuristic for search or to initialize the 
+values of leaves of the MC search tree. Such combinations of online and offline 
+learning for Go are discussed in \cite{gelly2007combining}. In this work, we 
+focus on the feature generation in large domains using 9x9 Go as a test-bed. 
+Improvements for optimizing Go performance are left for future work.
+
+\subsection{Scaling Challenges}
+
+The most significant of challenge to scaling is the cost of computing the desired 
+number of eigenvectors of the graph Laplacian. As our approach depends on 
+interpolating from known boards to new states, a good deal of coverage (a large
+sample set) is necessary to span the relevant state space. Simply putting all 
+samples in one large graph would result in an intractable eigenvalue computation 
+for large state spaces. Using an approach similar to \cite{savas2011clustered}, 
+we cluster the full graph using graclus \citep{Dhillon07weightedgraph} and then 
+find the eigenvectors of the graph Laplacian on each cluster's subgraph. 
+
+This approach gives good results (TODO is this true? mispl), speeding up the 
+cost of computing the features on a large graph while giving similar performance
+to the full computation. However, we experienced a heavy computational bottleneck 
+when trying to create the full graph; our ball-tree implementation was not able 
+to perform nearest neighbor queries for sample sets larger than $10^{5}$. This 
+may be mitigated by performing the clustering in the affinity space directly using
+an iterative algorithm like k-means.
+
+\subsection{Experiments}
+
+To evaluate the performance of our feature generation approach in the large 
+state space of Go, we ran the same procedure applied to Tic-Tac-Toe to fit the 
+generated features to true board values using ridge regression. As it is 
+intractable to evalutate the true value function, we performed monte-carlo 
+estimates using Fuego \citep{Enzenberger2010Fuego} for the target values. 
+To analyze the effects of sampling on performance, we varied the sample set
+size used to learn the features. The results for both the on-graph values and 
+the held out off-graph values are shown in \cref{fig:go.regression}. 
+
+As with TicTacToe, we see that the generated features provide good generalization
+as compared to the baseline random features. It is interesting to note, however, 
+that with interpolation smoothing on the off-graph samples, the random features
+were able to generalize a little. An increase in sample size seems 
+to increase performance up to a point, but the primary constraint appears to 
+be number of eigenvalues that can be computed. 
+
+
+\begin{figure}
+<<go.regression,fig=T,height=2.5>>=
+data <- read.csv("../results/go_prediction.csv")
+data$provenance <-
+    factor(
+        data$provenance,
+        levels = c("on_graph", "off_graph"),
+        labels = c("On-Graph", "Off-Graph"))
+aesthetic <-
+    aes(features, score_mean, colour = map_name, shape = map_name, ymin = score_mean - score_variance, ymax = score_mean + score_variance)
+plot <-
+    ggplot(data[data$samples < 20000,], aesthetic) +
+    geom_point() +
+    geom_smooth(stat = "identity") +
+    facet_grid(provenance ~ samples) +
+    labs(x = "Number of Features", y = "Mean $R^2$", colour = "Feature Set", shape = "Feature Set")
+
+print(plot)
+@
+\caption{\label{fig:go.regression}The mean $R^2$ score of value function
+prediction versus the number of feature vectors added from the specified
+feature set, under $10$-fold cross validation using ridge regression ($\alpha =
+1.0$) in the Go domain. As in TTT, these features are added to the set of raw,
+flattened-grid features used to construct the affinity graph. Graphs of three
+different sizes are evaluated, and the test states are drawn either from the
+set of the graph vertices (``On-Graph'') or from a held-out set (``Off-Graph'')
+whose features are then computed by linearly interpolating those of their $8$
+nearest neighbors. Interpolation has the effect of smoothing the graph, giving
+random features some minimal ability to generalize, but spectral features are
+clearly much more useful. The limiting factor appears to be the computational
+cost of computing additional eigenvectors.}
+\end{figure}
+
+% XXX cite Fuego
+
