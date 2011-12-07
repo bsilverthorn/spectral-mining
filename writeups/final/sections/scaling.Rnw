@@ -25,7 +25,46 @@ handcrafted programs have only proven moderately successful, making automatic
 methods for generating a representation appealing.
 
 Go programs have become much stronger recently with the introduction of 
-Monte Carlo Tree Search algorithms to the field.
+Monte Carlo Tree Search (MCTS) algorithms to Go \citep{brügmann1993monte}, 
+particularly UCT, an MCTS variant using upper confidence bounds to direct 
+exploration \citep{gelly2006exploration}. However, these approaches start each 
+game with no domain knowledge and do not learn across games at all. 
+
+Attemps to learn a global value function using reinforcement learning has had
+some success, but the resulting policies do not perform well compared to 
+UCT-based players. In \cite{Silver2007Shape} they enumerated all $nxm$ templates
+up to size $3x3$ and then use Temporal Difference learning and self-play. this
+approach suffers from enumerating too many irrelevant features without being 
+able to adress the global aspects of the board. 
+
+This work aims to adress these shortcomings by using representation discovery, 
+rather than enumeration, to generate useful features for a global value function. 
+To make the strongest Go player, such a value function may be best utilized 
+alongside a UCT-style program as a heuristic for search or to initialize the 
+values of leaves of the MC search tree. Such combinations of online and offline 
+learning for Go are discussed in \cite{gelly2007combining}. In this work, we 
+focus on the feature generation in large domains using 9x9 Go as a test-bed. 
+Improvements for optimizing Go performance are left for future work.
+
+\subsection{Scaling Challenges}
+
+The most significant of challenge to scaling is the cost of computing the desired 
+number of eigenvectors of the graph Laplacian. As our approach depends on 
+interpolating from known boards to new states, a good deal of coverage (a large
+sample set) is necessary to span the relevant state space. Simply putting all 
+samples in one large graph would result in an intractable eigenvalue computation 
+for large state spaces. Using an approach similar to \cite{savas2011clustered}, 
+we cluster the full graph using graclus \citep{Dhillon07weightedgraph} and then 
+find the eigenvectors of the graph Laplacian on each cluster's subgraph. 
+
+This approach gives good results (TODO is this true? mispl), speeding up the 
+cost of computing the features on a large graph while giving similar performance
+to the full computation. However, we experienced a heavy computational bottleneck 
+when trying to create the full graph; our ball-tree implementation was not able 
+to perform nearest neighbor queries for sample sets larger than $10^{5}. 
+
+
+
 
 % XXX figure for sampled paths in TTT gameplay graph
 
