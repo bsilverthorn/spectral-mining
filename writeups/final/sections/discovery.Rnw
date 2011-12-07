@@ -1,0 +1,302 @@
+\SweaveOpts{echo=F,cache=T,external=T}
+
+<<cache=F>>=
+library(ggplot2)
+
+source("../writeup_base.R")
+@
+
+\section{\label{sec:discovery}Grid World Domain}
+
+Existing work on spectral methods for feature discovery has focused on domains
+where the state graph has a simple spatial interpretation, and on grid worlds
+in particular. The standard two-room domain used by \citet{Mahadevan2006Value}
+is therefore a good first test of our implementation, and a good example of the
+value of spectral methods for uncovering useful representations of the state
+space.
+
+The domain consists of two (approximately) equally sized rooms connected by a
+single door. The adjacency graph is formed by connecting each grid point to its
+neighbors by an edge with weight one; the walls between the rooms are not
+included in the state space. Using this symmetric adjacency graph as $W$, we
+form the normalized graph Laplacian as described in \cref{eqn:norm.laplacian}.
+The first nine eigenvectors, ordered from the smallest to the largest
+eigenvalues, are shown in \cref{fig:grid.world.evs}. 
+
+Because the eigenvectors with the smallest eigenvalues correspond to the
+smoothest functions over the state space, when building a feature set, the
+Laplacian eigenvectors are often included in increasing order of their
+eigenvalues. This scheme starts with a constant vector and includes
+increasingly higher-frequency components in the representation. 
+
+As seen in \cref{fig:grid.world.evs}, the Laplacian eigenvectors form
+interesting functions across the rooms, capturing domain symmetries and
+adapting to the spatial connectivity of the states. Linear combinations of
+these functions are clearly capable of approximating smooth functions in the
+two-room domain. This visual example motivates our application of the
+eigenvectors of the graph Laplacian to game state graphs---although the richer
+topology of such graphs makes it difficult to predict its effectiveness.
+
+\begin{figure}
+<<grid.world.evs,fig=T,sanitize=T>>=
+data <- read.csv("../results/two_room_features.csv")
+plot <-
+    ggplot(data[data$eigen_num < 9,], aes(x, y, fill = value)) +
+    geom_tile() +
+    facet_wrap(~ eigen_num) +
+    scale_fill_continuous(low = "#000000", high = "#ffffff") +
+    labs(x = "X Position", y = "Y Position", fill = "Value")
+
+print(plot)
+@
+\caption{\label{fig:grid.world.evs}Visualization of the first nine eigenvectors
+of the graph Laplacian in the two-room domain. A vertical wall separates the
+two rooms with a single-space door connecting them in the middle. Note that the
+functions are adapted to the state space connectivity: the second eigenvector
+separates the two rooms, the third and fourth are near zero in one room while
+partitioning the other room, and the fifth eigenvector separates the doorway
+from the corners of the room.}
+\end{figure}
+
+\section{Tic-Tac-Toe Domain}
+
+With the goal of scaling up to larger board games, and Go in particular, we
+choose Tic-Tac-Toe (TTT) as our second domain. Its properties are similar to
+Go, including a tree-like state space and a discrete, grid-based board
+representation. It is also small enough that we can compute optimal play, solve
+for the optimal value function, and find the Laplacian eigenvalues on the full
+state-space graph.
+
+In the following sections, state rewards are defined as 1 for all winning
+states, -1 for all losing states, and 0 for draws. Similarly, the two players,
+as well as their pieces on the board, are denoted by 1 (for the first player)
+and -1 (for the second player), with 0 representing an empty space. $x_{ij}$
+refers to the configuration of board $x$ in the $i^{th}$ row and the $j^{th}$
+column.
+
+\subsection{Mining the Gameplay Graph}
+
+When choosing a graph with which to perform spectral analysis for
+representation discovery in TTT, the simplest and most obvious option is the
+adjacency graph for neighboring board states. We define the gameplay adjacency
+graph, displayed in \cref{fig:ttt.gameplay.graph}, as having weight-one edges
+between each board and all previous or subsequent boards.
+
+From the symmetric adjacency matrix representation of the graph, we formed the
+normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of
+the first nine eigenvectors is given in \cref{fig:ttt.evs}. Again,
+the eigenvectors capture much of domain's symmetry. They also provide useful
+features for evaluating gameplay, such as separating corner versus center
+moves. 
+
+It should be noted that we are discarding some information: Tic-Tac-Toe is
+fundamentally a directed game, but we consider only the undirected connections
+between states. This simplification is convenient, since a symmetric matrix is
+necessary for computing the eigenvectors, but alternatives such as the directed
+graph Laplacian \citep{chung2005laplacians} exist.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{results/ttt_graph.gameplay.pdf}
+\end{center}
+\caption{\label{fig:ttt.gameplay.graph}The complete TTT gameplay graph. Each
+vertex represents a board configuration, with the empty starting board at the
+center of the graph, and each edge represents a move. Green circles denote
+positions in which the first player is to move, as do blue squares for the
+second player. Every path from the root to a leaf represents a complete
+possible Tic-Tac-Toe game. While the tree-like structure is clear, the complete
+gameplay graph also includes many nodes in which multiple game paths intersect,
+i.e., it remains a DAG. This structural complexity will largely disappear in
+future work, when only sampled paths are available.}
+\end{figure}
+
+\begin{figure}
+<<ttt.evs,fig=T,sanitize=T,height=5.5>>=
+data <- read.csv("../results/ttt_move_evs.csv")
+plot <-
+    ggplot(data, aes(i, j, fill = value)) +
+    geom_tile() +
+    facet_wrap(~ number) +
+    scale_fill_continuous(low = "#000000", high = "#ffffff") +
+    opts(axis.text.x = theme_blank(), axis.text.y = theme_blank()) +
+    labs(x = "Columns", y = "Rows", fill = "Value")
+
+print(plot)
+@
+\caption{\label{fig:ttt.evs}Visualization of the nine smallest eigenvectors of
+the Laplacian of the TTT gameplay graph. Each grid is associated with an
+eigenvector, and each cell of the grid is filled according to the value of that
+eigenvector on the board state reached by the first player placing a mark in
+that cell on an empty board. The smallest eigenvector is a constant function,
+as expected, while the others capture useful aspects of the game rules;
+eigenvectors 1 and 2, and 6 and 7, for example, show that these features have
+recovered the game's symmetry over rotated board states.}
+\end{figure}
+
+\subsection{Mining a State Affinity Graph}
+
+A complete graph represention of the rules of a game, a \emph{gameplay graph}, is
+clearly a rich source of information from which to extract representation
+information. The graph representation of a nontrivial game, however, is often
+intractably large. Approaches to larger games will be explored in
+future work; for now, we will focus on alternative graph representations
+that may be useful in these contexts.
+
+If we can construct a measure of the similarity or ``affinity'' between
+arbitrary game states, that affinity function could be used to build an
+alternative graph representation of a game. This representation, an
+\emph{affinity graph}, represents information differently than the gameplay
+graph, but may include enough information to allow useful features to be
+extracted.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
+\end{center}
+\caption{\label{fig:ttt.affinity.graph}The complete TTT ``affinity'' graph: TTT
+board states connected by edges according to the Euclidean distance between
+flattened grid representations. The comparison to \cref{fig:ttt.gameplay.graph}
+(formatting is identical) shows that the affinity graph captures much of the
+same structure, but is significantly messier; for example, many more edges
+cross between distant nodes. In later experiments, we will see that spectral
+features acquired from this graph nonetheless form an effective state
+representation.}
+\end{figure}
+
+In Tic-Tac-Toe, one obvious distance function is the the Hamming
+distance between two board configurations
+%
+\begin{equation}
+d_{H}(x, z) = \sum_{i = 1}^3 \sum_{j = 1}^3 (1 - \delta_{x_{ij}z_{ij}})
+\end{equation}
+%
+where $\delta$ is the Kronecker delta. An ideal distance measure, however,
+would be compatible with methods such as $k$-means clustering, and with the
+balltree structure \citep{Omohundro89Five} employed for efficient graph
+construction. We therefore first map each board state to a vector of
+hand-selected state features, then use a vector norm to measure distance; we
+can approximate the Hamming distance by simply flattening our board
+representation into a vector, then using, e.g., Euclidean distance. The
+Gaussian kernel
+%
+\begin{equation}
+g(x) = \exp(-\frac{x^2}{2 \sigma^2})
+\end{equation}
+is used to convert distances into affinities when necessary.
+
+Given an affinity function $a(x, z)$, a graph can be constructed by placing
+edges from each game state to its $k$ most similar game states, weighting each
+edge by the affinity between the two states. \Cref{fig:ttt.affinity.graph}
+shows such a graph of TTT game states. While less clean than the gameplay
+graph, it nonetheless appears to encode some of the same information.
+
+While constructing an affinity graph requires defining a simple state feature
+set by hand, the following sections show that the features mined from this
+graph are much more useful than the features used to construct the graph.
+
+\subsection{\label{sec:eval.regression}Evaluation in Value Function Regression}
+
+The goal of this work is to construct features that are useful for linear
+approximations of the \emph{state value function}; that is, a linear
+combination of our features should approximate the utilities of our game
+states, with utility given by the fixed point of the deterministic Bellman
+equation \citep{Bellman1957Dynamic}
+%
+\begin{equation}
+V(x) = \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]
+\end{equation}
+%
+where $V(x)$ is the value of state $x$, $\mathcal{A}_x$ is the set of possible
+actions in $x$, $R(x)$ is the reward given by transitioning to $x$, and $T(x,
+a)$ is the state that results from taking action $a$ in $x$.
+
+\Cref{fig:ttt.regression} presents the outcome of using spectral and baseline
+random features to predict the values of TTT states. This experiment proceeds by
+%
+\begin{itemize}
+\item computing the true value function against the optimal opponent using
+value iteration;
+\item mapping each state to a vector of real-valued features, always including
+at least the raw grid features used for affinity graph construction;
+\item splitting the state space for cross validation;
+\item training a linear regression method on the feature vectors of the
+training states, labeled with their true value;
+\item and comparing the linear prediction of the test states' value to their
+computed true value.
+\end{itemize}
+%
+The results show that prediction accuracy improves with the number of basis
+vectors: spectral features computed from the either gameplay or affinity graphs
+do capture relevant aspects of the game.
+
+\subsection{Evaluation in a Tic-Tac-Toe Policy}
+
+The important test of a value-function representation, however, comes when the
+value function is used inside a policy---a mapping from states to
+actions---that operates in a domain. \Cref{fig:ttt.action} plots the
+performance of a policy that is greedy with respect to its value function using
+a range of numbers of state features drawn from various feature sets. This
+experiment proceeds similarly to that of \cref{sec:eval.regression}, except
+that its value function is computed against a uniform-random opponent, and that
+it measures the average reward, playing against that opponent, of a policy
+whose internal value function is represented by the learned weight vector and
+associated feature set.
+
+As in our measurement of value prediction error, both the affinity and state
+graph features outperform the random baseline, and their performance improves
+with additional eigenvector features---to the point where the associated policy
+consistently wins the vast majority of its games versus a random opponent.
+
+\begin{figure}
+<<ttt.regression,fig=T,height=2.5>>=
+data <- read.csv("../results/ttt_prediction.csv")
+plot <-
+    ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
+    geom_point() +
+    geom_line() +
+    labs(x = "Number of Features", y = "Mean $R^2$", colour = "Feature Set", shape = "Feature Set")
+
+print(plot)
+@
+\caption{\label{fig:ttt.regression}The mean $R^2$ score of value function
+prediction versus the number of feature vectors added from the specified
+feature set, under $10$-fold cross validation using ridge regression ($\alpha =
+1.0$) in the TTT domain. These features are added to the set of raw, flattened-
+grid features used to construct the affinity graph. As expected, random
+features do not generalize, while additional spectral features computed from
+both the affinity and gameplay graphs improve prediction accuracy.}
+\end{figure}
+
+\begin{figure}
+<<ttt.action,fig=T,height=2.5,sanitize=T>>=
+data <- read.csv("../results/ttt_action.csv")
+plot <-
+    ggplot(data, aes(features, score_mean, colour = map_name, shape = map_name)) +
+    geom_point() +
+    geom_smooth(span = 0.2) +
+    labs(x = "Number of Features", y = "Mean Reward", colour = "Feature Set", shape = "Feature Set")
+
+print(plot)
+@
+\caption{\label{fig:ttt.action}The mean reward obtained by a TTT policy over
+\np{1000} games, averaged under $10$-fold cross validation, using linear
+function approximation with weights tuned via ridge regression as in
+\cref{sec:eval.regression}. Again, the eigenvector features are clearly
+informative.}
+\end{figure}
+
+%\begin{figure}
+%<<vs.tabular.first,fig=T,height=4,sanitize=T>>=
+%data <- read.csv("../results/specmine-static/learning_curve.200games.alpha=0.001.gpe=200.csv")
+%data$name <- paste(data$method, data$features)
+%plot <- 
+%    ggplot(data, aes(games, mean_reward, colour = name, shape = name)) +
+%    geom_point() +
+%    geom_line() +
+%    labs(colour = "Method", shape = "Method")
+%
+%print(plot)
+%@
+%\caption{\label{fig:vs.tabular}XXX}
+%\end{figure}
+

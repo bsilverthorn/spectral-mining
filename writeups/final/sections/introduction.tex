@@ -1,0 +1,91 @@
+\section{Introduction}
+
+The field of reinforcement learning (RL) concerns itself with situations in
+which an agent learns from interactions with its environment. Value-based
+approaches to RL estimate the expected utility of each possible state of the
+agent and its environment---the so-called \emph{value function}---and use that
+value function to produce a \emph{policy} that maps from states to actions.
+
+Just as feature engineering is often critical to the success of supervised
+learning methods, the success of value-based RL depends on the quality of the
+representation used to estimate the value function. This work will explore new
+methods for automatically generating such a representation, with a focus on
+approaches that scale to large discrete domains.
+
+\subsection{Linear Value Function Approximation}
+
+In environments where the number of states is too large to permit a tabular
+representation of the value function, some form of approximation must be
+employed. A linear architecture is often chosen for simplicity and ease of
+analysis. In such a representation, the value $V(s)$ of a state $s$ is
+estimated as a linear combination of features $\phi(s)$ of that state:
+%
+\begin{equation}
+V(s) = w^{T}\phi(s)
+\end{equation}
+%
+As in any linear prediction scheme, the quality of the resulting value function
+and the performance of the resulting policy depends critically on the basis
+functions or state features $\phi(s)$. These features are typically constructed
+by hand, a labor-intensive process that requires extensive domain knowledge.
+
+Prior work in automatically generating representations for value function
+approximation include population-based search methods
+\citep{whiteson2006evolutionary}, methods based on Bellman error
+\citep{parr2007analyzing}, and methods based on augmented Krylov techniques
+\citep{petrik2007analysis}, as well as many others. This work builds upon a
+particularly promising approach that leverages results from the harmonic
+analysis of graphs to aid in discovering useful representations
+\citep{Mahadevan2006Value,Coifman06Diffusion,Wang2009Multiscale}.
+
+\subsection{Spectral Representation Discovery}
+
+Spectral graph theory provides many useful tools for analyzing a graph and
+functions on that graph \citep{Chung1997Spectral}. The graph Laplacian $L$ and
+its normalized variants play a central role in this analysis. Given the
+adjacency matrix of a weighted graph $W$, the graph Laplacian is defined as
+%
+\begin{equation}
+L = D-W
+\end{equation}
+%
+where $D$ is defined as the row sums of $W$:
+%
+\begin{equation}
+D = \sum_{i} W_{ij}
+\end{equation}
+%
+The normalized graph Laplacian is defined to be:
+%
+\begin{equation}
+\mathcal{L} = D^{-1/2}LD^{-1/2}
+\label{eqn:norm.laplacian}
+\end{equation}
+%
+The graph Laplacian has a number of useful properties; among others, its
+eigenvectors form a good basis for representing smooth functions on the graph.
+
+The state space of a finite Markov decision process (MDP) can be represented
+as a graph where each vertex is a state and edges represent state transitions.
+Using this state adjacency graph $W$, we can form the (normalized) graph 
+Laplacian and use the eigenvectors as a basis for performing linear value 
+function approximation.
+
+Recent work
+\citep{petrik2007analysis,mahadevan2006learning,Mahadevan2006Value,mahadevan2007proto}
+has begun to examine the use of harmonic analysis of graphs in this framework,
+but have focused on domains small enough for direct application of approaches
+similar to those described above. As the state space grows, however,
+representing the full adjacency graph and finding its eigenvectors becomes
+prohibitively expensive. Some prior research has applied Kronecker matrix
+factorization to the problem of scaling \citep{johns2007compact}. Our work will
+instead move toward an approach based on clustering the state graph.
+
+We focus on two domains in this preliminary submission: first, a simple
+two-room grid world that highlights the desirable properties of the Laplacian
+eigenvectors in terms of representing the topology of a state space; and
+second, a classic game, Tic-Tac-Toe (TTT), that serves as an easily-understood
+domain in which to develop and evaluate techniques for applying spectral
+methods to the unusual state graphs of board games. Both domains lead us toward
+future work on the larger, more challenging board game of Go.
+

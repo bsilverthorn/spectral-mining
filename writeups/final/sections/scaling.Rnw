@@ -1,0 +1,6 @@
+\section{\label{sec:scaling}Scaling to Larger Domains}
+
+% XXX figure for sampled paths in TTT gameplay graph
+
+XXX
+
