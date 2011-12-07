@@ -79,38 +79,40 @@ column.
 \subsection{Mining the Gameplay Graph}
 
 When choosing a graph with which to perform spectral analysis for
-representation discovery in TTT, the simplest and most obvious option is the
-adjacency graph for neighboring board states. We define the gameplay adjacency
-graph, displayed in \cref{fig:ttt.gameplay.graph}, as having weight-one edges
-between each board and all previous or subsequent boards.
+representation discovery in TTT, the simplest option is the adjacency graph for
+neighboring board states. We define the \emph{gameplay graph} as having a
+unit-weight edge between each board and each of the subsequent boards that can
+be formed by a single move. Every path from the root to a leaf in this gameplay
+graph represents a complete unique Tic-Tac-Toe game.
 
 From the symmetric adjacency matrix representation of the graph, we formed the
 normalized graph Laplacian as in \cref{eqn:norm.laplacian}. A visualization of
-the first nine eigenvectors is given in \cref{fig:ttt.evs}. Again,
-the eigenvectors capture much of domain's symmetry. They also provide useful
-features for evaluating gameplay, such as separating corner versus center
-moves. 
+the first nine eigenvectors is given in \cref{fig:ttt.evs}. As in the two-room
+domain, the eigenvectors capture much of domain's symmetry. They also provide
+useful features for evaluating gameplay, such as separating corner versus
+center moves. 
 
 It should be noted that we are discarding some information: Tic-Tac-Toe is
 fundamentally a directed game, but we consider only the undirected connections
-between states. This simplification is convenient, since a symmetric matrix is
-necessary for computing the eigenvectors, but alternatives such as the directed
-graph Laplacian \citep{chung2005laplacians} exist.
+between states in forming the adjacency matrix. This simplification is
+convenient, since a symmetric matrix is necessary for computing the
+eigenvectors, but alternatives such as the directed graph Laplacian
+\citep{chung2005laplacians} exist.
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=\textwidth]{results/ttt_graph.gameplay.pdf}
-\end{center}
-\caption{\label{fig:ttt.gameplay.graph}The complete TTT gameplay graph. Each
-vertex represents a board configuration, with the empty starting board at the
-center of the graph, and each edge represents a move. Green circles denote
-positions in which the first player is to move, as do blue squares for the
-second player. Every path from the root to a leaf represents a complete
-possible Tic-Tac-Toe game. While the tree-like structure is clear, the complete
-gameplay graph also includes many nodes in which multiple game paths intersect,
-i.e., it remains a DAG. This structural complexity will largely disappear in
-future work, when only sampled paths are available.}
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\includegraphics[width=\textwidth]{results/ttt_graph.gameplay.pdf}
+%\end{center}
+%\caption{\label{fig:ttt.gameplay.graph}The complete TTT gameplay graph. Each
+%vertex represents a board configuration, with the empty starting board at the
+%center of the graph, and each edge represents a move. Green circles denote
+%positions in which the first player is to move, as do blue squares for the
+%second player. Every path from the root to a leaf represents a complete
+%possible Tic-Tac-Toe game. While the tree-like structure is clear, the complete
+%gameplay graph also includes many nodes in which multiple game paths intersect,
+%i.e., it remains a DAG. This structural complexity will largely disappear in
+%future work, when only sampled paths are available.}
+%\end{figure}
 
 \begin{figure}
 <<ttt.evs,fig=T,sanitize=T,height=5.5>>=
@@ -149,19 +151,19 @@ representation of a game. This representation, which we call an \emph{affinity
 graph}, represents information differently than the gameplay graph, but may
 include enough information to allow useful features to be extracted.
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
-\end{center}
-\caption{\label{fig:ttt.affinity.graph}The complete TTT ``affinity'' graph: TTT
-board states connected by edges according to the Euclidean distance between
-flattened grid representations. The comparison to \cref{fig:ttt.gameplay.graph}
-(formatting is identical) shows that the affinity graph captures much of the
-same structure, but is significantly messier; for example, many more edges
-cross between distant nodes. In later experiments, we will see that spectral
-features acquired from this graph nonetheless form an effective state
-representation.}
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\includegraphics[width=\textwidth]{results/ttt_graph.affinity.pdf}
+%\end{center}
+%\caption{\label{fig:ttt.affinity.graph}The complete TTT ``affinity'' graph: TTT
+%board states connected by edges according to the Euclidean distance between
+%flattened grid representations. The comparison to \cref{fig:ttt.gameplay.graph}
+%(formatting is identical) shows that the affinity graph captures much of the
+%same structure, but is significantly messier; for example, many more edges
+%cross between distant nodes. In later experiments, we will see that spectral
+%features acquired from this graph nonetheless form an effective state
+%representation.}
+%\end{figure}
 
 In Tic-Tac-Toe, one obvious distance function is the the Hamming
 distance between two board configurations
@@ -194,7 +196,7 @@ While constructing an affinity graph requires defining a simple state feature
 set by hand, the following sections show that the features mined from this
 graph are much more useful than the features used to construct the graph.
 
-\subsection{\label{sec:eval.regression}Evaluation in Value Function Regression}
+\subsection{\label{sec:eval.regression}Learning to Predict a Value Function}
 
 The goal of this work is to construct features that are useful for linear
 approximations of the \emph{state value function}; that is, a linear
@@ -214,8 +216,9 @@ a)$ is the state that results from taking action $a$ in $x$.
 random features to predict the values of TTT states. This experiment proceeds by
 %
 \begin{itemize}
-\item computing the true value function against the optimal opponent using
-value iteration;
+\item computing the true value function against the optimal opponent,
+implemented using minimax search with alpha-beta pruning, using the standard
+value iteration algorithm of \citet{Bellman1957Dynamic};
 \item mapping each state to a vector of real-valued features, always including
 at least the raw grid features used for affinity graph construction;
 \item splitting the state space for cross validation;
@@ -229,7 +232,7 @@ The results show that prediction accuracy improves with the number of basis
 vectors: spectral features computed from the either gameplay or affinity graphs
 do capture relevant aspects of the game.
 
-\subsection{Evaluation in a Tic-Tac-Toe Policy}
+\subsection{Learning to Play Tic-Tac-Toe}
 
 The important test of a value-function representation, however, comes when the
 value function is used inside a policy---a mapping from states to
