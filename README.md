@@ -33,5 +33,7 @@ eigenvector visualization data, run
 
 `python -m specmine.experiments.ttt_analyze_evs eigenvectors.csv`
 
+Please contact the authors if any questions or difficulties arise.
+
 # XXX configure the static symlink
 

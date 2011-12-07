@@ -110,7 +110,8 @@ def main(out_path, games_path, values_path, neighbors = 8, workers = 0, off_grap
 
         avectors_ND = numpy.array(map(specmine.go.board_to_affinity, value_dict))
 
-        for B in numpy.r_[1:200:8j].round().astype(int):
+        #for B in numpy.r_[1:200:8j].round().astype(int):
+        for B in [200]:
             yield (run_graph_features, ["affinity", B, avectors_ND, test_values])
 
     with open(out_path, "wb") as out_file:

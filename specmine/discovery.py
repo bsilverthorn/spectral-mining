@@ -58,6 +58,7 @@ class InterpolationFeatureMapRaw(object):
         self.ball_tree = ball_tree
         self.affinity_map = affinity_map
         self.k = k
+        self._D = basis.shape[1]
 
     def __getitem__(self, state):
         affinity_vector = self.affinity_map(state)
@@ -74,6 +75,16 @@ class ClusteredFeatureMap(object):
         self._affinity_map = affinity_map
         self._clustering = clustering
         self._maps = maps
+        self._D = sum(m._D for m in maps)
+
+        self._indices = numpy.zeros((len(maps), self._D), numpy.uint8)
+
+        dd = 0
+
+        for (k, map_) in enumerate(maps):
+            self._indices[k, dd:dd + map_.D] = 1
+
+            dd += map_.D
 
         assert len(maps) == len(clustering.cluster_centers_)
 
@@ -81,7 +92,10 @@ class ClusteredFeatureMap(object):
         avector = self._affinity_map(state).astype(float)
         (k,) = self._clustering.predict(avector[None, :])
 
-        return self._maps[k][state]
+        features = numpy.zeros(self._D)
+        features[self._indices[k]] = self._maps[k][state]
+
+        return features
 
 def adjacency_dict_to_matrix(adict):
     """

@@ -9,7 +9,9 @@ logger = specmine.get_logger(__name__)
 try:
     import pyamg
 except ImportError:
-    logger.warning("failed to import pyamg; adaptive multigrid disabled")
+    pass
+    # XXX
+    #logger.warning("failed to import pyamg; adaptive multigrid disabled")
 
 def laplacian_operator(W):
     n = W.shape[0]
@@ -178,18 +180,18 @@ def clustered_basis_from_affinity(avectors_ND, B, clusters = None, neighbors = 8
     (N, D) = avectors_ND.shape
 
     if clusters is None:
-        clusters = int(round(N / 7500.0))
+        clusters = int(round(N / 10000.0))
 
     K = clusters
 
-    logger.info("finding clusters over %i points in %i-dimensional affinity space", N, D)
+    logger.info("finding %i clusters over %i points in %i-dimensional affinity space", K, N, D)
 
     #k_means = sklearn.cluster.KMeans(k = K)
     k_means = sklearn.cluster.MiniBatchKMeans(k = K)
 
     k_means.fit(avectors_ND)
 
-    logger.info("computing %i basis vectors for each of %i cluster(s)", B, K)
+    logger.info("computing %i basis vectors for each cluster", B)
 
     blocks = []
 
@@ -197,7 +199,7 @@ def clustered_basis_from_affinity(avectors_ND, B, clusters = None, neighbors = 8
         avectors_CD = avectors_ND[k_means.labels_ == k]
         (C, _) = avectors_CD.shape
 
-        logger.debug("cluster %i (of %i) contains %i points", k, K, C)
+        logger.info("cluster %i (of %i) contains %i points", k + 1, K, C)
 
         (affinity_CC, tree) = specmine.discovery.affinity_graph(avectors_CD, neighbors, sigma = 1e16, get_tree = True)
         basis_CB = specmine.spectral.laplacian_basis(affinity_CC, min(B, C), method = "arpack")
