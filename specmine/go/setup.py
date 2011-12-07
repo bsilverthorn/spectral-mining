@@ -50,6 +50,8 @@ distutils.core.setup(
                 ],
             extra_objects = [
                 "fuego/go/libfuego_go.a",
+                "fuego/gouct/libfuego_gouct.a",
+                "fuego/simpleplayers/libfuego_simpleplayers.a",
                 "fuego/smartgame/libfuego_smartgame.a",
                 ],
             #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],

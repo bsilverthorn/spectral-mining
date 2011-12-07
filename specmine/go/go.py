@@ -3,7 +3,6 @@ import random
 import hashlib
 import numpy
 import specmine
-#import gnugo_engine as gge
 
 logger = specmine.get_logger(__name__)
 
@@ -14,7 +13,7 @@ class Game(object):
         """
         Initialize.
 
-        moves: Mx3 array of (player, i, j) rows;
+        moves: Mx3 array of (player, row, column) rows;
         grids: Mx9x9 array of stone grids
         """
 
@@ -36,7 +35,8 @@ class GameState(object):
         self.moves = numpy.asarray(moves, numpy.int8)
         self.board = board
 
-    # hash and equality only rely on the board state, not the list of moves (?)
+    # XXX hash and equality only rely on the board state, not the list of moves (?)
+
     def __hash__(self):
         return hash(self.board._string)
 
@@ -70,25 +70,9 @@ class BoardState(object):
     def __repr__(self):
         return repr(self.grid)
 
-    #def canonical(self):
-        #grids = []
-        #grids.append(grid)
+def convert_sgf_moves(moves):
+    """Convert SGF moves to (r, c) from top left (i.e., numpy indexing)."""
 
-        #for i in xrange(1,4):
-            #grids.append(numpy.rot90(grid,i))
-
-        #grids.append(numpy.fliplr(grid))
-        #grids.append(numpy.flipud(grid))
-        #grids.append(numpy.fliplr(numpy.rot90(grid,1)))
-        #grids.append(numpy.flipud(numpy.rot90(grid,1)))
-
-        #return BoardState(max(grids, key = lambda x: hash(str(x))))
-
-    @staticmethod
-    def from_gge():
-        return BoardState(gge.gg_get_board())
-
-def convert_sgf_moves(moves): 
     ord_a = ord("a")
 
     for m in moves:
@@ -191,7 +175,7 @@ def read_sgf_game(sgf_file):
     (raw_moves, winner) = game_raw
 
     moves = numpy.array(raw_moves, dtype = numpy.int8)
-    grids = gge.replay_game(moves)
+    grids = specmine.go.fuego.moves_to_grids(moves)
 
     return Game(moves, grids, winner)
 

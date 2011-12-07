@@ -1,7 +1,11 @@
 import numpy
+import specmine
 
 cimport numpy
+cimport cython
 cimport specmine.go.fuego_c as fuego_c
+
+logger = specmine.get_logger(__name__)
 
 cdef fuego_c.SgBlackWhite _player_to_black_white(int player):
     if player == 1:
@@ -31,6 +35,72 @@ cdef int _board_color_to_int(fuego_c.SgBoardColor color):
     else:
         assert False
 
+def set_seed(int seed):
+    """Set Fuego's internal PRNG seed."""
+
+    fuego_c.SgRandom_SetSeed(seed)
+
+@cython.infer_types(True)
+def moves_to_grids(moves, FuegoBoard board = None):
+    """
+    Replay a game, returning an array of grids.
+
+    Columns in the moves array are (player, row, column).
+    """
+
+    moves = numpy.asarray(moves, numpy.int8)
+
+    if board is None:
+        board = FuegoBoard()
+
+    cdef int M = moves.shape[0]
+    cdef int S = board.size
+
+    cdef numpy.ndarray[numpy.int8_t, ndim = 2] moves_M3 = moves
+    cdef numpy.ndarray[numpy.int8_t, ndim = 3] grids_MSS = numpy.empty((M, S, S), numpy.int8)
+
+    for m in xrange(M):
+        player = moves_M3[m, 0]
+        move_r = moves_M3[m, 1]
+        move_c = moves_M3[m, 2]
+
+        if board._get_to_play() != player:
+            raise ValueError("player {0} is not to play!".format(player))
+
+        board.play(move_r, move_c)
+
+        for r in xrange(S):
+            for c in xrange(S):
+                grids_MSS[m, r, c] = board._at(r, c)
+
+    return grids_MSS
+
+@cython.infer_types(True)
+def moves_to_board(moves, FuegoBoard board = None):
+    """Replay a game, returning the resulting board."""
+
+    moves = numpy.asarray(moves, numpy.int8)
+
+    if board is None:
+        board = FuegoBoard()
+
+    cdef int M = moves.shape[0]
+    cdef int S = board.size
+
+    cdef numpy.ndarray[numpy.int8_t, ndim = 2] moves_M3 = moves
+
+    for m in xrange(M):
+        player = moves_M3[m, 0]
+        move_r = moves_M3[m, 1]
+        move_c = moves_M3[m, 2]
+
+        if board._get_to_play() != player:
+            raise ValueError("player {0} is not to play!".format(player))
+
+        board.play(move_r, move_c)
+
+    return board
+
 cdef class FuegoBoard(object):
     cdef int _size
     cdef fuego_c.GoBoard* _board
@@ -45,23 +115,51 @@ cdef class FuegoBoard(object):
     def __dealloc__(self):
         del self._board
 
+    def __getitem__(self, indices):
+        """Return the value at a position."""
+
+        (row, column) = indices
+
+        return self._at(row, column)
+
+    def initialize(self, int size = 0):
+        """Reinitialize the board, optionally altering size."""
+
+        if size == 0:
+            size = self._size
+
+        self._board.Init(size)
+
     def is_legal(self, int row, int column):
         """Is the specified move legal?"""
 
         return self._board.IsLegal(self._row_column_to_point(row, column))
 
-    def play(self, int row, int column):
+    cpdef play(self, int row, int column):
         """Play a single move."""
 
         self._board.Play(self._row_column_to_point(row, column))
 
         self._assert_move_was_ok()
 
+    def score_simple_endgame(self, double komi = 6.5, bint verify_endgame = True):
+        """Compute score in the endgame."""
+
+        cdef fuego_c.SgBWSet safe
+
+        return fuego_c.ScoreSimpleEndPosition(self._board[0], komi, safe, not verify_endgame, NULL)
+
+    @property
+    def size(self):
+        """The size of the board."""
+
+        return self._board.Size()
+
     @property
     def to_play(self):
-        """Return the player to play."""
+        """The player to play."""
 
-        return _black_white_to_int(self._board.ToPlay())
+        return self._get_to_play()
 
     @property
     def grid(self):
@@ -74,6 +172,11 @@ cdef class FuegoBoard(object):
                 grid[r, c] = self._at(r, c)
 
         return grid
+
+    cdef int _get_to_play(self):
+        """Return the player to play."""
+
+        return _black_white_to_int(self._board.ToPlay())
 
     cdef int _at(self, int row, int column):
         """Return the integer board state at a position."""
@@ -108,6 +211,66 @@ cdef class FuegoBoard(object):
         assert not self._board.LastMoveInfo(fuego_c.GO_MOVEFLAG_SUICIDE)
         assert not self._board.LastMoveInfo(fuego_c.GO_MOVEFLAG_REPETITION)
 
-fuego_c.SgInit()
-fuego_c.GoInit()
+cdef class FuegoPlayer(object):
+    cdef FuegoBoard _board
+    cdef fuego_c.GoPlayer* _player
+
+    def __cinit__(self, FuegoBoard board):
+        self._board = board
+        self._player = NULL
+
+    def __init__(self, board):
+        pass
+
+    def __dealloc__(self):
+        if self._player != NULL:
+            del self._player
+
+    def generate_move(self, double seconds = 1e6, int player = 0):
+        """Generate a move to play."""
+
+        cdef fuego_c.SgBlackWhite black_white
+
+        if player == 0:
+            black_white = self._board._board.ToPlay()
+        else:
+            black_white = _player_to_black_white(player)
+
+        cdef fuego_c.SgTimeRecord time = fuego_c.SgTimeRecord(True, seconds)
+        cdef fuego_c.SgPoint point = self._player.GenMove(time, black_white)
+
+        if point == fuego_c.SG_PASS:
+            return None
+        else:
+            return (
+                self._board._point_to_row(point),
+                self._board._point_to_column(point),
+                )
+
+cdef class FuegoRandomPlayer(FuegoPlayer):
+    def __cinit__(self, FuegoBoard board):
+        self._player = <fuego_c.GoPlayer*>new fuego_c.SpRandomPlayer(board._board[0])
+
+cdef class FuegoAveragePlayer(FuegoPlayer):
+    def __cinit__(self, FuegoBoard board):
+        self._player = <fuego_c.GoPlayer*>new fuego_c.SpAveragePlayer(board._board[0])
+
+cdef class FuegoCapturePlayer(FuegoPlayer):
+    def __cinit__(self, FuegoBoard board):
+        self._player = <fuego_c.GoPlayer*>new fuego_c.SpCapturePlayer(board._board[0])
+
+def _initialize_globals():
+    """Configure defaults."""
+
+    fuego_c.SgInit()
+    fuego_c.GoInit()
+    fuego_c.SgDebugToNull()
+
+    seed = numpy.random.randint(-2e9, 2e9)
+
+    set_seed(seed)
+
+    logger.info("set Fuego internal PRNG seed to %i", seed)
+
+_initialize_globals()
 
