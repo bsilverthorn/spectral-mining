@@ -60,12 +60,14 @@ from the corners of the room.}
 
 \section{Tic-Tac-Toe Domain}
 
-With the goal of scaling up to larger board games, and Go in particular, we
-choose Tic-Tac-Toe (TTT) as our second domain. Its properties are similar to
-Go, including a tree-like state space and a discrete, grid-based board
-representation. It is also small enough that we can compute optimal play, solve
-for the optimal value function, and find the Laplacian eigenvalues on the full
-state-space graph.
+Spectral methods are known to perform well on small, spatial environments like
+the two-room domain. The central contribution of this paper is their extension
+to the larger, non-spatial domains of board games. With the goal of scaling up
+to larger board games, and Go in particular, we first develop our approach on
+Tic-Tac-Toe (TTT). Its properties are similar to Go, including a tree-like
+state space and a discrete, grid-based board representation. It is also small
+enough that we can compute optimal play, solve for the optimal value function,
+and find the Laplacian eigenvalues on the full state-space graph.
 
 In the following sections, state rewards are defined as 1 for all winning
 states, -1 for all losing states, and 0 for draws. Similarly, the two players,
@@ -135,19 +137,17 @@ recovered the game's symmetry over rotated board states.}
 
 \subsection{Mining a State Affinity Graph}
 
-A complete graph represention of the rules of a game, a \emph{gameplay graph}, is
-clearly a rich source of information from which to extract representation
+A complete graph represention of the rules of a game, a \emph{gameplay graph},
+is clearly a rich source of information from which to extract feature
 information. The graph representation of a nontrivial game, however, is often
-intractably large. Approaches to larger games will be explored in
-future work; for now, we will focus on alternative graph representations
-that may be useful in these contexts.
+intractably large. In order to scale to larger games, we will need to construct
+our graph representation differently.
 
-If we can construct a measure of the similarity or ``affinity'' between
-arbitrary game states, that affinity function could be used to build an
-alternative graph representation of a game. This representation, an
-\emph{affinity graph}, represents information differently than the gameplay
-graph, but may include enough information to allow useful features to be
-extracted.
+If we can obtain a measure of the similarity or ``affinity'' between arbitrary
+game states, that affinity function could be used to build an alternative graph
+representation of a game. This representation, which we call an \emph{affinity
+graph}, represents information differently than the gameplay graph, but may
+include enough information to allow useful features to be extracted.
 
 \begin{figure}
 \begin{center}

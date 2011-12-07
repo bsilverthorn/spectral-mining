@@ -7,18 +7,18 @@ agent and its environment---the so-called \emph{value function}---and use that
 value function to produce a \emph{policy} that maps from states to actions.
 
 Just as feature engineering is often critical to the success of supervised
-learning methods, the success of value-based RL depends on the quality of the
-representation used to estimate the value function. This work will explore new
-methods for automatically generating such a representation, with a focus on
-approaches that scale to large discrete domains.
+learning methods, the success of value-based RL depends on how well the value
+function is represented. This work will explore new methods for automatically
+generating such a representation, with a focus on approaches that scale to
+large discrete domains.
 
 \subsection{Linear Value Function Approximation}
 
-In environments where the number of states is too large to permit a tabular
-representation of the value function, some form of approximation must be
-employed. A linear architecture is often chosen for simplicity and ease of
-analysis. In such a representation, the value $V(s)$ of a state $s$ is
-estimated as a linear combination of features $\phi(s)$ of that state:
+In environments where the number of states is large, an agent using a value
+function must employ some form of approximation. A linear architecture is often
+chosen for simplicity and ease of analysis. In such a representation, the value
+$V(s)$ of a state $s$ is estimated as a linear combination of features
+$\phi(s)$ of that state:
 %
 \begin{equation}
 V(s) = w^{T}\phi(s)
@@ -81,11 +81,12 @@ prohibitively expensive. Some prior research has applied Kronecker matrix
 factorization to the problem of scaling \citep{johns2007compact}. Our work will
 instead move toward an approach based on clustering the state graph.
 
-We focus on two domains in this preliminary submission: first, a simple
+This paper has three parts. First, we replicate existing results on a simple
 two-room grid world that highlights the desirable properties of the Laplacian
-eigenvectors in terms of representing the topology of a state space; and
-second, a classic game, Tic-Tac-Toe (TTT), that serves as an easily-understood
-domain in which to develop and evaluate techniques for applying spectral
-methods to the unusual state graphs of board games. Both domains lead us toward
-future work on the larger, more challenging board game of Go.
+eigenvectors for state space representation. Second, we develop and evaluate
+techniques for applying spectral methods to the unusual state graphs of board
+games. The classic game of Tic-Tac-Toe (TTT) serves as an easily-understood
+domain in which to verify these techniques. Third, we extend our methods for
+TTT to the much larger, much more challenging game of Go, using them to extract
+meaningful information from recorded expert gameplay.
 
