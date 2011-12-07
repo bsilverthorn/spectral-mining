@@ -1,13 +1,13 @@
 \section{Conclusion}
 
-This first submission has shown spectral analysis to be a promising method for
-automatically discovering linear representations of decision-process value
-functions, even in a board game domain less clearly amenable to spectral
-analysis than the spatial domains evaluated in existing work. The features
-learned in these experiments, for example, are sufficiently informative to
-represent an effective policy for Tic-Tac-Toe. This submission has established
-some initial techniques for representation discovery in a broad class of
-game-like domains, identified relevant challenges of scale, and proposed
-avenues for overcoming those obstacles. Future work will continue to explore
-these paths.
+This work has extended spectral representation discovery to board-game domains,
+which pose unique challenges, both of kind and of scale, not present in the
+small spatial domains employed in existing work. Three ideas are central:
+approximating the full gameplay graph using coarse state similarity; operating
+on partitions of the graph obtained from clustering; and extracting information
+about the space of relevant games from expert examples. Experiments cover the
+games of Tic-Tac-Toe and Go. The features learned in these experiments are, for
+example, sufficiently informative to represent an effective policy for
+Tic-Tac-Toe, and to substantially improve value function prediction over
+baseline features in Go. Future work will further develop these methods.
 
