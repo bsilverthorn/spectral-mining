@@ -1,6 +1,56 @@
+\SweaveOpts{echo=F,cache=T,external=T}
+
+<<cache=F>>=
+library(ggplot2)
+
+source("../writeup_base.R")
+@
+
 \section{\label{sec:scaling}Scaling to Larger Domains}
 
 % XXX figure for sampled paths in TTT gameplay graph
 
 XXX
+
+\begin{figure}
+\begin{center}
+%\includegraphics[width=\textwidth]{results/go_graph.pdf}
+\end{center}
+\caption{\label{fig:go.hairball}XXX}
+\end{figure}
+
+\begin{figure}
+<<go.regression,fig=T,height=2.5>>=
+data <- read.csv("../results/go_prediction.csv")
+data$provenance <-
+    factor(
+        data$provenance,
+        levels = c("on_graph", "off_graph"),
+        labels = c("On-Graph", "Off-Graph"))
+aesthetic <-
+    aes(features, score_mean, colour = map_name, shape = map_name, ymin = score_mean - score_variance, ymax = score_mean + score_variance)
+plot <-
+    ggplot(data[data$samples < 20000,], aesthetic) +
+    geom_point() +
+    geom_smooth(stat = "identity") +
+    facet_grid(provenance ~ samples) +
+    labs(x = "Number of Features", y = "Mean $R^2$", colour = "Feature Set", shape = "Feature Set")
+
+print(plot)
+@
+\caption{\label{fig:go.regression}The mean $R^2$ score of value function
+prediction versus the number of feature vectors added from the specified
+feature set, under $10$-fold cross validation using ridge regression ($\alpha =
+1.0$) in the Go domain. As in TTT, these features are added to the set of raw,
+flattened-grid features used to construct the affinity graph. Graphs of three
+different sizes are evaluated, and the test states are drawn either from the
+set of the graph vertices (``On-Graph'') or from a held-out set (``Off-Graph'')
+whose features are then computed by linearly interpolating those of their $8$
+nearest neighbors. Interpolation has the effect of smoothing the graph, giving
+random features some minimal ability to generalize, but spectral features are
+clearly much more useful. The limiting factor appears to be the computational
+cost of computing additional eigenvectors.}
+\end{figure}
+
+% XXX cite Fuego
 
