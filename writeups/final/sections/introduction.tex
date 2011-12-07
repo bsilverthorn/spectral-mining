@@ -7,18 +7,18 @@ agent and its environment---the so-called \emph{value function}---and use that
 value function to produce a \emph{policy} that maps from states to actions.
 
 Just as feature engineering is often critical to the success of supervised
-learning methods, the success of value-based RL depends on the quality of the
-representation used to estimate the value function. This work will explore new
-methods for automatically generating such a representation, with a focus on
-approaches that scale to large discrete domains.
+learning methods, the success of value-based RL depends on how well the value
+function is represented. This work will explore new methods for automatically
+generating such a representation, with a focus on approaches that scale to
+large discrete domains.
 
 \subsection{Linear Value Function Approximation}
 
-In environments where the number of states is too large to permit a tabular
-representation of the value function, some form of approximation must be
-employed. A linear architecture is often chosen for simplicity and ease of
-analysis. In such a representation, the value $V(s)$ of a state $s$ is
-estimated as a linear combination of features $\phi(s)$ of that state:
+In environments where the number of states is large, an agent using a value
+function must employ some form of approximation. A linear architecture is often
+chosen for simplicity and ease of analysis. In such a representation, the value
+$V(s)$ of a state $s$ is estimated as a linear combination of features
+$\phi(s)$ of that state:
 %
 \begin{equation}
 V(s) = w^{T}\phi(s)
