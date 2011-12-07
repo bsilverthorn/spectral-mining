@@ -20,9 +20,10 @@ def write_dot_file(out_file, states, directed = False, coloring = None, root = N
 
         edge = "--"
 
-    #out_file.write("node [label=\"\",width=0.15,height=0.15];\n")
-    out_file.write("node [label=\"\"];\n")
-    out_file.write("edge [color=\"#00000022\"];\n")
+    out_file.write("node [label=\"\",width=0.02,height=0.02];\n")
+    #out_file.write("node [label=\"\"];\n")
+    #out_file.write("edge [color=\"#00000019\"];\n")
+    out_file.write("edge [color=\"#00000000\"];\n")
     out_file.write("splines=true;\n")
     out_file.write("outputorder=edgesfirst;\n")
 
@@ -76,14 +77,12 @@ def continuous_to_coloring(values, hue_min = 0.0, hue_max = 0.9):
     values -= numpy.min(values)
     values /= numpy.max(values)
 
-    print values
-
     def value_to_color(value):
         rgbs = colorsys.hsv_to_rgb(value, 0.85, 0.85)
-        #if value > 1.0:
-            #value = 1.0
-        #elif value < 0.0:
-            #value = 0.0
+        if value > 1.0:
+            value = 1.0
+        elif value < 0.0:
+            value = 0.0
         #rgbs = colorsys.hsv_to_rgb(0.0, 0.0, value)
         string = "#{0}".format("".join("{0:02x}".format(int(round(v * 255.0))) for v in rgbs))
 

@@ -1,10 +1,17 @@
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
-import pyamg
+import sklearn.cluster
 import specmine
 
 logger = specmine.get_logger(__name__)
+
+try:
+    import pyamg
+except ImportError:
+    pass
+    # XXX
+    #logger.warning("failed to import pyamg; adaptive multigrid disabled")
 
 def laplacian_operator(W):
     n = W.shape[0]
@@ -85,7 +92,8 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
         "solving for %i %s eigenvector(s) of the Laplacian (using %s)",
         k,
         "largest" if largest else "smallest",
-        method,)
+        method,
+        )
 
     L = laplacian_operator(W) 
 
@@ -97,6 +105,7 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
         solver = pyamg.smoothed_aggregation_solver(L)
         pre = solver.aspreconditioner()
         initial = scipy.rand(L.shape[0], k)
+
         (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-8, largest = largest)
     elif method == "arpack":
         if largest:
@@ -122,16 +131,16 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
 def clustered_laplacian_basis(W, num_clusters, num_evs, affinity_vectors, method = "arpack"):
     ''' cluster the adjacency graph before solving for laplacian eigenvectors on the subgraph 
         reorders the indices of the graph, intended for use with interpolation feature map'''
-    
+
     # adjacency graph must have integer values
     A = scipy.sparse.csr_matrix(W); A.data[:] = 1
     A.data = np.array(A.data,dtype=int)
-  
+
     assert isinstance(A, scipy.sparse.csr_matrix)
     assert num_clusters < A.shape[0]
 
     clustering = specmine.graclus.cluster(A,num_clusters)
-    
+
     B = np.zeros((A.shape[0],num_clusters*num_evs))
     lef = 0; bot = 0
     reordering = np.array([],dtype=int)
@@ -147,16 +156,15 @@ def clustered_laplacian_basis(W, num_clusters, num_evs, affinity_vectors, method
         B[bot:bot+b.shape[0],lef:lef+b.shape[1]] = b
         bot = bot + b.shape[0]
         lef = lef + b.shape[1]
-    
+
     reord_aff_vec = affinity_vectors[reordering,:]
     #B = scipy.sparse.csr_matrix(B) 
     assert bot == W.shape[0]
     assert lef == num_clusters*num_evs
     assert affinity_vectors.shape == reord_aff_vec.shape
     assert B.shape[0] == reord_aff_vec.shape[0]
-    
+
     return B, reord_aff_vec
-    
 
 def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     ''' build diffusion wavelet basis matrix with k bases from weighted adjacency matrix W '''
@@ -165,4 +173,38 @@ def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 
     return expand_wavelets(phi_dict, psi_dict, k, n) 
+
+def clustered_basis_from_affinity(avectors_ND, B, clusters = None, neighbors = 8):
+    avectors_ND = np.asarray(avectors_ND, dtype = float)
+
+    (N, D) = avectors_ND.shape
+
+    if clusters is None:
+        clusters = int(round(N / 10000.0))
+
+    K = clusters
+
+    logger.info("finding %i clusters over %i points in %i-dimensional affinity space", K, N, D)
+
+    #k_means = sklearn.cluster.KMeans(k = K)
+    k_means = sklearn.cluster.MiniBatchKMeans(k = K)
+
+    k_means.fit(avectors_ND)
+
+    logger.info("computing %i basis vectors for each cluster", B)
+
+    blocks = []
+
+    for k in xrange(K):
+        avectors_CD = avectors_ND[k_means.labels_ == k]
+        (C, _) = avectors_CD.shape
+
+        logger.info("cluster %i (of %i) contains %i points", k + 1, K, C)
+
+        (affinity_CC, tree) = specmine.discovery.affinity_graph(avectors_CD, neighbors, sigma = 1e16, get_tree = True)
+        basis_CB = specmine.spectral.laplacian_basis(affinity_CC, min(B, C), method = "arpack")
+
+        blocks.append((basis_CB, tree))
+
+    return (k_means, blocks)
 

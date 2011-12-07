@@ -50,6 +50,53 @@ class InterpolationFeatureMap(object):
         # simple nearest neighbor averaging
         return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
 
+class InterpolationFeatureMapRaw(object):
+    """Map states to features via nearest-neighbor regression."""
+
+    def __init__(self, basis, ball_tree, affinity_map, k = 8):
+        self.basis = basis
+        self.ball_tree = ball_tree
+        self.affinity_map = affinity_map
+        self.k = k
+        self._D = basis.shape[1]
+
+    def __getitem__(self, state):
+        affinity_vector = self.affinity_map(state)
+
+        (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
+
+        # simple nearest neighbor averaging
+        return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
+
+class ClusteredFeatureMap(object):
+    """Map states to features modulo clustering."""
+
+    def __init__(self, affinity_map, clustering, maps):
+        self._affinity_map = affinity_map
+        self._clustering = clustering
+        self._maps = maps
+        self._D = sum(m._D for m in maps)
+
+        self._indices = numpy.zeros((len(maps), self._D), numpy.uint8)
+
+        dd = 0
+
+        for (k, map_) in enumerate(maps):
+            self._indices[k, dd:dd + map_.D] = 1
+
+            dd += map_.D
+
+        assert len(maps) == len(clustering.cluster_centers_)
+
+    def __getitem__(self, state):
+        avector = self._affinity_map(state).astype(float)
+        (k,) = self._clustering.predict(avector[None, :])
+
+        features = numpy.zeros(self._D)
+        features[self._indices[k]] = self._maps[k][state]
+
+        return features
+
 def adjacency_dict_to_matrix(adict):
     """
     Create a symmetric adjacency matrix from a {state: [state]} dict.
@@ -101,7 +148,7 @@ def adjacency_matrix_to_dict(amatrix, rindex = None, make_directed = True):
 
     return adict
 
-def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
+def affinity_graph(vectors_ND, neighbors, sigma = 1e16, get_tree = False):
     """Build the k-NN affinity graph from state feature vectors."""
 
     G = neighbors
@@ -136,7 +183,10 @@ def affinity_graph(vectors_ND, neighbors, sigma = 2.0):
 
     logger.info("affinity graph has %i unique edges", coo_affinities.shape[0])
 
-    return adjacency
+    if get_tree:
+        return (adjacency, tree)
+    else:
+        return adjacency
 
     ## cluster states
     #logger.info("aliasing states with spectral clustering")

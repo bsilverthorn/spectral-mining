@@ -11,29 +11,29 @@ Authors
 Craig Corcoran `<ccor@cs.utexas.edu>`
 Bryan Silverthorn `<bcs@cargo-cult.org>`
 
-Running Tests
--------------
+Installation
+------------
 
-`nosetests -v specmine --all-modules`
+This package is implemented in Python. To begin, set up a virtual environment
+with virtualenv. From the project root (the directory containing this README):
 
-Modular RL Outline
-------------------
+`python virtualenv.py --no-site-packages environment`
+`source environment/bin/activate`
 
-State space pickle: `{state: [state]}`
+Then install the minimum set of relevant dependencies:
 
-"Domains" provide:
+`easy_install numpy`
+`easy_install scipy`
+`easy_install scikit-learn`
+`easy_install plac`
 
-- `an initial_state`
-- `states -> [state]`
-- `outcome_of(state, action) -> state`
-- `actions_in(state) -> [action]`
-- `reward_in(state) -> scalar`
-- `check_end(state) -> boolean`
+The project experiments are organized as modules under the
+"specmine.experiments" package. To obtain, for example, the Tic-Tac-Toe
+eigenvector visualization data, run
 
-Learning functions are of the form:
+`python -m specmine.experiments.ttt_analyze_evs eigenvectors.csv`
 
-`learn(domain) -> policy`
+Please contact the authors if any questions or difficulties arise.
 
-Where policies are of the form:
+# XXX configure the static symlink
 
-`policy[state] -> action`
