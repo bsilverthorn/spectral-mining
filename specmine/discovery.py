@@ -82,9 +82,9 @@ class ClusteredFeatureMap(object):
         dd = 0
 
         for (k, map_) in enumerate(maps):
-            self._indices[k, dd:dd + map_.D] = 1
+            self._indices[k, dd:dd + map_._D] = 1
 
-            dd += map_.D
+            dd += map_._D
 
         assert len(maps) == len(clustering.cluster_centers_)
 

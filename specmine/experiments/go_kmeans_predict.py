@@ -93,7 +93,7 @@ def main(out_path, games_path, values_path, neighbors = 8, workers = 0, off_grap
     logger.info("number of value samples total: %i", len(value_list))
  
     def yield_jobs():
-        samples = 50000
+        samples = 20000
 
         shuffled_values = sorted(value_list, key = lambda _: numpy.random.rand()) 
 
