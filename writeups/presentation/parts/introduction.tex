@@ -1,0 +1,55 @@
+\section{Introduction}
+
+\begin{frame}
+Consider solving an instance of satisfiability (SAT), e.g.:
+\begin{center}
+\tikz \node [rectangle,draw]
+{ $(x_0 \vee \neg x_2 \vee \cdots) \wedge (\neg x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
+\end{center}
+It's typical to consider only \emph{that instance}.
+\end{frame}
+
+\begin{frame}
+---but no instance is an island.
+
+\begin{center}
+\tikz \node [rectangle,draw]
+{ $(x_0 \vee \neg x_2 \vee \cdots) \wedge (\neg x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
+\tikz \node [rectangle,draw]
+{ $(x_0 \vee x_2 \vee \cdots) \wedge (\neg x_1 \vee \neg x_2 \vee \cdots) \wedge \cdots$ };
+\tikz \node [rectangle,draw]
+{ $(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge (x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
+\\ $\vdots$
+\end{center}
+
+Instances are different, yet they are often still related.
+\end{frame}
+
+\begin{frame}
+Can we \emph{learn} to solve problems more efficiently?
+
+Can the problems we've \textcolor{darkgreen}{solved} help with those we \textcolor{darkred}{haven't}?
+
+\begin{center}
+\tikz \node [rectangle,draw,darkgreen]
+{ \textcolor{black}{$(x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
+\tikz \node [rectangle,draw,darkgreen]
+{ \textcolor{black}{$(x_0 \vee x_2 \vee \cdots) \wedge \cdots$} };
+\tikz \node [rectangle,draw,darkgreen]
+{ \textcolor{black}{$(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
+
+\tikz \draw [->] (0,0) -- (0,-0.5);
+
+Learning!
+
+\tikz \draw [->] (0,0) -- (0,-0.5);
+
+\tikz \node [rectangle,draw,darkred]
+{ \textcolor{black}{$(x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
+\tikz \node [rectangle,draw,darkred]
+{ \textcolor{black}{$(x_0 \vee x_2 \vee \cdots) \wedge \cdots$} };
+\tikz \node [rectangle,draw,darkred]
+{ \textcolor{black}{$(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
+\end{center}
+\end{frame}
+

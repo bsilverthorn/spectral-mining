@@ -1,0 +1,58 @@
+\documentclass{beamer}
+\usepackage[urw-garamond]{mathdesign}
+\usepackage{tikz}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage[autolanguage,np]{numprint}
+\usefonttheme{serif}
+\usetikzlibrary{arrows,backgrounds,fit,positioning,backgrounds,calc,shapes.geometric}
+\setbeamertemplate{navigation symbols}{}     % eliminate navigation clutter
+\setbeamertemplate{footline}[frame number]{} % eliminate footer cluter
+
+% -----------
+% PREPARATION
+% -----------
+
+\definecolor{darkred}{RGB}{127,0,0}
+\definecolor{darkgreen}{RGB}{0,127,0}
+\definecolor{darkblue}{RGB}{0,0,127}
+
+\begin{document}
+
+% -----------
+% TITLE SLIDE
+% -----------
+
+\begin{frame}[plain]
+\begin{center}
+{\Huge \bf Resistance is Futile}
+\ \\
+\ \\
+{\Large (and other good news)}
+\ \\
+\ \\
+{\bf Bryan Silverthorn}
+\ \\
+\ \\
+8 March 2011
+\ \\
+\ \\
+Department of Computer Science\\
+The University of Texas at Austin
+\end{center}
+\end{frame}
+
+% --------
+% SECTIONS
+% --------
+
+\input{parts/introduction.tex}
+\input{parts/portfolio.tex}
+\input{parts/polarity.tex}
+\input{parts/connections.tex}
+\input{parts/conclusions.tex}
+
+\end{document}
+

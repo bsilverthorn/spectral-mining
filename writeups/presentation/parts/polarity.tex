@@ -1,0 +1,108 @@
+\section{Learning to Predict Polarity}
+
+\begin{frame}
+But: ``what solver should I run?'' is a coarse, high-level decision.
+\end{frame}
+
+\begin{frame}
+It matters only if solvers are \emph{complementary} and \emph{competitive}.
+\end{frame}
+
+\begin{frame}
+Can we also use learning to make better \emph{low-level} decisions?
+\end{frame}
+
+\begin{frame}
+Our goal in SAT is to compute variables' satisfying values:
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+{\bf Instance} & {\bf Variable} & {\bf Sat. Value}\\
+\midrule
+X & $x_0$ & True\\
+  & $x_1$ & False\\
+  & \vdots & \vdots\\
+Y & $y_0$ & False\\
+  & $y_1$ & True\\
+  & \vdots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+Variables in an instance are not alike:
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+{\bf Inst.} & {\bf Var.} & {\bf Appearances} & {\bf Polarity ($\mu$)} & {\bf \dots}\\
+\midrule
+X & $x_0$ & 15 & 0.7 & \dots\\
+  & $x_1$ & 2 & 0.1 & \dots\\
+  & \vdots & \vdots & \vdots & \dots\\
+X & $x_0$ & 3 & 0.2 & \dots\\
+  & $x_1$ & 18 & 0.6 & \dots\\
+  & \vdots & \vdots & \vdots & \dots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+Can we use this microstructure to make \emph{informed} guesses?
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+{\bf Inst.} & {\bf Var.} & {\bf Appearances} & {\bf Polarity ($\mu$)} & {\bf \dots} & {\bf Sat. Value}\\
+\midrule
+X & $x_0$ & 15 & 0.7 & \dots & True\\
+  & $x_1$ & 2 & 0.1 & \dots & False\\
+  & \vdots & \vdots & \vdots & \dots & \vdots\\
+X & $x_0$ & 3 & 0.2 & \dots & False\\
+  & $x_1$ & 18 & 0.6 & \dots & True\\
+  & \vdots & \vdots & \vdots & \dots & \vdots\\
+Z & $z_0$ & 17 & 0.8 & \dots & True?\\
+  & \vdots & \vdots & \vdots & \dots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+Yes---and they can improve search efficiency.
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+& \multicolumn{2}{l}{{\bf Median Cost Ratio}}\\
+\cmidrule{2-3}
+{\bf Collection} & $\mu$ & $\sigma$\\
+\midrule
+{\tt SAPS-newQCP} & \np{0.98} & \np{0.14}\\
+ %& mean & \np{1.01} & \np{0.05} & \np{1.01} & \np{0.05}\\
+{\tt SAPS-SWGCP} & \np{0.21} & \np{0.04}\\
+ %& mean & \np{0.68} & \np{0.11} & \np{1.02} & \np{0.14}\\
+{\tt satenstein-cbmc} & \np{0.01} & \np{0.00}\\
+ %& mean & \np{0.55} & \np{0.04} & \np{0.91} & \np{0.03}\\
+{\tt satlib-bms} & \np{0.97} & \np{0.19}\\
+ %& mean & \np{0.98} & \np{0.18} & \np{0.98} & \np{0.18}\\
+{\tt satlib-cbs-m403-b10} & \np{0.58} & \np{0.08}\\
+ %& mean & \np{0.77} & \np{0.07} & \np{0.90} & \np{0.07}\\
+{\tt satlib-cbs-m449-b90} & \np{0.87} & \np{0.10}\\
+ %& mean & \np{0.93} & \np{0.10} & \np{0.97} & \np{0.10}\\
+{\tt satlib-ii} & \np{0.97} & \np{0.32}\\
+ %& mean & \np{1.40} & \np{0.58} & \np{1.07} & \np{0.56}\\
+{\tt satlib-rti} & \np{0.76} & \np{0.10}\\
+ %& mean & \np{0.91} & \np{0.11} & \np{0.97} & \np{0.13}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+

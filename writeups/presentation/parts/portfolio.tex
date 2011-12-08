@@ -1,0 +1,303 @@
+\section{Algorithm Portfolios}
+
+\begin{frame}
+In practice, humans do this learning all the time.
+\end{frame}
+
+\begin{frame}
+``Algorithm A isn't working; let me try algorithm B.''
+\end{frame}
+
+\begin{frame}
+What about automating such reasoning?
+\end{frame}
+
+\begin{frame}
+Great idea! You've invented an algorithm portfolio.
+\end{frame}
+
+\begin{frame}
+Let's say we know each algorithm's probabilities of success:
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{{\bf Budget (CPU Seconds)}}\\
+\cmidrule{2-5}
+{\bf Algorithm} & {\bf 30 s} & {\bf 60 s} & {\bf 90 s} & {\bf 120 s}\\
+\midrule
+Solver A & $0.10$ & $0.20$ & $0.60$ & $0.65$\\
+Solver B & $0.25$ & $0.26$ & $0.27$ & $0.28$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+How do we maximize \emph{our} probability of success?
+\end{frame}
+
+\begin{frame}
+
+What is our best action with $N$ seconds remaining?
+
+It's the action that minimizes our joint probability of failure:
+\[ (1 - p(\textrm{success}\ |\ \textrm{solver}_i, \textrm{budget}_i)) * (1 - p(\textrm{success}\ |\ \textrm{best}_{N - \textrm{budget}_i})) \]
+
+% XXX the above equation is reasonably confusing
+
+\end{frame}
+
+\begin{frame}
+What is our \textcolor{darkblue}{best} action with $30$ seconds remaining?
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{Success Probability After}\\
+\cmidrule{2-5}
+Algorithm & 30 s & 60 s & 90 s & 120 s\\
+\midrule
+Solver A & $0.10$ & $0.20$ & $0.60$ & $0.65$\\
+Solver B & \textcolor{darkblue}{$0.25$} & $0.26$ & $0.27$ & $0.28$\\
+\textcolor{darkblue}{Best Plan} & 0.25 & ? & ? & ?\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\dots B for 30, with failure probability $0.75$.
+\end{frame}
+
+\begin{frame}
+What is our \textcolor{darkblue}{best} action with $60$ seconds remaining?
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{Success Probability After}\\
+\cmidrule{2-5}
+Algorithm & 30 s & 60 s & 90 s & 120 s\\
+\midrule
+Solver A & $0.10$ & $0.20$ & $0.60$ & $0.65$\\
+Solver B & \textcolor{darkblue}{$0.25$} & $0.26$ & $0.27$ & $0.28$\\
+\textcolor{darkblue}{Best Plan} & $0.25$ & $0.44$ & ? & ?\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\dots B for 30, again, with failure probability $0.75 * 0.75 = 0.56$.
+\end{frame}
+
+\begin{frame}
+What is our \textcolor{darkblue}{best} action with $90$ seconds remaining?
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{Success Probability After}\\
+\cmidrule{2-5}
+Algorithm & 30 s & 60 s & 90 s & 120 s\\
+\midrule
+Solver A & $0.10$ & $0.20$ & \textcolor{darkblue}{$0.60$} & $0.65$\\
+Solver B & $0.25$ & $0.26$ & $0.27$ & $0.28$\\
+\textcolor{darkblue}{Best Plan} & $0.25$ & $0.44$ & $0.60$ & ?\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\dots A for 90, with failure probability $0.40$.
+\end{frame}
+
+\begin{frame}
+What is our \textcolor{darkblue}{best} action with 120 seconds remaining?
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{Success Probability After}\\
+\cmidrule{2-5}
+Algorithm & 30 s & 60 s & 90 s & 120 s\\
+\midrule
+Solver A & $0.10$ & $0.20$ & \textcolor{darkblue}{$0.60$} & $0.65$\\
+Solver B & $\textcolor{darkblue}{0.25}$ & $0.26$ & $0.27$ & $0.28$\\
+\textcolor{darkblue}{Best Plan} & $0.25$ & $0.44$ & $0.60$ & $0.70$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\dots A for 90, again, with failure probability $0.40 * 0.75 = 0.30$.
+\end{frame}
+
+\begin{frame}
+\begin{textblock*}{5in}(0pt,0pt)
+\input{figures/portfolio_oracle.tikz.tex}
+\end{textblock*}
+\end{frame}
+
+\begin{frame}
+Of course, for a new instance, we \emph{don't} know those probabilities!
+\end{frame}
+
+\begin{frame}
+---and we can only know them \emph{with certainty} by solving the instance.
+\end{frame}
+
+\begin{frame}
+We do know the history of run costs for each solver,
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Instance & Solver & TTS (s)\\
+\midrule
+X & A & \textcolor{black}{99}\\
+  &   & \textcolor{black}{22}\\
+  &   & \textcolor{black}{103}\\
+Y &   & \textcolor{black}{116}\\
+  &   & \textcolor{black}{17}\\
+  &   & \textcolor{black}{8}\\
+\vdots & \vdots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+and we can cluster each of these solver histories:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Instance & Solver & TTS (s)\\
+\midrule
+X & A & \textcolor{darkred}{99}\\
+  &   & \textcolor{darkblue}{22}\\
+  &   & \textcolor{darkred}{103}\\
+Y &   & \textcolor{darkred}{116}\\
+  &   & \textcolor{darkblue}{17}\\
+  &   & \textcolor{darkblue}{8}\\
+\vdots & \vdots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+These clusters give us probabilities in multiple possible ``worlds'':
+
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+& & \multicolumn{4}{l}{Success Probability After}\\
+\cmidrule{3-6}
+Algorithm & Cluster & 30 s & 60 s & 90 s & 120 s\\
+\midrule
+Solver A & \textcolor{darkblue}{\#0} & $0.90$ & $0.98$ & $1.00$ & $1.00$\\
+& \textcolor{darkred}{\#1} & $0.02$ & $0.05$ & $0.13$ & $0.94$\\
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+We can then group the run clusters by \emph{task}, and cluster again:
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+& & \multicolumn{2}{l}{Run Class Prob.}\\
+\cmidrule{3-4}
+Task Class & Solver & \textcolor{darkblue}{RC \#0} & \textcolor{darkred}{RC \#1}\\
+\midrule
+TC \#0 & A & $0.91$ & $0.09$\\
+       & B & $0.11$ & $0.89$\\
+TC \#1 & A & $0.03$ & $0.97$\\
+       & B & $0.84$ & $0.16$\\
+\vdots & \vdots & \vdots & \vdots\\
+\bottomrule
+\end{tabular}
+\end{center}
+\ \\
+\ \\
+Run failures narrow down both the \emph{task cluster} and the \emph{run clusters}.
+\end{frame}
+
+\begin{frame}
+What if we have static information about a new instance?
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Task & Clauses & Balance & \dots\\
+\midrule
+X & 3000 & 0.22 & \dots\\
+Y & 400 & 0.90 & \dots\\
+\vdots & \vdots & \vdots &\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+We can train a classifier to predict the task cluster probabilities.
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{llllll}
+\toprule
+Task & Clauses & Balance & \dots & TC \#0 & TC \#1\\
+\midrule
+X & 3000 & 0.22 & \dots & 0.12 & 0.88\\
+Y & 400 & 0.90 & \dots & 0.70 & 0.30\\
+\vdots & \vdots & \vdots & \dots & \vdots & \vdots\\
+Z & 500 & 0.87 & \dots & \textcolor{darkgreen}{0.74?} & \textcolor{darkgreen}{0.26?}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+%One obvious inefficiency: we can only \emph{stop} and \emph{restart} solvers.
+What if a solver run \emph{would have} succeeded, given an extra few seconds?
+
+Let's permit solver runs to be resumed.
+\end{frame}
+
+\begin{frame}
+Augment our probability matrices to include paused solver runs.
+\ \\
+\ \\
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+& \multicolumn{4}{l}{{\bf Budget (CPU Seconds)}}\\
+\cmidrule{2-5}
+{\bf Algorithm} & {\bf 30 s} & {\bf 60 s} & {\bf 90 s} & {\bf 120 s}\\
+\midrule
+Solver A & $0.10$ & $0.20$ & $0.60$ & $0.65$\\
+Solver B & $0.25$ & $0.26$ & $0.27$ & $0.28$\\
+Solver A@30 & $0.20$ & $0.60$ & $0.65$ & $0.65$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{textblock*}{5in}(0pt,0pt)
+\input{figures/portfolio_all.tikz.tex}
+\end{textblock*}
+\end{frame}
+
+\begin{frame}
+\begin{textblock*}{5in}(0pt,0pt)
+\input{figures/portfolio_all_sat07.tikz.tex}
+\end{textblock*}
+\end{frame}
+
+\begin{frame}
+What if we have multiple cores?
+
+Repeatedly re-plan, assuming that in-progress actions will fail.
+\end{frame}
+
