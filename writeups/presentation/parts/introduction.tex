@@ -1,55 +1,100 @@
 \section{Introduction}
 
 \begin{frame}
-Consider solving an instance of satisfiability (SAT), e.g.:
-\begin{center}
-\tikz \node [rectangle,draw]
-{ $(x_0 \vee \neg x_2 \vee \cdots) \wedge (\neg x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
-\end{center}
-It's typical to consider only \emph{that instance}.
+\frametitle{Problem Description}
+
+\begin{itemize}
+  \item Model board game as an MDP
+  \item We want to estimate the value function:
+    \begin{align*}
+        V^{*}(x) &= \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]\\
+        V(s)     &= w^{T}\phi(s)
+    \end{align*}
+  \item Good $V(s) \rightarrow$ Good greedy policy
+  \item Generate $\phi(s)$ automatically
+\end{itemize}
 \end{frame}
 
 \begin{frame}
----but no instance is an island.
-
-\begin{center}
-\tikz \node [rectangle,draw]
-{ $(x_0 \vee \neg x_2 \vee \cdots) \wedge (\neg x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
-\tikz \node [rectangle,draw]
-{ $(x_0 \vee x_2 \vee \cdots) \wedge (\neg x_1 \vee \neg x_2 \vee \cdots) \wedge \cdots$ };
-\tikz \node [rectangle,draw]
-{ $(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge (x_1 \vee x_2 \vee \cdots) \wedge \cdots$ };
-\\ $\vdots$
-\end{center}
-
-Instances are different, yet they are often still related.
+\frametitle{How to Generate Features?}
+Mine the state-space graph
+(TODO - state space diagram here)
 \end{frame}
 
 \begin{frame}
-Can we \emph{learn} to solve problems more efficiently?
-
-Can the problems we've \textcolor{darkgreen}{solved} help with those we \textcolor{darkred}{haven't}?
-
-\begin{center}
-\tikz \node [rectangle,draw,darkgreen]
-{ \textcolor{black}{$(x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
-\tikz \node [rectangle,draw,darkgreen]
-{ \textcolor{black}{$(x_0 \vee x_2 \vee \cdots) \wedge \cdots$} };
-\tikz \node [rectangle,draw,darkgreen]
-{ \textcolor{black}{$(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
-
-\tikz \draw [->] (0,0) -- (0,-0.5);
-
-Learning!
-
-\tikz \draw [->] (0,0) -- (0,-0.5);
-
-\tikz \node [rectangle,draw,darkred]
-{ \textcolor{black}{$(x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
-\tikz \node [rectangle,draw,darkred]
-{ \textcolor{black}{$(x_0 \vee x_2 \vee \cdots) \wedge \cdots$} };
-\tikz \node [rectangle,draw,darkred]
-{ \textcolor{black}{$(\neg x_0 \vee \neg x_2 \vee \cdots) \wedge \cdots$} };
-\end{center}
+\frametitle{What to do with the graph?}
+\begin{itemize}
+  \item Weighted Adjacency Matrix $W$
+  \item Form Graph Laplacian: $L = D-W $
+  \item take $k$ "smallest" eigenvectors: $Lv = \lambda v$
+    \begin{itemize}
+        \item As in Spectral Clustering
+        \item Good basis for smooth functions on graph $\rightarrow$ features 
+    \end{itemize}
+\end{itemize}
 \end{frame}
 
+\begin{frame}
+\frametitle{TicTacToe Eigenvectors}
+\includegraphics[width=\textwidth]{figures/ttt_move_evs}
+\end{frame}
+
+\begin{frame}
+\frametitle{Affinity Graph for Large Domains}
+In large games using full state-space graph is intractable.
+\begin{itemize}
+  \item Sample using recorded expert games
+    \begin{itemize}
+    \item reveals relevant region of state space
+    \end{itemize}
+  \item form K-NN graph in board space $\rightarrow W$
+\end{itemize} 
+\ \\
+\begin{equation}
+W_{ij} = \exp(-\frac{\vectornorm{x_{i}-x_{j}}^2}{2 \sigma^2})
+\end{equation}
+\end{frame}
+
+\begin{frame}
+\frametitle{TTT Value-Function Prediction Error}
+\includegraphics[width=\textwidth]{figures/ttt_prediction}
+\end{frame}
+
+\begin{frame}
+\frametitle{Go Results} 
+\includegraphics[width=\textwidth]{figures/go_prediction}
+\end{frame}
+
+\begin{frame}
+\frametitle{Demo!} 
+(TODO - Demo URL)
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Future Work} 
+Obstacles to scaling
+    \begin{itemize}
+    \item Large number of samples
+            \begin{itemize}
+            \item Constructing K-NN graph
+            \item Eigenvalue Computation
+            \end{itemize} 
+    \end{itemize} 
+
+Work in Progress
+    \begin{itemize}
+    \item Using k-means to cluster samples
+            \begin{itemize}
+            \item Perform feature generation on subgraphs
+            \end{itemize}
+    \item Use a better affinity space representation
+            \begin{itemize}
+            \item Use hand-crafted, symmetry-invariant features
+                \begin{itemize}
+                \item Feature amplification
+                \end{itemize}
+            \item Learning
+            \end{itemize}
+    \end{itemize}
+\end{frame}

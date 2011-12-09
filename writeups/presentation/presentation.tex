@@ -1,20 +1,23 @@
 \documentclass{beamer}
-\usepackage[urw-garamond]{mathdesign}
-\usepackage{tikz}
-\usepackage[absolute,overlay]{textpos}
-\usepackage{booktabs}
-\usepackage{array}
+%\usepackage[usenames,dvipsnames]{color}
+%\usepackage{tikz}
+%\usepackage{booktabs}
+\usepackage{graphicx}
+%\usepackage{array}
+\usepackage{amsmath}
 \usepackage{parskip}
-\usepackage[autolanguage,np]{numprint}
 \usefonttheme{serif}
-\usetikzlibrary{arrows,backgrounds,fit,positioning,backgrounds,calc,shapes.geometric}
+%\usetikzlibrary{arrows,backgrounds,fit,positioning,backgrounds,calc,shapes.geometric}
 \setbeamertemplate{navigation symbols}{}     % eliminate navigation clutter
 \setbeamertemplate{footline}[frame number]{} % eliminate footer cluter
-
+\setbeamertemplate{itemize item}{\textbullet}
+%\setbeamertemplate{itemize item item}{\textbullet}
+\setbeamercolor{itemize item}{fg=gray}
 % -----------
 % PREPARATION
 % -----------
 
+\newcommand{\vectornorm}[1]{\left|\left|#1\right|\right|}
 \definecolor{darkred}{RGB}{127,0,0}
 \definecolor{darkgreen}{RGB}{0,127,0}
 \definecolor{darkblue}{RGB}{0,0,127}
@@ -27,16 +30,13 @@
 
 \begin{frame}[plain]
 \begin{center}
-{\Huge \bf Resistance is Futile}
+{\LARGE Mining State-Space Graphs to Build Value-Function Representations}
 \ \\
 \ \\
-{\Large (and other good news)}
+{\bf Bryan Silverthorn\\Craig Corcoran}
 \ \\
 \ \\
-{\bf Bryan Silverthorn}
-\ \\
-\ \\
-8 March 2011
+9 December 2011
 \ \\
 \ \\
 Department of Computer Science\\
@@ -49,10 +49,10 @@ The University of Texas at Austin
 % --------
 
 \input{parts/introduction.tex}
-\input{parts/portfolio.tex}
-\input{parts/polarity.tex}
-\input{parts/connections.tex}
-\input{parts/conclusions.tex}
+%\input{parts/portfolio.tex}
+%\input{parts/polarity.tex}
+%input{parts/connections.tex}
+%\input{parts/conclusions.tex}
 
 \end{document}
 
