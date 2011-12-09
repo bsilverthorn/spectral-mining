@@ -10,15 +10,19 @@
         V^{*}(x) &= \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]\\
         V(s)     &= w^{T}\phi(s)
     \end{align*}
-  \item Good $V(s) \rightarrow$ Good greedy policy
+  \item Good estimate of $V(s) \rightarrow$ Good greedy policy
   \item Generate $\phi(s)$ automatically
 \end{itemize}
 \end{frame}
 
 \begin{frame}
 \frametitle{How to Generate Features?}
+\begin{center}
 Mine the state-space graph
-(TODO - state space diagram here)
+\\ \
+\\ \
+\includegraphics[width=0.7\textwidth]{figures/tictactoe_graph.png}
+\end{center}
 \end{frame}
 
 \begin{frame}
@@ -26,7 +30,7 @@ Mine the state-space graph
 \begin{itemize}
   \item Weighted Adjacency Matrix $W$
   \item Form Graph Laplacian: $L = D-W $
-  \item take $k$ "smallest" eigenvectors: $Lv = \lambda v$
+  \item take $k$ "smallest" eigenvectors: $Lv_{i} = \lambda_{i} v_{i}, \lambda_{i} <= \lambda_{i+1}$
     \begin{itemize}
         \item As in Spectral Clustering
         \item Good basis for smooth functions on graph $\rightarrow$ features 
@@ -47,12 +51,13 @@ In large games using full state-space graph is intractable.
     \begin{itemize}
     \item reveals relevant region of state space
     \end{itemize}
-  \item form K-NN graph in board space $\rightarrow W$
+  \item Form K-NN graph in board space $\rightarrow W$
+  \item Interpolate to new states (off-graph)
 \end{itemize} 
 \ \\
-\begin{equation}
+\begin{equation*}
 W_{ij} = \exp(-\frac{\vectornorm{x_{i}-x_{j}}^2}{2 \sigma^2})
-\end{equation}
+\end{equation*}
 \end{frame}
 
 \begin{frame}
