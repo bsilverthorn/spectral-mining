@@ -1,0 +1,104 @@
+\section{Introduction}
+
+\begin{frame}
+\frametitle{Problem Description}
+
+\begin{itemize}
+  \item Model board game as an MDP
+  \item We want a linear estimate of the value function:
+    \begin{align*}
+        V^{*}(x) &= \max_{a \in \mathcal{A}_x} [ R(x) + \gamma V(T(x, a)) ]\\
+        V(s)     &= w^{T}\phi(s)
+    \end{align*}
+  \item Good estimate of $V(s) \rightarrow$ good greedy policy
+  \item Generate $\phi(s)$ automatically
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{But how do we generate features?}
+\dots mine the state-space graph:
+\begin{center}
+\includegraphics[width=0.7\textwidth]{figures/tictactoe_graph.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{What to do with the graph?}
+\begin{itemize}
+  \item Build the weighted adjacency matrix $W$
+  \item Form the graph Laplacian: $L = D-W $
+  \item Take $k$ ``smallest'' eigenvectors: $Lv_{i} = \lambda_{i} v_{i}, \lambda_{i} <= \lambda_{i+1}$
+    \begin{itemize}
+        \item (as in spectral clustering)
+        \item Good basis for smooth functions on graph $\rightarrow$ features 
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenvectors of Tic-Tac-Toe}
+\includegraphics[width=\textwidth]{figures/ttt_move_evs}
+\end{frame}
+
+\begin{frame}
+\frametitle{Affinity Graph for Large Domains}
+In large games, using full state-space graph is intractable.
+\begin{itemize}
+  \item Sample from recorded expert games
+    \begin{itemize}
+    \item Reveals relevant region of state space
+    \end{itemize}
+  \item Form $k$-NN graph in board space $\rightarrow W$
+  \item Interpolate to new states (off-graph)
+\end{itemize} 
+\ \\
+\begin{equation*}
+W_{ij} = \exp(-\frac{\vectornorm{x_{i}-x_{j}}^2}{2 \sigma^2})
+\end{equation*}
+\end{frame}
+
+\begin{frame}
+\frametitle{TTT Value-Function Prediction Error}
+\includegraphics[width=\textwidth]{figures/ttt_prediction}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results in Go} 
+\includegraphics[width=\textwidth]{figures/go_prediction}
+\end{frame}
+
+\begin{frame}
+\frametitle{Demo!} 
+\begin{center}
+\texttt{http://www.cs.utexas.edu/$\sim$bsilvert/ttt.html}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Future Work} 
+Obstacles to scaling
+    \begin{itemize}
+    \item Large number of samples
+            \begin{itemize}
+            \item Constructing $k$-NN graph
+            \item Eigenvalue computation
+            \end{itemize} 
+    \end{itemize} 
+
+Work in Progress
+    \begin{itemize}
+    \item Using $k$-means to cluster samples
+            \begin{itemize}
+            \item Perform feature generation on subgraphs
+            \end{itemize}
+    \item Use a better affinity space representation
+            \begin{itemize}
+            \item Use hand-crafted, symmetry-invariant features
+                \begin{itemize}
+                \item Feature amplification
+                \end{itemize}
+            \item Learning
+            \end{itemize}
+    \end{itemize}
+\end{frame}

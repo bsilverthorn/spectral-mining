@@ -1,0 +1,58 @@
+\documentclass{beamer}
+%\usepackage[usenames,dvipsnames]{color}
+%\usepackage{tikz}
+%\usepackage{booktabs}
+\usepackage{graphicx}
+%\usepackage{array}
+\usepackage{amsmath}
+\usepackage{parskip}
+\usefonttheme{serif}
+%\usetikzlibrary{arrows,backgrounds,fit,positioning,backgrounds,calc,shapes.geometric}
+\setbeamertemplate{navigation symbols}{}     % eliminate navigation clutter
+\setbeamertemplate{footline}[frame number]{} % eliminate footer cluter
+\useinnertheme{circles}
+\usecolortheme{seagull}
+
+%\setbeamertemplate{itemize item}{\textbullet}
+%\setbeamertemplate{itemize item item}{\textbullet}
+%\setbeamercolor{itemize item}{fg=gray}
+%\setbeamercolor{itemize item itemize item}{fg=gray}
+% -----------
+% PREPARATION
+% -----------
+
+\newcommand{\vectornorm}[1]{\left|\left|#1\right|\right|}
+\definecolor{darkred}{RGB}{127,0,0}
+\definecolor{darkgreen}{RGB}{0,127,0}
+\definecolor{darkblue}{RGB}{0,0,127}
+
+\begin{document}
+
+% -----------
+% TITLE SLIDE
+% -----------
+
+\begin{frame}[plain]
+\begin{center}
+{\LARGE Mining State-Space Graphs to\\Build Value-Function Representations}
+\ \\
+\ \\
+{\bf Bryan Silverthorn\\Craig Corcoran}
+\ \\
+\ \\
+9 December 2011
+\ \\
+\ \\
+Department of Computer Science\\
+The University of Texas at Austin
+\end{center}
+\end{frame}
+
+% --------
+% SECTIONS
+% --------
+
+\input{parts/introduction.tex}
+
+\end{document}
+
