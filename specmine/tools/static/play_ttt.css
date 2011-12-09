@@ -1,0 +1,123 @@
+html {
+    font-family: sans-serif;
+}
+
+body {
+    /*width: 304px;*/
+    /*margin: auto;*/
+    margin: 20px;
+}
+
+h2#prompt {
+    font-size: 32px;
+    font-family: monospace;
+    line-height: 60px;
+    float: left;
+    clear: left;
+    /*margin: 0px;*/
+    /*width: 800px;*/
+    /*position: absolute;*/
+    /*top: -120px;*/
+    /*left: -180px;*/
+}
+
+div#content {
+    /*width: 304px;*/
+    /*height: 304px;*/
+    /*position: absolute;*/
+    /*top: 45%;*/
+    /*margin-top: -152px;*/
+}
+
+/*
+ * MAIN BOARD
+ */
+
+div#board {
+    float: left;
+    clear: left;
+    text-align: center;
+}
+
+div.row {
+    float: left;
+    clear: left;
+}
+
+div.square {
+    width: 100px;
+    height: 100px;
+    padding: 0px;
+    margin: 0px;
+    float: left;
+    font-size: 64px;
+    line-height: 100px;
+    cursor: pointer;
+}
+
+div.square:first-child,
+div.small-square:first-child {
+    border-right: 2px solid #444444;
+}
+
+div.square:last-child,
+div.small-square:last-child {
+    border-left: 2px solid #444444;
+}
+
+div.row:first-child {
+    border-bottom: 2px solid #444444;
+}
+
+div.row:last-child {
+    border-top: 2px solid #444444;
+}
+
+div.open {
+    color: #cccccc;
+}
+
+/*
+ * SMALL BOARDS
+ */
+
+div#small-boards {
+    float: left;
+    width: 440px;
+    height: 304px;
+    font-family: monospace;
+}
+
+div.small-board-area {
+    float: left;
+    position: relative;
+    margin-left: 20px;
+    margin-bottom: 2px;
+    width: 200px;
+}
+
+div.small-board {
+    float: left;
+}
+
+div.small-square {
+    width: 32px;
+    height: 32px;
+    padding: 0px;
+    margin: 0px;
+    float: left;
+    line-height: 32px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+div.description {
+    position: absolute;
+    top: 0px;
+    left: 100px;
+    width: 90px;
+    height: 90px;
+    padding: 5px;
+}
+
