@@ -86,6 +86,7 @@ div#small-boards {
     width: 440px;
     height: 304px;
     font-family: monospace;
+    margin-left: 20px;
 }
 
 div.small-board-area {
