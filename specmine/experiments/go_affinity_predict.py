@@ -28,7 +28,7 @@ def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, 
     num_samples = feature_map.basis.shape[0]
     return [map_name, B, num_samples, mean, variance]
 
-def run_graph_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
+def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
     if B > 0:
         basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack")
         all_features_NF = numpy.hstack([vectors_ND, basis_NB])
@@ -37,7 +37,7 @@ def run_graph_features(map_name, B, vectors_ND, affinity_NN, index, values, inte
 
     return run_features(map_name, B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
-def run_clustered_graph_features(map_name, evs_per_cluster, vectors_ND, affinity_NN, index, values,\
+def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affinity_NN, index, values,\
                             num_clusters, interpolate = True, **kwargs):
     if evs_per_cluster > 0:
         basis, vectors_ND = specmine.spectral.clustered_laplacian_basis(affinity_NN, num_clusters, \
@@ -59,6 +59,10 @@ def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwa
     all_features_NF = numpy.hstack([vectors_ND, random_basis_NB])
 
     return run_features("random", B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
+
+def run_template_features():
+    ''' TODO perform least squares analysis using template features '''
+    
 
 def get_value_list(games_path,values_path):
     games_path = specmine.util.static_path(games_path)
@@ -157,7 +161,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     ) 
-def flat_affinity_test(out_path, games_path, values_path, neighbors = 8, workers = 0, interpolate = False, off_graph = False):
+def flat_affinity_test(out_path, games_path, values_path, neighbors = 8, workers = 0, interpolate = True, off_graph = True):
     """Test value prediction in Go."""
 
     value_list = get_value_list(games_path,values_path) 
@@ -194,12 +198,12 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 8, workers
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
                     #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, interpolate], \
                             #dict(aff_vec = avectors_ND, aff_map = affinity_map))
-                    yield (run_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate],\
+                    yield (run_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate],\
                             dict(aff_map = affinity_map))
                 else:
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
                     #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, interpolate])
-                    yield (run_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate])
+                    yield (run_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate])
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
@@ -210,6 +214,6 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 8, workers
             writer.writerow(row)
 
 if __name__ == "__main__":
-    #specmine.script(flat_affinity_test)
-    specmine.script(clustered_affinity_test)
+    specmine.script(flat_affinity_test)
+    #specmine.script(clustered_affinity_test)
  
