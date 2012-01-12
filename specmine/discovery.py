@@ -32,6 +32,60 @@ class RandomFeatureMap(TabularFeatureMap):
             index,
             )
 
+def generate_templates(n,m):
+    templates = set()
+    template = TemplateFeature(numpy.zeros((n,m)))
+    templates.add(template)
+    for temp in template.gen_templates(numpy.zeros(n*m),0):
+        templates.add(temp)
+
+    return list(templates)
+
+def test_gen_templates(num_tests=10,m=2,n=2):
+    templates = generate_templates(m,n)
+    for i in xrange(num_tests):
+        temp = TemplateFeature(numpy.round(2*numpy.random.random((m,n))-1))
+        assert temp in templates
+    
+class TemplateFeature(object):
+
+    def __init__(self,grid):
+        self.grid = grid
+        self._string = str(grid.flatten())
+
+    def __hash__(self):
+        return hash(self._string)
+
+    def __eq__(self,other):
+        return self._string == other._string
+
+    def gen_temps(self,partial,ind):
+        n,m = self.grid.shape
+        if ind == n*m:
+            yield TemplateFeature(numpy.reshape(partial,(n,m)))
+        else:
+            for s in [-1,0,1]:
+                partial[ind] = s
+                yield self.gen_next(partial,ind+1)
+
+
+class TemplateFeatureMap(object):
+    
+    def __init__(self, basis_matrix, index):
+        self.basis = basis_matrix # number of states x number of features
+        u, s, v = numpy.linalg.svd(basis_matrix)
+        rank = numpy.sum(s > 1e-10)
+        print 'rank of basis: ', rank
+        print 'full rank: ', basis_matrix.shape[1]
+        #assert rank == basis_matrix.shape[1]
+
+        self.index = index
+
+    def __getitem__(self, state):
+        #print 'state: ',state
+        return self.basis[self.index[state], :]
+
+
 class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression."""
 
@@ -201,3 +255,7 @@ def affinity_graph(vectors_ND, neighbors, sigma = 1e16, get_tree = False):
 
     #clustering.fit(features_ND)
 
+
+if __name__ == "__main__":
+    templates = generate_templates(2,2)
+    print templates
