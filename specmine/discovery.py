@@ -2,6 +2,7 @@ import numpy
 import scipy.sparse
 import sklearn.neighbors
 import specmine
+import copy
 
 logger = specmine.get_logger(__name__)
 
@@ -32,43 +33,72 @@ class RandomFeatureMap(TabularFeatureMap):
             index,
             )
 
-def generate_templates(n,m):
-    templates = set()
-    template = TemplateFeature(numpy.zeros((n,m)))
-    templates.add(template)
-    for temp in template.gen_templates(numpy.zeros(n*m),0):
-        templates.add(temp)
+def test_gen_templates(num_tests=10,m=2,n=2,size=9):
+    feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
+    features = feat.gen_features()
 
-    return list(templates)
+    try:
+        for i in xrange(num_tests):
+            ft = TemplateFeature(numpy.array(numpy.round( \
+                2*numpy.random.random((m,n))-1), dtype=int), \
+                (int(round((size-m)*numpy.random.random())), \
+                int(round((size-n)*numpy.random.random()))))
+            assert ft in features
 
-def test_gen_templates(num_tests=10,m=2,n=2):
-    templates = generate_templates(m,n)
-    for i in xrange(num_tests):
-        temp = TemplateFeature(numpy.round(2*numpy.random.random((m,n))-1))
-        assert temp in templates
+    except AssertionError:
+        print ft._string + 'is not in the templates list'
     
 class TemplateFeature(object):
 
-    def __init__(self,grid):
+    def __init__(self,grid,position):
         self.grid = grid
+        self.position = position
         self._string = str(grid.flatten())
 
-    def __hash__(self):
+
+    def __hash__(self,size=9):
+        boards = []
+        m,n = self.grid.shape
+        board = numpy.zeros((size,size))
+        board[self.position[0]:self.position[0]+m, \
+            self.position[1]:self.position[1]+n] = self.grid
+        boards.append(board)
+        
+
         return hash(self._string)
 
     def __eq__(self,other):
         return self._string == other._string
 
-    def gen_temps(self,partial,ind):
+    def gen_templates(self, pref_list=[], templates = set()):
+        ''' generate the full list of templates of the same size as
+        the current feature'''
+
         n,m = self.grid.shape
-        if ind == n*m:
-            yield TemplateFeature(numpy.reshape(partial,(n,m)))
+        if len(pref_list) == n*m:
+            templates.add(tuple(pref_list))
         else:
-            for s in [-1,0,1]:
-                partial[ind] = s
-                yield self.gen_next(partial,ind+1)
+            for s in [-1, 0, 1]:
+                new_list = copy.copy(pref_list)
+                new_list.append(s)
+                self.gen_templates(new_list,templates)
 
+            return list(templates)
 
+    def gen_features(self,size=9):
+        '''generate a list of all nxm templates in all positions on the board, 
+        (taking into account symmetries) '''
+        templates = self.gen_templates()
+        features = set()
+        n,m = self.grid.shape
+        for i in xrange(size-m+1):
+            for j in xrange(size-n+1):
+                for temp in templates:
+                    features.add(TemplateFeature( \
+                        numpy.reshape(numpy.array(temp),(n,m)),(i,j)))
+
+        return list(features)
+            
 class TemplateFeatureMap(object):
     
     def __init__(self, basis_matrix, index):
@@ -257,5 +287,4 @@ def affinity_graph(vectors_ND, neighbors, sigma = 1e16, get_tree = False):
 
 
 if __name__ == "__main__":
-    templates = generate_templates(2,2)
-    print templates
+    test_gen_templates()
