@@ -50,25 +50,40 @@ def test_gen_templates(num_tests=10,m=2,n=2,size=9):
     
 class TemplateFeature(object):
 
-    def __init__(self,grid,position):
+    def __init__(self,grid,position, size=9):
         self.grid = grid
         self.position = position
         self._string = str(grid.flatten())
+        m,n = self.grid.shape
+        board = numpy.zeros((size,size)) # board containing only template
+        board[self.position[0]:self.position[0]+m, \
+            self.position[1]:self.position[1]+n] = self.grid
+
+        # find all symmetrically equivalent features
+        self.boards = set() # list of symmetric/equivalent board strings
+        for i in xrange(4):
+            self.boards.add(tuple(numpy.rot90(board,i).flatten().tolist()))
+
+        self.boards.add(str(numpy.fliplr(board).flatten()))
+        self.boards.add(str(numpy.flipud(board).flatten()))
+        rot_board = numpy.rot90(board,1)
+        self.boards.add(str(numpy.fliplr(rot_board).flatten()))
+        self.boards.add(str(numpy.flipud(rot_board).flatten()))
+
+        #self.boards = list(self.boards)
 
 
     def __hash__(self,size=9):
-        boards = []
-        m,n = self.grid.shape
-        board = numpy.zeros((size,size))
-        board[self.position[0]:self.position[0]+m, \
-            self.position[1]:self.position[1]+n] = self.grid
-        boards.append(board)
         
-
-        return hash(self._string)
+        hashes = map(hash,self.boards)
+        return max(hashes)
 
     def __eq__(self,other):
-        return self._string == other._string
+        # test - TODO remove
+        if self._string in other.boards:
+            assert other._string in self.boards
+
+        return self._string in other.boards
 
     def gen_templates(self, pref_list=[], templates = set()):
         ''' generate the full list of templates of the same size as
@@ -87,7 +102,7 @@ class TemplateFeature(object):
 
     def gen_features(self,size=9):
         '''generate a list of all nxm templates in all positions on the board, 
-        (taking into account symmetries) '''
+        (TODO: taking into account symmetries) '''
         templates = self.gen_templates()
         features = set()
         n,m = self.grid.shape
