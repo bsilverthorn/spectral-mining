@@ -46,7 +46,7 @@ def test_gen_templates(num_tests=10,m=2,n=2,size=9):
             assert ft in features
 
     except AssertionError:
-        print ft._string + 'is not in the templates list'
+        print ft._string + ' at ' + ft.position + ' is not in the templates list'
     
 class TemplateFeature(object):
 
