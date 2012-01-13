@@ -102,7 +102,7 @@ class TemplateFeature(object):
 
     def gen_features(self,size=9):
         '''generate a list of all nxm templates in all positions on the board, 
-        (TODO: taking into account symmetries) '''
+        (taking into account symmetries) '''
         templates = self.gen_templates()
         features = set()
         n,m = self.grid.shape
