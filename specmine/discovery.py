@@ -52,7 +52,8 @@ def test_gen_templates(num_tests=10,m=3,n=3,size=9):
 def test_gen_applications(m=2,n=2,size=9):
     ''' tests generating applications for go_loops '''
     feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
-    features, templates, grids = feat.gen_features()
+    features, templates = feat.gen_features()
+    grids = [temp.grid for temp in templates]
     print 'number of features: ', len(features)
     print 'number of templates: ', len(templates)
     print 'number of grids: ', len(grids)
@@ -78,8 +79,11 @@ def test_gen_applications(m=2,n=2,size=9):
 
 
     board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.int8)
-    grids = numpy.array(grids)
+    grids = numpy.array(grids, dtype=numpy.int8)
+    applications = numpy.array(applications, dtype=numpy.int8)
     assert grids.shape[1:] == (m,n)
+    print applications[0]
+    print grids[0]
     indices, count = specmine.go.applyTemplates(applications,grids,board,num_features)
     print 'nonzero: ', indices
     print 'count: ', count
@@ -181,7 +185,8 @@ class TemplateFeature(object):
 
         n,m = self.grid.shape
         if len(pref_list) == n*m:
-            templates.add(tuple(pref_list))
+            grid = numpy.reshape(numpy.array(pref_list,dtype=numpy.int8),(n,m))
+            templates.add(Template(grid))
         else:
             for s in [-1, 0, 1]:
                 new_list = copy.copy(pref_list)
@@ -195,18 +200,13 @@ class TemplateFeature(object):
         (taking into account symmetries) '''
         templates = self.gen_templates() # generate templates without duplicates
         features = set()
-        templates_out = set()
-        grids = []
         n,m = self.grid.shape
         for i in xrange(size-m+1):
             for j in xrange(size-n+1):
                 for temp in templates:
-                    grid = numpy.reshape(numpy.array(temp),(n,m))
-                    grids.append(grid)
-                    templates_out.add(Template(grid))
-                    features.add(TemplateFeature(grid,(i,j)))
+                    features.add(TemplateFeature(temp.grid,(i,j)))
 
-        return list(features), list(templates_out), grids
+        return list(features), templates
             
 class TemplateFeatureMap(object):
     # TODO
