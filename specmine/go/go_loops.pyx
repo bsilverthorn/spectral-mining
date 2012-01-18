@@ -5,11 +5,11 @@ cimport cython
 cimport numpy
 
 @cython.boundscheck(False)
-def applyTemplates(py_applications, py_templates, py_state):
+def applyTemplates(py_applications, py_templates, py_state, num_feats):
     cdef numpy.ndarray[numpy.uint32_t, ndim = 2] applications = py_applications.astype(numpy.uint32)
     cdef numpy.ndarray[numpy.uint8_t, ndim = 3] templates = py_templates.astype(numpy.uint8)
     cdef numpy.ndarray[numpy.uint8_t, ndim = 2] state = py_state.astype(numpy.uint8)
-    cdef numpy.ndarray[numpy.uint32_t, ndim = 1] counts = numpy.zeros(templates.shape[0], numpy.uint32)
+    cdef numpy.ndarray[numpy.uint32_t, ndim = 1] counts = numpy.zeros(num_feats, numpy.uint32)
 
     cdef unsigned int i
     cdef unsigned int r
@@ -24,6 +24,7 @@ def applyTemplates(py_applications, py_templates, py_state):
         r = applications[i, <unsigned int>0]
         c = applications[i, <unsigned int>1]
         t = applications[i, <unsigned int>2]
+        f = applications[i, <unsigned int>3]
 
         match = True
 
@@ -38,7 +39,7 @@ def applyTemplates(py_applications, py_templates, py_state):
                 break
 
         if match:
-            counts[t] += 1
+            counts[f] += 1
 
     ind = counts.nonzero()[0] #  weight indices where the number of features present was nonzero
     counts = counts[ind]
