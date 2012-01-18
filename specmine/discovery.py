@@ -229,9 +229,11 @@ class TemplateFeatureMap(object):
         feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
         self.features, self.templates = feat.gen_features()
         self.grids = [temp.grid for temp in self.templates]
-
+        self.B = B # number of active basis (other than flattened grid
         self.applications = []
-        self.num_features = len(self.features)
+        print type(self.features)
+        print self.features
+        self.num_features = len(self.features) # total number of possible features
         for i in xrange(min(B,self.num_features)):
             feat = self.features[i]
             for app in feat.applications:
@@ -246,13 +248,17 @@ class TemplateFeatureMap(object):
 
     def __getitem__(self, state):
         grid = state.board.grid
-        indices, count = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
-        #indices, count = specmine.go.applyTemplates(self.applications,self.grids,board,num_features)
+        
+        if self.B > 0:
+            indices, count = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
+            #indices, count = specmine.go.applyTemplates(self.applications,self.grids,board,num_features)
 
-        feat_vec = numpy.zeros(len(self.features))
-        feat_vec[indices] = 1
-        # feat_vec[indices] = counts # weighted by number of occurances
-        return feat_vec
+        feat_vec = numpy.zeros(B)
+        if B > 0:
+            feat_vec[indices] = 1
+            # feat_vec[indices] = counts # weighted by number of occurances
+        
+        return numpy.hstack((1,grid.flatten(),feat_vec)) # add constant and float board vector
 
 
 class InterpolationFeatureMap(object):
