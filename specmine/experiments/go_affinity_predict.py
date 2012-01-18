@@ -38,9 +38,9 @@ def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, 
 def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
     if B > 0:
         basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack")
-        all_features_NF = numpy.hstack([vectors_ND, basis_NB])
+        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, basis_NB])
     else:
-        all_features_NF = vectors_ND
+        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND])
 
     return run_features(map_name, B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
@@ -52,9 +52,9 @@ def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affi
 
         logger.info("number of laplacian features: %i", basis.shape[1])
         
-        all_features_NF = numpy.hstack((vectors_ND, basis))
+        all_features_NF =  numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, basis])
     else:
-        all_features_NF = vectors_ND
+        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND])
 
     return run_features(map_name, evs_per_cluster, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
@@ -63,7 +63,7 @@ def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwa
     (N, _) = vectors_ND.shape
 
     random_basis_NB = numpy.random.random((N, B))
-    all_features_NF = numpy.hstack([vectors_ND, random_basis_NB])
+    all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, random_basis_NB])
 
     return run_features("random", B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
     
@@ -179,8 +179,8 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
     logger.info("number of value samples total: %i", len(value_list))
  
     def yield_jobs():
-        min_samples = 5000
-        max_samples = 10000
+        min_samples = 10000
+        max_samples = 15000
         step_samples = 5000
         max_test_samples = 100000
 
