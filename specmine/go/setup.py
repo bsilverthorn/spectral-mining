@@ -32,11 +32,11 @@ distutils.core.setup(
             #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
             #libraries = ["m", "curses"],
             #),
-        #distutils.extension.Extension(
-            #"go_loops",
-            #["go_loops.pyx"],
-            #libraries = ["m", "curses"],
-            #),
+        distutils.extension.Extension(
+            "go_loops",
+            ["go_loops.pyx"],
+            libraries = ["m", "curses"],
+            ),
         distutils.extension.Extension(
             "fuego",
             ["fuego.pyx"],
