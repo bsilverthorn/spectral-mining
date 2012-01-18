@@ -1,5 +1,6 @@
 from go import *
 from features import *
+from go_loops import *
 
 try:
     from fuego import *

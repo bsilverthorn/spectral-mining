@@ -3,6 +3,7 @@ import scipy.sparse
 import sklearn.neighbors
 import specmine
 import copy
+import go_loops
 
 logger = specmine.get_logger(__name__)
 
@@ -33,55 +34,63 @@ class RandomFeatureMap(TabularFeatureMap):
             index,
             )
 
-def test_gen_templates(num_tests=10,m=2,n=2,size=9):
+def test_gen_templates(num_tests=10,m=3,n=3,size=9):
     feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
     features = feat.gen_features()
 
     try:
         for i in xrange(num_tests):
             ft = TemplateFeature(numpy.array(numpy.round( \
-                2*numpy.random.random((m,n))-1), dtype=int), \
+                2*numpy.random.random((m,n))-1), dtype=numpy.int8), \
                 (int(round((size-m)*numpy.random.random())), \
                 int(round((size-n)*numpy.random.random()))))
             assert ft in features
 
     except AssertionError:
-        print ft._string + ' at ' + ft.position + ' is not in the templates list'
+        print str(ft.grid) + ' at ' + str(ft.position) + ' is not in the templates list'
     
 class TemplateFeature(object):
 
     def __init__(self,grid,position, size=9):
         self.grid = grid
         self.position = position
-        self._string = str(grid.flatten())
+        self.size = size
         m,n = self.grid.shape
-        board = numpy.zeros((size,size)) # board containing only template
-        board[self.position[0]:self.position[0]+m, \
+        self.board = numpy.zeros((size,size)) # board containing only template
+        self.board[self.position[0]:self.position[0]+m, \
             self.position[1]:self.position[1]+n] = self.grid
+        self.board = numpy.array(self.board,dtype=numpy.int8)
+        self._string = str(self.board.flatten())
 
         # find all symmetrically equivalent features
         self.boards = set() # list of symmetric/equivalent board strings
         for i in xrange(4):
-            self.boards.add(tuple(numpy.rot90(board,i).flatten().tolist()))
+            self.boards.add(str(numpy.array(numpy.rot90(self.board,i).flatten(), \
+                        dtype=numpy.int8)))
 
-        self.boards.add(str(numpy.fliplr(board).flatten()))
-        self.boards.add(str(numpy.flipud(board).flatten()))
-        rot_board = numpy.rot90(board,1)
-        self.boards.add(str(numpy.fliplr(rot_board).flatten()))
-        self.boards.add(str(numpy.flipud(rot_board).flatten()))
+        self.boards.add(str(numpy.array(numpy.fliplr(self.board).flatten(), \
+                        dtype=numpy.int8)))
+        self.boards.add(str(numpy.array(numpy.flipud(self.board).flatten(), \
+                        dtype=numpy.int8)))
 
-        #self.boards = list(self.boards)
+        rot_board = numpy.rot90(self.board,1)
+        self.boards.add(str(numpy.array(numpy.fliplr(rot_board).flatten(), \
+                        dtype=numpy.int8)))
+        self.boards.add(str(numpy.array(numpy.flipud(rot_board).flatten(), \
+                        dtype=numpy.int8)))
 
-
-    def __hash__(self,size=9):
+    def __hash__(self):
         
         hashes = map(hash,self.boards)
         return max(hashes)
 
     def __eq__(self,other):
         # test - TODO remove
+        
         if self._string in other.boards:
-            assert other._string in self.boards
+            assert self._string in self.boards
+        else:
+            assert not other._string in self.boards
 
         return self._string in other.boards
 
@@ -106,29 +115,35 @@ class TemplateFeature(object):
         templates = self.gen_templates()
         features = set()
         n,m = self.grid.shape
-        for i in xrange(size-m+1):
-            for j in xrange(size-n+1):
-                for temp in templates:
+        for t in xrange(len(templates)):
+            temp = templates[t]
+            for i in xrange(size-m+1):
+                for j in xrange(size-n+1):
+                    num_feats = len(features)
                     features.add(TemplateFeature( \
-                        numpy.reshape(numpy.array(temp),(n,m)),(i,j)))
+                        numpy.reshape(numpy.array(temp, dtype=numpy.int8),  
+                        (n,m)), (i,j)))
+                    if len(features) > num_feats:
+                        applications.append([i,j,t])
 
-        return list(features)
+
+        return list(features), templates, applications
             
 class TemplateFeatureMap(object):
-    
-    def __init__(self, basis_matrix, index):
-        self.basis = basis_matrix # number of states x number of features
-        u, s, v = numpy.linalg.svd(basis_matrix)
-        rank = numpy.sum(s > 1e-10)
-        print 'rank of basis: ', rank
-        print 'full rank: ', basis_matrix.shape[1]
-        #assert rank == basis_matrix.shape[1]
+    ''' feature map for the set of all position-dependent mxn template features'''
+    def __init__(self, m,n):
 
-        self.index = index
+        # TODO - load feature set from file or save features map
+        self.features,self.templates,self.applications = TemplateFeature(numpy.zeros((m,n)),(0,0)).gen_features()
+        self.templates = numpy.array(self.templates)
+        self.applications = numpy.array(self.applications)
 
     def __getitem__(self, state):
-        #print 'state: ',state
-        return self.basis[self.index[state], :]
+        indices, counts = go_loops.applyTemplates(self.applications, self.templates, state.grid)
+        feat_vec = numpy.zeros((len(self.features)))
+        feat_vec[indices] = 1
+        # feat_vec[indices] = counts # weighted by number of occurances
+        return feat_vec
 
 
 class InterpolationFeatureMap(object):
