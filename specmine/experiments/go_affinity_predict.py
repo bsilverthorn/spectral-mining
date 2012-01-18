@@ -127,10 +127,10 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
             value_dict = dict(shuffled_values[:samples])
     
             if off_graph:
-                test_values = dict(shuffled_values[samples:])
+                # limit max number of samples tested
+                test_values = dict(shuffled_values[samples:max_test_samples+1])
             else: 
                 test_values = dict(shuffled_values[:samples])
-            test_values = test_values[:max_test_samples] # limit max number of samples tested
 
             boards = value_dict.keys()
             num_boards = len(boards)
@@ -179,8 +179,8 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
     logger.info("number of value samples total: %i", len(value_list))
  
     def yield_jobs():
-        min_samples = 5000
-        max_samples = 20000
+        min_samples = 10000
+        max_samples = 15000
         step_samples = 5000
         max_test_samples = 100000
 
@@ -192,11 +192,10 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
                 
             # if testing off-graph use held-out samples
             if off_graph:
-                test_values = dict(shuffled_values[samples:])
+                test_values = dict(shuffled_values[samples:max_test_samples+1])
             else: 
                 test_values = dict(shuffled_values[:samples])
             print type(test_values)
-            #test_values = test_values[:max_test_samples] # limit max number of samples tested
 
             boards = value_dict.keys()
             num_boards = len(boards)
