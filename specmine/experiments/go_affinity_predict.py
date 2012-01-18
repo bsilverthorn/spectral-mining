@@ -69,8 +69,8 @@ def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwa
     
 
 def get_value_list(games_path,values_path):
-    games_path = specmine.util.static_path(games_path)
-    values_path = specmine.util.static_path(values_path)
+    #games_path = specmine.util.static_path(games_path)
+    #values_path = specmine.util.static_path(values_path)
 
     with specmine.util.openz(games_path) as games_file:
         games = pickle.load(games_file)
