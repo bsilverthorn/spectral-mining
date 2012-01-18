@@ -143,14 +143,14 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
                 if interpolate:
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
-                    yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
-                    #yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
+                    #yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
+                    yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
                     #    num_clusters,interpolate], dict(aff_map = affinity_map))
                 else:
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
-                    yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate])
-                    #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, num_clusters, interpolate])
+                    #yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate])
+                    yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, num_clusters, interpolate])
                     #yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, num_clusters, interpolate])
 
     with open(out_path, "wb") as out_file:
@@ -202,17 +202,16 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
             avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
             affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors, sigma = 1e6)
 
-            for B in numpy.r_[0:200:20j].round().astype(int):
+            for B in numpy.r_[0:200:50j].round().astype(int):
                 if interpolate:
+                    yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
-                    #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, interpolate], \
-                            #dict(aff_vec = avectors_ND, aff_map = affinity_map))
-                    yield (run_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate],\
-                            dict(aff_map = affinity_map))
+                    yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
                 else:
+                    yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
-                    #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, interpolate])
-                    yield (run_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, interpolate])
+                    yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate])
+
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
