@@ -57,8 +57,8 @@ def test_gen_applications(m=2,n=2,size=9):
     print 'number of features: ', len(features)
     print 'number of templates: ', len(templates)
     print 'number of grids: ', len(grids)
-    print 'should be 0, templates: ', templates.index(templates[0])
-    print 'should be 0, features: ', features.index(features[0])
+    assert templates.index(templates[0]) == 0
+    assert features.index(features[10]) == 10
 
     applications = []
     num_features = len(features)
@@ -78,9 +78,9 @@ def test_gen_applications(m=2,n=2,size=9):
                 print features.index(feat)
 
 
-    board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.int8)
-    grids = numpy.array(grids, dtype=numpy.int8)
-    applications = numpy.array(applications, dtype=numpy.int8)
+    board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.uint8)
+    grids = numpy.array(grids, dtype=numpy.uint8)
+    applications = numpy.array(applications, dtype=numpy.uint32)
     assert grids.shape[1:] == (m,n)
     print applications[0]
     print grids[0]
