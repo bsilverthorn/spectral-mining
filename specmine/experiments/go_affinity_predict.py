@@ -195,7 +195,8 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
                 test_values = dict(shuffled_values[samples:])
             else: 
                 test_values = dict(shuffled_values[:samples])
-            test_values = test_values[:max_test_samples] # limit max number of samples tested
+            print test_values
+            #test_values = test_values[:max_test_samples] # limit max number of samples tested
 
             boards = value_dict.keys()
             num_boards = len(boards)
