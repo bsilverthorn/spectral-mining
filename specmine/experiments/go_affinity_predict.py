@@ -113,6 +113,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
         max_samples = 260000
         step_samples = 60000
         cluster_size = 10000 #average
+        max_test_samples = 100000
  
         shuffled_values = sorted(value_list, key = lambda _: numpy.random.rand()) 
 
@@ -129,6 +130,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
                 test_values = dict(shuffled_values[samples:])
             else: 
                 test_values = dict(shuffled_values[:samples])
+            test_values = test_values[:max_test_samples] # limit max number of samples tested
 
             boards = value_dict.keys()
             num_boards = len(boards)
@@ -145,7 +147,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
                     #yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
                     yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
-                    #    num_clusters,interpolate], dict(aff_map = affinity_map))
+                        num_clusters,interpolate], dict(aff_map = affinity_map))
                 else:
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
@@ -180,6 +182,7 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
         min_samples = 5000
         max_samples = 20000
         step_samples = 5000
+        max_test_samples = 100000
 
         shuffled_values = sorted(value_list, key = lambda _: numpy.random.rand()) 
 
@@ -192,6 +195,7 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
                 test_values = dict(shuffled_values[samples:])
             else: 
                 test_values = dict(shuffled_values[:samples])
+            test_values = test_values[:max_test_samples] # limit max number of samples tested
 
             boards = value_dict.keys()
             num_boards = len(boards)
