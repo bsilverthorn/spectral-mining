@@ -179,8 +179,8 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
     logger.info("number of value samples total: %i", len(value_list))
  
     def yield_jobs():
-        min_samples = 10000
-        max_samples = 15000
+        min_samples = 5000
+        max_samples = 10000
         step_samples = 5000
         max_test_samples = 100000
 

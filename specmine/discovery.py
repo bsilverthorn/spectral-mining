@@ -221,7 +221,8 @@ class TemplateFeature(object):
                 for temp in templates:
                     features.add(TemplateFeature(temp.grid,(i,j)))
 
-        random.shuffle(list(features))
+        feature_list = list(features)
+        random.shuffle(feature_list)
         return features, templates
             
 class TemplateFeatureMap(object):
@@ -248,14 +249,14 @@ class TemplateFeatureMap(object):
         # TODO - save/load feature map
 
     def __getitem__(self, state):
-        grid = state.board.grid
+        grid = state.grid
         
         if self.B > 0:
             indices, count = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
             #indices, count = specmine.go.applyTemplates(self.applications,self.grids,board,num_features)
 
-        feat_vec = numpy.zeros(B)
-        if B > 0:
+        feat_vec = numpy.zeros(self.B)
+        if self.B > 0:
             feat_vec[indices] = 1
             # feat_vec[indices] = counts # weighted by number of occurances
         
