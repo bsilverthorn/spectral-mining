@@ -221,7 +221,8 @@ class TemplateFeature(object):
                 for temp in templates:
                     features.add(TemplateFeature(temp.grid,(i,j)))
 
-        return random.shuffle(list(features)), templates
+        random.shuffle(list(features))
+        return features, templates
             
 class TemplateFeatureMap(object):
 
