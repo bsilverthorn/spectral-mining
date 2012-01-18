@@ -38,9 +38,9 @@ def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, 
 def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
     if B > 0:
         basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack")
-        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, basis_NB])
+        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, basis_NB])
     else:
-        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND])
+        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND])
 
     return run_features(map_name, B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
@@ -52,9 +52,9 @@ def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affi
 
         logger.info("number of laplacian features: %i", basis.shape[1])
         
-        all_features_NF =  numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, basis])
+        all_features_NF =  numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, basis])
     else:
-        all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND])
+        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND])
 
     return run_features(map_name, evs_per_cluster, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
@@ -63,7 +63,7 @@ def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwa
     (N, _) = vectors_ND.shape
 
     random_basis_NB = numpy.random.random((N, B))
-    all_features_NF = numpy.hstack([numpy.ones((1,vectors_ND.shape[1])),vectors_ND, random_basis_NB])
+    all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, random_basis_NB])
 
     return run_features("random", B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
     
@@ -146,14 +146,14 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
                     #yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
-                    yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
+                    yield (run_clustered_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, \
                         num_clusters,interpolate], dict(aff_map = affinity_map))
                 else:
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
                     #yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate])
-                    yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, num_clusters, interpolate])
-                    #yield (run_clustered_graph_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, num_clusters, interpolate])
+                    #yield (run_graph_features, ["gameplay", B, avectors_ND, gameplay_NN, gameplay_index, test_values, num_clusters, interpolate])
+                    yield (run_clustered_laplacian_features, ["affinity", B, avectors_ND, affinity_NN, index, test_values, num_clusters, interpolate])
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
