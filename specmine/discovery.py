@@ -1,8 +1,10 @@
+import random
 import numpy
 import scipy.sparse
 import sklearn.neighbors
 import specmine
 import copy
+import specmine.go.not_go_loops
 
 logger = specmine.get_logger(__name__)
 
@@ -55,8 +57,8 @@ def test_gen_applications(m=2,n=2,size=9):
     features, templates = feat.gen_features()
     grids = [temp.grid for temp in templates]
     print 'number of features: ', len(features)
-    print 'number of templates: ', len(templates)
-    print 'number of grids: ', len(grids)
+    print 'number of templates: ', len(grids)
+    assert len(templates) == 3**(n*m)
     assert templates.index(templates[0]) == 0
     assert features.index(features[10]) == 10
 
@@ -77,16 +79,28 @@ def test_gen_applications(m=2,n=2,size=9):
                 print templates.index(grid)
                 print features.index(feat)
 
-
-    board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.uint8)
-    grids = numpy.array(grids, dtype=numpy.uint8)
-    applications = numpy.array(applications, dtype=numpy.uint32)
+    # change to unsigned?
+    board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.int8)
+    grids = numpy.array(grids, dtype=numpy.int8)
+    applications = numpy.array(applications, dtype=numpy.int32)
     assert grids.shape[1:] == (m,n)
     print applications[0]
     print grids[0]
-    indices, count = specmine.go.applyTemplates(applications,grids,board,num_features)
+    indices, count = specmine.go.not_go_loops.applyTemplates(applications,grids,board,num_features)
+    #indices, count = specmine.go.applyTemplates(applications,grids,board,num_features)
+    
     print 'nonzero: ', indices
     print 'count: ', count
+
+def test_template_feat_map(m=2,n=2,size=9,num_runs=10):
+    #TODO test
+    feat_map = TemplateFeatureMap(m,n,50)
+    
+    for i in xrange(num_runs):
+        board = numpy.array(numpy.round(numpy.random.random((size,size))*2-1),dtype=numpy.int8)
+        feat_vec = feat_map[specmine.go.GameState([],specmine.go.BoardState(board))]
+        print 'number of active features: ', numpy.sum(feat_vec)
+    
 
 class Template(object):
 
@@ -152,13 +166,14 @@ class TemplateFeature(object):
             pp = numpy.nonzero(numpy.flipud(rot_brd))
         elif i == 6:
             rot_template = numpy.fliplr(numpy.rot90(self.grid,1))
-            pp = numpy.nonzero(numpy.fliplr(rot_brd))
+            pp = numpy.nonzero(numpy.fliplr(numpy.rot90(rot_brd)))
         elif i == 7:
             rot_template = numpy.flipud(numpy.rot90(self.grid,1))
-            pp = numpy.nonzero(numpy.flipud(rot_brd))
+            pp = numpy.nonzero(numpy.flipud(numpy.rot90(rot_brd)))
 
         pp = numpy.array(pp,dtype=numpy.int8).flatten() - numpy.array(offsets[i],dtype=numpy.int8) # new top left position
         self.applications.append([pp,rot_template]) 
+        assert (-1 < pp[0] & pp[0] < size) & (-1 < pp[1] & pp[1] < size)
 
     def __hash__(self):
         
@@ -166,8 +181,8 @@ class TemplateFeature(object):
         return max(hashes)
 
     def __eq__(self,other):
+
         # test - TODO remove
-        
         if self._string in other.boards:
             #print 'string: ', self._string 
             #print 'boards: ', self.boards
@@ -206,26 +221,35 @@ class TemplateFeature(object):
                 for temp in templates:
                     features.add(TemplateFeature(temp.grid,(i,j)))
 
-        return list(features), templates
+        return random.shuffle(list(features)), templates
             
 class TemplateFeatureMap(object):
-    # TODO
-    def __init__(self, basis_matrix, index):
-        self.basis = basis_matrix # number of states x number of features
-        u, s, v = numpy.linalg.svd(basis_matrix)
-        rank = numpy.sum(s > 1e-10)
-        print 'rank of basis: ', rank
-        print 'full rank: ', basis_matrix.shape[1]
-        #assert rank == basis_matrix.shape[1]
 
-        # TODO - load feature set from file or save features map
-        self.features,self.templates,self.applications = TemplateFeature(numpy.zeros((m,n)),(0,0)).gen_features()
-        self.templates = numpy.array(self.templates)
-        self.applications = numpy.array(self.applications)
+    def __init__(self, m, n, B,size=9):
+        feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
+        self.features, self.templates = feat.gen_features()
+        self.grids = [temp.grid for temp in self.templates]
+
+        self.applications = []
+        self.num_features = len(self.features)
+        for i in xrange(min(B,self.num_features)):
+            feat = self.features[i]
+            for app in feat.applications:
+                pos = app[0]
+                grid = app[1]
+                self.applications.append([pos[0],pos[1],self.templates.index(Template(grid)),self.features.index(feat)])
+
+        self.grids = numpy.array(self.grids, dtype=numpy.int8)
+        self.applications = numpy.array(self.applications, dtype=numpy.int32)
+
+        # TODO - save/load feature map
 
     def __getitem__(self, state):
-        indices, counts = specmine.go.applyTemplates(self.applications, self.templates, state.grid)
-        feat_vec = numpy.zeros((len(self.features)))
+        grid = state.board.grid
+        indices, count = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
+        #indices, count = specmine.go.applyTemplates(self.applications,self.grids,board,num_features)
+
+        feat_vec = numpy.zeros(len(self.features))
         feat_vec[indices] = 1
         # feat_vec[indices] = counts # weighted by number of occurances
         return feat_vec
@@ -402,4 +426,4 @@ def affinity_graph(vectors_ND, neighbors, sigma = 1e16, get_tree = False):
 
 
 if __name__ == "__main__":
-    test_gen_applications()
+    test_template_feat_map()
