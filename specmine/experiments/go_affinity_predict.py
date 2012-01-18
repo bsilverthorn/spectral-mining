@@ -206,7 +206,7 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers
             avectors_ND = numpy.array(map(specmine.go.board_to_affinity, boards))
             affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors, sigma = 1e6)
 
-            for B in numpy.r_[0:200:50j].round().astype(int):
+            for B in numpy.r_[0:200:8j].round().astype(int):
                 if interpolate:
                     yield (run_template_features, [2, 2, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
