@@ -223,7 +223,7 @@ class TemplateFeature(object):
 
         feature_list = list(features)
         random.shuffle(feature_list)
-        return features, templates
+        return feature_list, templates
             
 class TemplateFeatureMap(object):
 
