@@ -152,7 +152,6 @@ class TemplateFeature(object):
 
         pp = pp - offsets[i] # new top left position
         self.applications.append([pp,rot_template]) 
->>>>>>> 4e2577aadd621ca39050a9531420f0c0d1186c0c
 
     def __hash__(self):
         
