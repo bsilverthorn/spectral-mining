@@ -13,12 +13,6 @@ class TabularFeatureMap(object):
 
     def __init__(self, basis_matrix, index):
         self.basis = basis_matrix # number of states x number of features
-        u, s, v = numpy.linalg.svd(basis_matrix)
-        rank = numpy.sum(s > 1e-10)
-        print 'rank of basis: ', rank
-        print 'full rank: ', basis_matrix.shape[1]
-        #assert rank == basis_matrix.shape[1]
-
         self.index = index
 
     def __getitem__(self, state):
@@ -295,7 +289,10 @@ class InterpolationFeatureMapRaw(object):
         self.ball_tree = ball_tree
         self.affinity_map = affinity_map
         self.k = k
-        self._D = basis.shape[1]
+        if basis is not None:
+            self._D = basis.shape[1]
+        else:
+            self._D = 0
 
     def __getitem__(self, state):
         affinity_vector = self.affinity_map(state)
