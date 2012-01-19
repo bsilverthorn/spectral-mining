@@ -214,13 +214,13 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 10, worker
             for B in numpy.r_[0:250:10j].round().astype(int):
                 if interpolate:
                     yield (run_template_features, [2, 2, B, test_values])
-                    yield (run_template_features, [2, 3, B, test_values])
+                    #yield (run_template_features, [2, 3, B, test_values])
                     yield (run_template_features, [3, 3, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = affinity_map))
                     yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = affinity_map))
                 else:
                     yield (run_template_features, [2, 2, B, test_values])
-                    yield (run_template_features, [2, 3, B, test_values])
+                    #yield (run_template_features, [2, 3, B, test_values])
                     yield (run_template_features, [3, 3, B, test_values])
                     yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
                     yield (run_laplacian_features, ["Laplacian",B,avectors_ND, affinity_NN, index, test_values, interpolate])
