@@ -170,7 +170,12 @@ class TemplateFeature(object):
 
         pp = numpy.array(pp,dtype=numpy.int8).flatten() - numpy.array(offsets[i],dtype=numpy.int8) # new top left position
         self.applications.append([pp,rot_template]) 
-        assert (-1 < pp[0] & pp[0] < size) & (-1 < pp[1] & pp[1] < size)
+        try:
+            assert (-1 < pp[0] & pp[0] < size) & (-1 < pp[1] & pp[1] < size)
+        except AssertionError as e:
+            print e.message
+            print 'assertion error for position:'
+            print pp
 
     def __hash__(self):
         
