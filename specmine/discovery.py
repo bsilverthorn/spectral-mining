@@ -183,7 +183,7 @@ class TemplateFeature(object):
         if self._string in other.boards:
             #print 'string: ', self._string 
             #print 'boards: ', self.boards
-            assert self._string in self.boards
+            assert other._string in self.boards
         else:
             #print 'string: ', other._string 
             #print 'boards: ', self.boards
