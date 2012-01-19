@@ -23,7 +23,10 @@ class TabularFeatureMap(object):
 
     def __getitem__(self, state):
         #print 'state: ',state
-        return self.basis[self.index[state], :]
+        if self.basis is not None:
+            return numpy.hstack((1,state.grid.flatten(),self.basis[self.index[state], :]))
+        else:
+            return numpy.hstack((1,state.grid.flatten()))
 
 class RandomFeatureMap(TabularFeatureMap):
     """Map states to (fixed) random features."""
@@ -279,7 +282,10 @@ class InterpolationFeatureMap(object):
         (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
 
         # simple nearest neighbor averaging
-        return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
+        if self.basis is not None:
+            return numpy.hstack((1,state.grid.flatten(),numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]))
+        else:
+            return numpy.hstack((1,state.grid.flatten()))
 
 class InterpolationFeatureMapRaw(object):
     """Map states to features via nearest-neighbor regression."""
@@ -297,11 +303,15 @@ class InterpolationFeatureMapRaw(object):
         (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
 
         # simple nearest neighbor averaging
-        return numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]
+        if self.basis is not None:
+            return numpy.hstack((1,state.grid.flatten(),numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]))
+        else:
+            return numpy.hstack((1,state.grid.flatten()))
 
 class ClusteredFeatureMap(object):
     """Map states to features modulo clustering."""
-
+    # TODO - add board vector and constant features?
+    
     def __init__(self, affinity_map, clustering, maps):
         self._affinity_map = affinity_map
         self._clustering = clustering

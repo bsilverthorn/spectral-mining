@@ -38,9 +38,10 @@ def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, 
 def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
     if B > 0:
         basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack")
-        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, basis_NB])
+        all_features_NF = basis_NB
     else:
-        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND])
+        all_features_NF = None
+        
 
     return run_features(map_name, B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
@@ -52,18 +53,19 @@ def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affi
 
         logger.info("number of laplacian features: %i", basis.shape[1])
         
-        all_features_NF =  numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, basis])
+        all_features_NF =  basis
     else:
-        all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND])
+        all_features_NF = None
 
     return run_features(map_name, evs_per_cluster, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
 
 
 def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwargs):
     (N, _) = vectors_ND.shape
-
-    random_basis_NB = numpy.random.random((N, B))
-    all_features_NF = numpy.hstack([numpy.ones((vectors_ND.shape[0],1)),vectors_ND, random_basis_NB])
+    if B > 0:
+        all_features_NF = numpy.random.random((N, B))
+    else:
+        all_features_NF = None
 
     return run_features("random", B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
     
