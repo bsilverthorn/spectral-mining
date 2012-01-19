@@ -176,7 +176,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     ) 
-def flat_affinity_test(out_path, games_path, values_path, neighbors = 5, workers = 0, interpolate = True, off_graph = True):
+def flat_affinity_test(out_path, games_path, values_path, neighbors = 10, workers = 0, interpolate = True, off_graph = True):
     """Test value prediction in Go."""
 
     value_list = get_value_list(games_path,values_path) 
