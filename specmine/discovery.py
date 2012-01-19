@@ -212,7 +212,7 @@ class TemplateFeature(object):
         (taking into account symmetries) '''
         templates = self.gen_templates() # generate templates without duplicates
         features = set()
-        n,m = self.grid.shape
+        m,n = self.grid.shape
         for i in xrange(size-m+1):
             for j in xrange(size-n+1):
                 for temp in templates:
