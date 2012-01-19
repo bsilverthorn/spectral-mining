@@ -32,7 +32,10 @@ def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, 
 
     logger.info("with %i %s features, mean score is %.4f", B, map_name, mean)
 
-    num_samples = feature_map.basis.shape[0]
+    num_samples = len(index)#feature_map.basis.shape[0]
+    if B >0:
+        assert len(index) == feature_map.basis.shape[0]
+
     return [map_name, B, num_samples, mean, variance]
 
 def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
@@ -51,7 +54,7 @@ def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affi
         basis, vectors_ND = specmine.spectral.clustered_laplacian_basis(affinity_NN, num_clusters, \
                                                     evs_per_cluster, vectors_ND, method = "arpack")
 
-        logger.info("number of laplacian features: %i", basis.shape[1])
+        #logger.info("number of laplacian features: %i", basis.shape[1])
         
         all_features_NF =  basis
     else:
@@ -61,8 +64,8 @@ def run_clustered_laplacian_features(map_name, evs_per_cluster, vectors_ND, affi
 
 
 def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwargs):
-    (N, _) = vectors_ND.shape
     if B > 0:
+        (N, _) = vectors_ND.shape
         all_features_NF = numpy.random.random((N, B))
     else:
         all_features_NF = None
