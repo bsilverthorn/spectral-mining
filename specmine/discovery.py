@@ -235,8 +235,6 @@ class TemplateFeatureMap(object):
         self.grids = [temp.grid for temp in self.templates]
         self.B = B # number of active basis (other than flattened grid
         self.applications = []
-        print type(self.features)
-        print self.features
         self.num_features = len(self.features) # total number of possible features
         for i in xrange(min(B,self.num_features)):
             feat = self.features[i]
@@ -244,7 +242,9 @@ class TemplateFeatureMap(object):
                 pos = app[0]
                 grid = app[1]
                 self.applications.append([pos[0],pos[1],self.templates.index(Template(grid)),self.features.index(feat)])
-
+    
+        print type(self.grids)
+        print self.grids
         self.grids = numpy.array(self.grids, dtype=numpy.int8)
         self.applications = numpy.array(self.applications, dtype=numpy.int32)
 
