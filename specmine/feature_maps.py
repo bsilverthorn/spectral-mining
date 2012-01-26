@@ -144,6 +144,7 @@ class TemplateFeatureMap(object):
             self.features, self.templates = feat.gen_features()
             self.grids = [temp.grid for temp in self.templates]
             self.NT = NT # number of template features
+            self.append_board = append_board
             self.applications = []
         
             # from the templates and features list, construct the applications for use in go_loops
@@ -159,10 +160,8 @@ class TemplateFeatureMap(object):
                     grid = app[1]
                     self.applications.append([pos[0],pos[1],self.templates.index(Template(grid)),self.features.index(feat)])
     
-            print 'should be array: ', type(self.grids[0])
             self.grids = numpy.array(self.grids, dtype=numpy.int8)
             self.applications = numpy.array(self.applications, dtype=numpy.int32)
-            print 'should be 3D array: ', type(self.grids)
             
             # save for next time
             print 'saving computed feature map: ', path
