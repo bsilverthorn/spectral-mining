@@ -167,24 +167,28 @@ class TemplateFeature(object):
         elif i == 7:
             rot_template = numpy.flipud(numpy.rot90(self.grid,1))
             pp = numpy.nonzero(numpy.flipud(numpy.rot90(rot_brd)))
-
-        pp = numpy.array(pp,dtype=numpy.int8).flatten() - numpy.array(offsets[i],dtype=numpy.int8) # new top left position
+        
+        # find the new top left position after rotation/reflection
+        pp = numpy.array(pp,dtype=numpy.int8).flatten() - numpy.array(offsets[i],dtype=numpy.int8) 
         self.applications.append([pp,rot_template]) 
         try:
             assert (-1 < pp[0] & pp[0] < size) & (-1 < pp[1] & pp[1] < size)
         except AssertionError as e:
             print e.message
-            print 'assertion error for position:'
+            print 'top corner out of bounds'
+            print 'original board: ', rot_brd
+            print 'application i = ',i
             print pp
 
     def __hash__(self):
-        
+
+        # choose the max hash of all boards as the hash
         hashes = map(hash,self.boards)
         return max(hashes)
 
     def __eq__(self,other):
 
-        # test - TODO remove
+        # test - TODO move to test
         if self._string in other.boards:
             #print 'string: ', self._string 
             #print 'boards: ', self.boards

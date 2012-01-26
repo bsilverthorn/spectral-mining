@@ -18,8 +18,9 @@ def affinity_map(state):
 def run_template_features(m,n,B,values):
 
     feature_map = specmine.discovery.TemplateFeatureMap(m,n,B)
-    m,n = feature_map.grids[0].shape
     (mean, variance) = specmine.science.score_features_predict(feature_map, values)
+    
+    m,n = feature_map.grids[0].shape
     return [str(m)+'by'+str(n)+"template", feature_map.B, None ,mean, variance]
 
 def run_features(map_name, B, all_features_NF, affinity_vectors, index, values, interpolate = False, **kwargs):
@@ -74,8 +75,8 @@ def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwa
     
 
 def get_value_list(games_path,values_path):
-    #games_path = specmine.util.static_path(games_path)
-    #values_path = specmine.util.static_path(values_path)
+    ''' takes a list of games and a dictionary of values and builds a list of
+    (BoardState, value) pairs '''
 
     with specmine.util.openz(games_path) as games_file:
         games = pickle.load(games_file)
@@ -176,7 +177,7 @@ def clustered_affinity_test(out_path, games_path, values_path, neighbors = 8, wo
     neighbors = ("number of neighbors", "option", None, int),
     workers = ("number of condor jobs", "option", None, int),
     ) 
-def flat_affinity_test(out_path, games_path, values_path, neighbors = 10, workers = 0, interpolate = True, off_graph = True):
+def flat_affinity_test(out_path, games_path, values_path, neighbors = 8, workers = 0, interpolate = True, off_graph = True):
     """Test value prediction in Go."""
 
     value_list = get_value_list(games_path,values_path) 
@@ -187,7 +188,7 @@ def flat_affinity_test(out_path, games_path, values_path, neighbors = 10, worker
         min_samples = 10000
         max_samples = 15000
         step_samples = 5000
-        max_test_samples = 100000
+        max_test_samples = 250000
 
         shuffled_values = sorted(value_list, key = lambda _: numpy.random.rand()) 
 
