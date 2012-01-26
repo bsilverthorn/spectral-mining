@@ -1,6 +1,6 @@
 from go import *
 from features import *
-from go_loops import applyTemplates
+#from go_loops import applyTemplates
 
 try:
     from fuego import *
