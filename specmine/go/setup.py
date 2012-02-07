@@ -32,31 +32,31 @@ distutils.core.setup(
             #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
             #libraries = ["m", "curses"],
             #),
-        distutils.extension.Extension(
+    distutils.extension.Extension(
             "go_loops",
             ["go_loops.pyx"],
             libraries = ["m", "curses"],
             ),
-        distutils.extension.Extension(
-            "fuego",
-            ["fuego.pyx"],
-            language="c++",
-            include_dirs = [
-                'fuego/go',
-                'fuego/gouct',
-                'fuego/smartgame',
-                'fuego/simpleplayers',
-                numpy_include_dir(),
-                ],
-            extra_objects = [
-                "fuego/go/libfuego_go.a",
-                "fuego/gouct/libfuego_gouct.a",
-                "fuego/simpleplayers/libfuego_simpleplayers.a",
-                "fuego/smartgame/libfuego_smartgame.a",
-                ],
-            #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
-            libraries = ["m"],
-            ),
+        #distutils.extension.Extension(
+            #"fuego",
+            #["fuego.pyx"],
+            #language="c++",
+            #include_dirs = [
+                #'fuego/go',
+                #'fuego/gouct',
+                #'fuego/smartgame',
+                #'fuego/simpleplayers',
+                #numpy_include_dir(),
+                #],
+            #extra_objects = [
+                #"fuego/go/libfuego_go.a",
+                #"fuego/gouct/libfuego_gouct.a",
+                #"fuego/simpleplayers/libfuego_simpleplayers.a",
+                #"fuego/smartgame/libfuego_smartgame.a",
+                #],
+            ##library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
+            #libraries = ["m"],
+            #),
         ],
     cmdclass = {'build_ext': Cython.Distutils.build_ext},
     )
