@@ -23,7 +23,7 @@ logger = specmine.get_logger(__name__)
 def measure_feature_performance( \
     out_path, games_path, values_path,  workers = 0,\
     neighbors = 8, interpolate = True, \
-    min_samples = 10000, max_samples = 10000, step_samples = 5000, max_test_samples = 250000, \
+    min_samples = 10000, max_samples = 10000, step_samples = 5000, max_test_samples = 25000, \
     max_num_features=200):
     
     values = get_value_list(games_path,values_path)
