@@ -66,8 +66,6 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
     # run the experiment
     ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
 
-    print 'coefficients: ', ridge.coef_
-
     k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
     scores = \
         sklearn.cross_validation.cross_val_score(
@@ -77,6 +75,8 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             cv = k_fold_cv,
             score_func = sklearn.metrics.mean_square_error
             )
+
+    print 'coefficients: ', ridge.coef_
     print 'scores: ',scores
     # ...
     return (numpy.mean(scores), numpy.var(scores))
