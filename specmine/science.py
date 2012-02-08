@@ -75,13 +75,13 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             state_features,
             state_values,
             cv = k_fold_cv,
-            score_func = sklearn.metrics.mean_square_error
+            score_func = rmse_score
             )
 
     #scores = sklearn.cross_validation.cross_val_score(regression,state_features,state_values,cv = k_fold_cv,score_func = sklearn.metrics.mean_square_error)
 
     regression.fit(state_features, state_values)
-    my_score = sklearn.metrics.mean_square_error(state_values, regression.predict(state_features))
+    my_score = rmse_score(state_values, regression.predict(state_features))
     print 'coefficients: ', ridge.coef_
     print 'scores: ',scores
     print 'my score: ', my_score
@@ -135,4 +135,11 @@ def score_features_regress_act(
 
     # ...
     return (numpy.mean(rewards), numpy.var(rewards))
+
+def rmse_score(values, prediction):
+    ''' takes two numpy arrays and returns the RMSE between them'''
+    error = (values-prediction)**2
+    error = numpy.sqrt(numpy.mean(error))
+    
+    return error
 
