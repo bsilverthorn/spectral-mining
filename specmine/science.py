@@ -75,7 +75,7 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             cv = k_fold_cv,
             score_func = sklearn.metrics.mean_square_error
             )
-
+    ridge.fit(state_features, state_values)
     print 'coefficients: ', ridge.coef_
     print 'scores: ',scores
     # ...
