@@ -2,6 +2,7 @@ import numpy
 import sklearn.linear_model
 import sklearn.cross_validation
 import sklearn.metrics
+import sklearn.pipeline
 import specmine
 
 logger = specmine.get_logger(__name__)
