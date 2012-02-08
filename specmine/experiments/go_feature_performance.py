@@ -23,8 +23,8 @@ logger = specmine.get_logger(__name__)
 def measure_feature_performance( \
     out_path, games_path, values_path,  workers = 0,\
     neighbors = 8, interpolate = True, \
-    min_samples = 10000, max_samples = 10000, step_samples = 5000, max_test_samples = 25, \
-    max_num_features=100):
+    min_samples = 1000, max_samples = 1000, step_samples = 500, max_test_samples = 25, \
+    max_num_features=20):
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
