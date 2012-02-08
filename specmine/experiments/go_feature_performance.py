@@ -31,11 +31,13 @@ def measure_feature_performance( \
 
     def yield_jobs():
         for samples in xrange(min_samples, max_samples+step_samples, step_samples):
+            
+            print 'samples : ', samples
 
             value_dict = dict(values[:samples])
             # if testing off-graph use held-out samples
             if interpolate:
-                test_values = dict(values[samples:max_test_samples+1])
+                test_values = dict(values[samples:samples+max_test_samples+1])
             else: 
                 test_values = dict(values[:samples])
 
