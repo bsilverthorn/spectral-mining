@@ -28,6 +28,8 @@ def measure_feature_performance( \
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
+    print values
+    sys.exit()
 
     print values
     sys.exit()
