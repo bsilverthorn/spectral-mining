@@ -28,11 +28,6 @@ def measure_feature_performance( \
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
-    print values
-    sys.exit()
-
-    print values
-    sys.exit()
 
     def yield_jobs():
         for samples in xrange(min_samples, max_samples+step_samples, step_samples):
