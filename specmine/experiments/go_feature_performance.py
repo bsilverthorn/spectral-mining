@@ -3,6 +3,7 @@ import numpy
 import cPickle as pickle
 import condor
 import specmine
+import sys
 
 logger = specmine.get_logger(__name__)
 
@@ -27,6 +28,9 @@ def measure_feature_performance( \
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
+
+    print values
+    sys.exit()
 
     def yield_jobs():
         for samples in xrange(min_samples, max_samples+step_samples, step_samples):
