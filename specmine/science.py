@@ -1,6 +1,7 @@
 import numpy
 import sklearn.linear_model
 import sklearn.cross_validation
+import sklearn.metrics
 import specmine
 
 logger = specmine.get_logger(__name__)
@@ -71,6 +72,7 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             state_features,
             state_values,
             cv = k_fold_cv,
+            score_func = sklearn.metrics.mean_square_error
             )
 
     # ...
