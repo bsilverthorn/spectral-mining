@@ -1,11 +1,14 @@
 import os
+import sys
 import cPickle as pickle
 import random
 import numpy
+import scipy.sparse
 import sklearn.neighbors
 import specmine
 import copy
-import specmine.go.not_go_loops
+# import specmine.go.not_go_loops
+import specmine.go.go_loops
 
 logger = specmine.get_logger(__name__)
 
@@ -42,40 +45,19 @@ class RandomFeatureMap(TabularFeatureMap):
             )
 
 class InterpolationFeatureMap(object):
-    """Map states to features via nearest-neighbor regression."""
+    """Map states to features via nearest-neighbor regression. Must give either
+    a ball tree or the raw affinity vectors"""
 
-    def __init__(self, basis, affinity_vectors, affinity_map, k = 8):
+    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8):
         self.basis = basis
-        self.affinity_vectors = affinity_vectors
-        self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)
+        if ball_tree is None:
+            self.affinity_vectors = affinity_vectors
+            self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)
+        elif affinity_vectors is None:
+            self.ball_tree = ball_tree
+
         self.affinity_map = affinity_map
         self.k = k
-
-    def __getitem__(self, state):
-        affinity_vector = self.affinity_map(state)
-
-        (d, i) = self.ball_tree.query(affinity_vector, k = self.k, return_distance = True)
-
-        # simple nearest neighbor averaging
-        if self.basis is not None:
-            return numpy.hstack((1,state.grid.flatten(),numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]))
-        else:
-            return numpy.hstack((1,state.grid.flatten()))
-
-class InterpolationFeatureMapRaw(object):
-    # TODO combine with above or subclass?
-    """Map states to features via nearest-neighbor regression. Starts with the 
-    constructed ball tree rather than constructing one"""
-
-    def __init__(self, basis, ball_tree, affinity_map, k = 8):
-        self.basis = basis
-        self.ball_tree = ball_tree
-        self.affinity_map = affinity_map
-        self.k = k
-        if basis is not None:
-            self._D = basis.shape[1]
-        else:
-            self._D = 0
 
     def __getitem__(self, state):
         affinity_vector = self.affinity_map(state)
@@ -132,16 +114,17 @@ class TemplateFeatureMap(object):
             path = specmine.util.static_path('features/templates.'+str(NT)+'.'+str(m)+'by'+str(n)+'size='+str(size))
     
         # if precomputed feature map is available, us it
-        if os.path.isfile(path):
+        if False:# os.path.isfile(path):
+            logger.info("using precomputed features at %s", path)
             with specmine.openz(path) as featuremap_file:
                 self = pickle.load(featuremap_file)
 
         # otherwise, generate the feature map from all possible mxn templates
         else:
-
+            print "generating templates %i by %i, features",m,n
 
             feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
-            self.features, self.templates = feat.gen_features()
+            self.features, self.templates = feat.gen_features(NT)
             self.grids = [temp.grid for temp in self.templates]
             self.NT = NT # number of template features
             self.append_board = append_board
@@ -150,7 +133,7 @@ class TemplateFeatureMap(object):
             # from the templates and features list, construct the applications for use in go_loops
             self.num_features = len(self.features) # total number of possible features
 
-            logger.info("max number of "+str(m)+'by'+str(n)+' features: ', self.num_features)
+            logger.info("number of %iby%i features: %i",m,n, self.num_features)
 
             for i in xrange(min(NT,self.num_features)):
                 feat = self.features[i]
@@ -158,12 +141,24 @@ class TemplateFeatureMap(object):
                 for app in feat.applications:
                     pos = app[0]
                     grid = app[1]
-                    self.applications.append([pos[0],pos[1],self.templates.index(Template(grid)),self.features.index(feat)])
-    
+                    assert grid.shape == (m,n)
+                    self.applications.append([pos[0], pos[1], self.templates.index(Template(grid)),self.features.index(feat)])
+            
+            #print self.grids
+            #print type(self.grids)
+            for g in self.grids:
+                try:
+                    assert g.shape == (m,n)
+                except AssertionError:
+                    print m,n
+                    print 'not m by n grid: ', g.shape
+                    print g
+                    sys.exit()
+
             self.grids = numpy.array(self.grids, dtype=numpy.int8)
             self.applications = numpy.array(self.applications, dtype=numpy.int32)
             
-            # save for next time
+            #save for next time
             print 'saving computed feature map: ', path
             with specmine.util.openz(path, "wb") as out_file:
                 pickle.dump(self, out_file)
@@ -178,8 +173,8 @@ class TemplateFeatureMap(object):
             grid = state.board.grid
         
         if self.NT > 0:
-            indices, counts = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
-           #indices, counts = specmine.go.applyTemplates(self.applications,self.grids,board,num_features)
+            #indices, counts = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
+            indices, counts = specmine.go.applyTemplates(self.applications,self.grids,grid,self.num_features)
             feat_vec = numpy.zeros(self.NT)
             feat_vec[indices] = 1
           # feat_vec[indices] = counts # weighted by number of occurances
@@ -238,6 +233,7 @@ class TemplateFeature(object):
         if len(self.boards) > self._num_apps: self.add_application(offsets,4) 
         self.boards.add(str(numpy.flipud(self.board).flatten()))
         if len(self.boards) > self._num_apps: self.add_application(offsets,5) 
+
         rot_board = numpy.rot90(self.board,1)
         self.boards.add(str(numpy.fliplr(rot_board).flatten()))
         if len(self.boards) > self._num_apps: self.add_application(offsets,6) 
@@ -303,30 +299,95 @@ class TemplateFeature(object):
         ''' generate the full list of templates of the same size as
         the current feature without duplicates'''
 
-        n,m = self.grid.shape
+        m,n = self.grid.shape
         if len(pref_list) == n*m:
-            grid = numpy.reshape(numpy.array(pref_list,dtype=numpy.int8),(n,m))
+            grid = numpy.reshape(numpy.array(pref_list,dtype=numpy.int8),(m,n))
             templates.add(Template(grid))
+            assert grid.shape == (m,n)
         else:
             for s in [-1, 0, 1]:
                 new_list = copy.copy(pref_list)
                 new_list.append(s)
                 self.gen_templates(new_list,templates)
 
-            return list(templates)
+            return list(copy.deepcopy(templates))
 
-    def gen_features(self,size=9):
+    def gen_features(self,max_num,size=9):
         '''generate a list of all nxm templates in all positions on the board, 
         (taking into account symmetries) '''
-        templates = self.gen_templates() # generate templates without duplicates
+
+        if max_num == 0:
+            return [], []
+
         features = set()
         m,n = self.grid.shape
+        templates = self.gen_templates(pref_list=[], templates = set()) # generate templates without duplicates
         for i in xrange(size-m+1):
             for j in xrange(size-n+1):
                 for temp in templates:
                     features.add(TemplateFeature(temp.grid,(i,j)))
+                    if len(features) >= max_num:
+                        feature_list = list(features)
+                        random.shuffle(feature_list)
+                        return feature_list, templates
 
         feature_list = list(features)
         random.shuffle(feature_list)
         return feature_list, templates
+
+def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
+    """Build the k-NN affinity graph from state feature vectors."""
+
+    G = neighbors
+    (N, D) = vectors_ND.shape
+
+    logger.info("building balltree in %i-dimensional affinity space", D)
+
+    tree = sklearn.neighbors.BallTree(vectors_ND)
+
+    logger.info("retrieving %i nearest neighbors", G)
+
+    (neighbor_distances_NG, neighbor_indices_NG) = tree.query(vectors_ND, k = G)
+
+    logger.info("constructing the affinity graph over %i vertices", N)
+
+    coo_is = []
+    coo_js = []
+    #coo_distances = []
+
+    for n in xrange(N):
+        for g in xrange(G):
+            m = neighbor_indices_NG[n, g]
+
+            coo_is.append(n)
+            coo_js.append(m)
+            #coo_distances.append(neighbor_distances_NG[n, g])
+
+    #coo_distances = numpy.array(2 * coo_distances)
+    #coo_affinities = numpy.exp(-coo_distances**2 / (2.0 * sigma))
+    
+    # just uses a weight of 1 for all edges
+    coo_affinities = numpy.ones(2*len(coo_is))
+    adj1 =scipy.sparse.coo_matrix((numpy.ones(len(coo_is)), (coo_is, coo_js)))
+    adj2 = numpy.zeros((N,N))
+    adj2[coo_is,coo_js] = 1
+    adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
+    print 'adj1: ', adj1.todense()
+    print 'adj2: ', adj2
+    print 'adjacency: ', adjacency.todense()
+    assert (adj2 == adj1.todense()).all()
+    assert (adjacency.todense() == (adj1+adj1.T).todense()).all()
+    test_adj = adjacency.todense()
+    assert (test_adj.T == test_adj).all()
+
+    logger.info("affinity graph has %i unique edges", coo_affinities.shape[0])
+    logger.info("adjacency shape: %s", str(adjacency.shape))
+    logger.info("adj1 shape: %s", str(adj1.shape))
+
+    if get_tree:
+        return (adjacency, tree)
+    else:
+        return adjacency
+
+
         

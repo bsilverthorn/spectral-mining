@@ -22,8 +22,8 @@ logger = specmine.get_logger(__name__)
 def measure_feature_performance( \
     out_path, games_path, values_path,  workers = 0,\
     neighbors = 8, interpolate = True, \
-    min_samples = 5000, max_samples = 5000, step_samples = 5000, max_test_samples = 250000, \
-    max_num_features=100):
+    min_samples = 10000, max_samples = 10000, step_samples = 5000, max_test_samples = 250000, \
+    max_num_features=200):
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
@@ -45,19 +45,20 @@ def measure_feature_performance( \
 
             index = dict(zip(boards, xrange(num_boards)))
             avectors_ND = numpy.array(map(specmine.feature_maps.affinity_map, boards))
-            # TODO check affinity graph construction
-            affinity_NN = specmine.discovery.affinity_graph(avectors_ND, neighbors, sigma = 1e6)
+            affinity_NN, ball_tree = specmine.feature_maps.build_affinity_graph(avectors_ND, neighbors, get_tree=True)
 
-            for NF in numpy.r_[0:max_num_features:10j].round().astype(int):
+            for NF in numpy.r_[0:max_num_features:5j].round().astype(int):
                 if interpolate:
                     yield (run_template_features, [2, 2, NF, test_values])
-                    yield (run_laplacian_features, ["Laplacian", NF, avectors_ND, affinity_NN, index, test_values, interpolate], dict(aff_map = specmine.feature_maps.affinity_map))
-                    # yield (run_random_features, [B, avectors_ND, index, test_values, interpolate], dict(aff_map = specmine.feature_maps.affinity_map))
+                    #yield (run_template_features, [3, 3, NF, test_values])
+                    yield (run_laplacian_features, ["Laplacian", NF, affinity_NN, ball_tree, index, test_values, interpolate], dict(aff_map = specmine.feature_maps.affinity_map))
+                    yield (run_random_features, [NF, ball_tree, index, test_values, interpolate], dict(aff_map = specmine.feature_maps.affinity_map))
 
                 else:
                     yield (run_template_features, [2, 2, NF, test_values])
-                    yield (run_laplacian_features, ["Laplacian", NF, avectors_ND, affinity_NN, index, test_values, interpolate])
-                    # yield (run_random_features, [B, avectors_ND, index, test_values, interpolate])
+                    #yield (run_template_features, [3, 3, NF, test_values])
+                    yield (run_laplacian_features, ["Laplacian", NF, affinity_NN, ball_tree, index, test_values, interpolate])
+                    yield (run_random_features, [NF, ball_tree,index, test_values, interpolate])
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
@@ -68,27 +69,29 @@ def measure_feature_performance( \
             writer.writerow(row)
 
 def run_template_features(m,n,B,values):
-
+    print 'run_template_features: ',m,n
     feature_map = specmine.feature_maps.TemplateFeatureMap(m,n,B)
-    (mean, variance) = specmine.science.score_features_predict(feature_map, values)
-    
-    m,n = feature_map.grids[0].shape
-    return [str(m)+'by'+str(n)+"template", feature_map.B, None ,mean, variance]
 
-def run_proximity_features(map_name, B, all_features_NF, affinity_vectors, index, values, interpolate = False, **kwargs):
-    
+    (mean, variance) = specmine.science.score_features_predict(feature_map, values)
+
+    logger.info("with %i %s features, mean score is %f", B, 'template', mean)
+
+    return [str(m)+'by'+str(n)+'template', feature_map.NT, None ,mean, variance]
+
+def run_graph_features(map_name, B, features_NF, ball_tree, index, values, interpolate = False, **kwargs):
+    print 'run_graph_feature'    
     if interpolate:    
         aff_map = kwargs.get('aff_map')
         assert aff_map is not None
 
-        feature_map = specmine.feature_maps.InterpolationFeatureMap(all_features_NF, affinity_vectors, aff_map)
+        feature_map = specmine.feature_maps.InterpolationFeatureMap(features_NF, aff_map, ball_tree)
 
     else:
-        feature_map = specmine.feature_maps.TabularFeatureMap(all_features_NF, index)
-
+        feature_map = specmine.feature_maps.TabularFeatureMap(features_NF, index)
+    
     (mean, variance) = specmine.science.score_features_predict(feature_map, values)
 
-    logger.info("with %i %s features, mean score is %.4f", B, map_name, mean)
+    logger.info("with %i %s features, mean score is %f", B, map_name, mean)
 
     num_samples = len(index)#feature_map.basis.shape[0]
     if B >0:
@@ -96,22 +99,22 @@ def run_proximity_features(map_name, B, all_features_NF, affinity_vectors, index
 
     return [map_name, B, num_samples, mean, variance]
 
-def run_laplacian_features(map_name, B, vectors_ND, affinity_NN, index, values, interpolate = False, **kwargs):
+def run_laplacian_features(map_name, B, affinity_NN, ball_tree, index, values, interpolate = False, **kwargs):
     if B > 0:
-        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack")
+        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, B, method = "arpack") # amg
     else:
         basis_NB = None
         
-    return run_proximity_features(map_name, B, basis_NB, vectors_ND, index, values, interpolate, **kwargs)
+    return run_graph_features(map_name, B, basis_NB, ball_tree, index, values, interpolate, **kwargs)
 
-def run_random_features(B, vectors_ND, index, values, interpolate = False, **kwargs):
+def run_random_features(B, ball_tree, index, values, interpolate = False, **kwargs):
     if B > 0:
-        N = vectors_ND.shape[0]
-        all_features_NF = numpy.random.random((N, B))
+        N = len(index.keys())
+        features_NB = numpy.random.random((N, B))
     else:
-        all_features_NF = None
+        features_NB = None
 
-    return run_proximity_features("random", B, all_features_NF, vectors_ND, index, values, interpolate, **kwargs)
+    return run_graph_features("random", B, features_NB, ball_tree, index, values, interpolate, **kwargs)
 
 
 def get_value_list(games_path,values_path):

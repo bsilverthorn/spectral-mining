@@ -2,8 +2,8 @@ import numpy
 
 def applyTemplates(applications, templates, state, num_feats):
 
-    TR = templates.shape[1]
-    TC = templates.shape[2]
+    TR = templates[0].shape[0]
+    TC = templates[0].shape[1]
     counts = numpy.zeros(num_feats, numpy.uint32)
 
     for i in xrange(applications.shape[0]):
