@@ -66,6 +66,8 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
     # run the experiment
     ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
 
+    from ipdb import set_trace; set_trace()
+
     k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
     scores = \
         sklearn.cross_validation.cross_val_score(
