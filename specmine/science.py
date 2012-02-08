@@ -80,13 +80,13 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
 
     #scores = sklearn.cross_validation.cross_val_score(regression,state_features,state_values,cv = k_fold_cv,score_func = sklearn.metrics.mean_square_error)
 
-    regression.fit(state_features, state_values)
-    my_score = rmse_score(state_values, regression.predict(state_features))
-    print 'coefficients: ', ridge.coef_
-    print 'scores: ',scores
-    print 'my score: ', my_score
+    #regression.fit(state_features, state_values)
+    #my_score = rmse_score(state_values, regression.predict(state_features))
+    #print 'coefficients: ', ridge.coef_
+    #print 'scores: ',scores
+    #print 'my score: ', my_score
 
-    from ipdb import set_trace; set_trace()
+    #from ipdb import set_trace; set_trace()
 
     # ...
     return (numpy.mean(scores), numpy.var(scores))
