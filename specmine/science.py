@@ -74,7 +74,7 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             cv = k_fold_cv,
             score_func = sklearn.metrics.mean_square_error
             )
-    print scores
+    print 'scores: ',scores
     # ...
     return (numpy.mean(scores), numpy.var(scores))
 
