@@ -66,8 +66,7 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
 
     # run the experiment
     ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
-    regression = sklearn.pipeline.Pipeline([("scaler", sklearn.preprocessing.Scaler()),
-                    ("ridge",ridge),])
+    regression = sklearn.pipeline.Pipeline([("scaler", sklearn.preprocessing.Scaler()), ("ridge",ridge),])
 
     k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
     scores = \
@@ -76,8 +75,10 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             state_features,
             state_values,
             cv = k_fold_cv,
-            score_func = sklearn.metrics.mean_square_error
+            #score_func = sklearn.metrics.mean_square_error
             )
+
+    #scores = sklearn.cross_validation.cross_val_score(regression,state_features,state_values,cv = k_fold_cv,score_func = sklearn.metrics.mean_square_error)
 
     regression.fit(state_features, state_values)
     print 'coefficients: ', ridge.coef_
