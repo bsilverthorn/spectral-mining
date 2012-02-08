@@ -31,6 +31,9 @@ def measure_feature_performance( \
     print values
     sys.exit()
 
+    print values
+    sys.exit()
+
     def yield_jobs():
         for samples in xrange(min_samples, max_samples+step_samples, step_samples):
 
