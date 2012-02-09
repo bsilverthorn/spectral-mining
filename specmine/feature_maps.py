@@ -159,9 +159,9 @@ class TemplateFeatureMap(object):
             self.applications = numpy.array(self.applications, dtype=numpy.int32)
             
             #save for next time
-            print 'saving computed feature map: ', path
-            with specmine.util.openz(path, "wb") as out_file:
-                pickle.dump(self, out_file)
+            #print 'saving computed feature map: ', path
+            #with specmine.util.openz(path, "wb") as out_file:
+                #pickle.dump(self, out_file)
 
     def __getitem__(self, state):
         ''' computes the feature vector given a board or game state, always 
