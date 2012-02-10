@@ -6,19 +6,19 @@ import condor
 
 logger = specmine.get_logger(__name__)
 
-def find_values(name, game, rollouts):
+def find_values(name, game, rollouts, winrate=True):
     (M, _) = game.moves.shape
     values = []
 
     logger.info("evaluating all %i positions in game %s", M, name)
 
     for m in xrange(M):
-        value = specmine.go.estimate_value(game.moves[:m + 1], rollouts)
+        value = specmine.go.estimate_alp_value(game.moves[:m + 1], rollouts, winrate=winrate)
 
         values.append(value)
 
         logger.info("%s grid %i, below, has value %f:\n%s", name, m, value, game.grids[m])
-
+        
     return numpy.array(values)
 
 @specmine.annotations(

@@ -106,7 +106,49 @@ cpdef FuegoBoard replay_moves(moves, FuegoBoard board = None):
     return board
 
 @cython.infer_types(True)
-def estimate_value(moves, int rollouts = 128, winrate=True):
+def estimate_alp_value(moves, int rollouts = 128, winrate=True):
+    """Estimate the value of a position."""
+
+    cdef FuegoBoard board = replay_moves(moves)
+    cdef FuegoPlayer rand_player = FuegoRandomPlayer(board)
+    cdef FuegoPlayer avglib_player = FuegoAveragePlayer(board)
+    cdef int passed
+    cdef double value = 0.0
+
+    board.take_snapshot()
+
+    for i in xrange(rollouts):
+        board.restore_snapshot()
+
+        passed = 0
+        player = 0
+        while passed < 2:
+            if player == 0: 
+                move = avglib_player._generate_move()
+            else:
+                move = rand_player._generate_move()                
+            player = player*-1 + 1
+
+            if move.r == -1:
+                passed += 1
+
+                continue
+            else:
+                passed = 0
+
+                board.play(move.r, move.c)
+        
+        score = board.score_simple_endgame()
+        # TODO assuming player 2?
+        if winrate:
+            value += 0 if score < 0 else 1
+        else:
+            value += score 
+
+    return value / rollouts
+
+@cython.infer_types(True)
+def estimate_random_value(moves, int rollouts = 128, winrate=True):
     """Estimate the value of a position."""
 
     cdef FuegoBoard board = replay_moves(moves)
@@ -282,12 +324,12 @@ cdef class FuegoPlayer(object):
         else:
             return (move.r, move.c)
 
-    cdef RowColumn _generate_move(self, double seconds = 1e6, int player = 0):
+    cdef RowColumn _generate_move(self, double seconds = 1e6, int player = -1):
         """Generate a move to play."""
 
         cdef fuego_c.SgBlackWhite black_white
 
-        if player == 0:
+        if player == -1:
             black_white = self._board._board.ToPlay()
         else:
             black_white = _player_to_black_white(player)
