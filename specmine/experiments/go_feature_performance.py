@@ -23,8 +23,8 @@ logger = specmine.get_logger(__name__)
 def measure_feature_performance( \
     out_path, games_path, values_path,  workers = 0,\
     neighbors = 8, interpolate = True, \
-    min_samples = 10000, max_samples = 10000, step_samples = 5000, max_test_samples = 250000, \
-    max_num_features=200):
+    min_samples = 100, max_samples = 100, step_samples = 50, max_test_samples = 250, \
+    max_num_features=20):
     
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
@@ -50,7 +50,7 @@ def measure_feature_performance( \
             avectors_ND = numpy.array(map(specmine.feature_maps.affinity_map, boards))
             affinity_NN, ball_tree = specmine.feature_maps.build_affinity_graph(avectors_ND, neighbors, get_tree=True)
 
-            for NF in numpy.r_[0:max_num_features:5j].round().astype(int):
+            for NF in numpy.r_[0:max_num_features:2j].round().astype(int):
                 if interpolate:
                     yield (run_template_features, [2, 2, NF, test_values])
                     #yield (run_template_features, [3, 3, NF, test_values])
