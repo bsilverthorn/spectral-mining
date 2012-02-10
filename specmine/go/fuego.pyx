@@ -106,7 +106,7 @@ cpdef FuegoBoard replay_moves(moves, FuegoBoard board = None):
     return board
 
 @cython.infer_types(True)
-def estimate_value(moves, int rollouts = 128):
+def estimate_value(moves, int rollouts = 128, winrate=True):
     """Estimate the value of a position."""
 
     cdef FuegoBoard board = replay_moves(moves)
@@ -132,8 +132,13 @@ def estimate_value(moves, int rollouts = 128):
                 passed = 0
 
                 board.play(move.r, move.c)
-
-        value += board.score_simple_endgame()
+        
+        score = board.score_simple_endgame()
+        # TODO assuming player 2?
+        if winrate:
+            value += 0 if score < 0 else 1
+        else:
+            value += score 
 
     return value / rollouts
 
