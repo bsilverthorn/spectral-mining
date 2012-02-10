@@ -11,36 +11,17 @@ def numpy_include_dir():
 
 distutils.core.setup(
     name = "PyGo",
-    ext_modules=[ 
-        #distutils.extension.Extension(
-            #"gnugo_engine",
-            #["gnugo_engine.pyx"],
-            #include_dirs = [
-                #'gnugo-3.8',
-                #'gnugo-3.8/sgf',
-                #'gnugo-3.8/utils',
-                #'gnugo-3.8/engine',
-                #numpy_include_dir(),
-                #],
-            #extra_objects=[
-                #"gnugo-3.8/engine/libboard.a",
-                #"gnugo-3.8/engine/libengine.a",
-                #"gnugo-3.8/sgf/libsgf.a",
-                #"gnugo-3.8/utils/libutils.a",
-                #"gnugo-3.8/patterns/libpatterns.a",
-                #],
-            #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
-            #libraries = ["m", "curses"],
-            #),
+    ext_modules = [ 
     distutils.extension.Extension(
             "go_loops",
             ["go_loops.pyx"],
+            include_dirs = [numpy_include_dir()],
             libraries = ["m", "curses"],
             ),
     distutils.extension.Extension(
             "fuego",
             ["fuego.pyx"],
-            language="c++",
+            language = "c++",
             include_dirs = [
                 'fuego/go',
                 'fuego/gouct',
@@ -54,7 +35,6 @@ distutils.core.setup(
                 "fuego/simpleplayers/libfuego_simpleplayers.a",
                 "fuego/smartgame/libfuego_smartgame.a",
                 ],
-            #library_dirs=['gnugo-3.8/engine', 'gnugo-3.8/sgf', 'gnugo-3.8/utils'],
             libraries = ["m"],
             ),
         ],
