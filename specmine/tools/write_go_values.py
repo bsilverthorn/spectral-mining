@@ -13,7 +13,15 @@ def find_values(name, game, rollouts, winrate=True):
     logger.info("evaluating all %i positions in game %s", M, name)
 
     for m in xrange(M):
-        value = specmine.go.estimate_alp_value(game.moves[:m + 1], rollouts, winrate=winrate)
+
+        board = specmine.go.replay_moves(game.moves[:m + 1])
+       
+        value = specmine.go.estimate_value(board, rollouts, \
+            player = specmine.go.FuegoRandomPlayer(board), \
+            opponent = specmine.go.FuegoRandomPlayer(board), \
+            winrate = winrate)
+        #value = specmine.go.estimate_value(board, rollouts, \
+            #winrate = winrate)
 
         values.append(value)
 

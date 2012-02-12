@@ -106,8 +106,10 @@ class TemplateFeatureMap(object):
     dependent on the board. The feature vector also always includes a constant 
     and includes flattened board if append_board=True'''
 
-    def __init__(self, m, n, NT, append_board=True, size=9):
-    
+    def __init__(self, m, n, NT, append_board=True, size=9, weighted = False):
+        
+        self._weighted = weighted
+
         if append_board:
             path = specmine.util.static_path('features/templates.'+str(NT)+'.'+str(m)+'by'+str(n)+'.app_board.size='+str(size))
         else:
@@ -176,8 +178,10 @@ class TemplateFeatureMap(object):
             #indices, counts = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
             indices, counts = specmine.go.applyTemplates(self.applications,self.grids,grid,self.num_features)
             feat_vec = numpy.zeros(self.NT)
-            feat_vec[indices] = 1
-          # feat_vec[indices] = counts # weighted by number of occurances
+            if self._weighted:
+                feat_vec[indices] = counts # weighted by number of occurances
+            else:
+                feat_vec[indices] = 1
         else:
             feat_vec = []
         

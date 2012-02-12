@@ -106,14 +106,17 @@ cpdef FuegoBoard replay_moves(moves, FuegoBoard board = None):
     return board
 
 @cython.infer_types(True)
-def estimate_alp_value(moves, int rollouts = 128, winrate=True):
+def estimate_value(FuegoBoard board, int rollouts = 256, FuegoPlayer player = None, FuegoPlayer opponent = None, winrate=True):
     """Estimate the value of a position."""
 
-    cdef FuegoBoard board = replay_moves(moves)
-    cdef FuegoPlayer rand_player = FuegoRandomPlayer(board)
-    cdef FuegoPlayer avglib_player = FuegoAveragePlayer(board)
     cdef int passed
     cdef double value = 0.0
+
+    if player == None:
+        player = FuegoAveragePlayer(board)
+
+    if opponent == None:
+        opponent = FuegoRandomPlayer(board)
 
     board.take_snapshot()
 
@@ -121,13 +124,11 @@ def estimate_alp_value(moves, int rollouts = 128, winrate=True):
         board.restore_snapshot()
 
         passed = 0
-        player = 0
         while passed < 2:
-            if player == 0: 
-                move = avglib_player._generate_move()
+            if board._get_to_play() == 0: 
+                move = player._generate_move()
             else:
-                move = rand_player._generate_move()                
-            player = player*-1 + 1
+                move = opponent._generate_move()                
 
             if move.r == -1:
                 passed += 1
@@ -139,50 +140,14 @@ def estimate_alp_value(moves, int rollouts = 128, winrate=True):
                 board.play(move.r, move.c)
         
         score = board.score_simple_endgame()
-        # TODO assuming player 2?
-        if winrate:
-            value += 0 if score < 0 else 1
-        else:
-            value += score 
-
-    return value / rollouts
-
-@cython.infer_types(True)
-def estimate_random_value(moves, int rollouts = 128, winrate=True):
-    """Estimate the value of a position."""
-
-    cdef FuegoBoard board = replay_moves(moves)
-    cdef FuegoPlayer player = FuegoRandomPlayer(board)
-    cdef int passed
-    cdef double value = 0.0
-
-    board.take_snapshot()
-
-    for i in xrange(rollouts):
-        board.restore_snapshot()
-
-        passed = 0
-
-        while passed < 2:
-            move = player._generate_move()
-
-            if move.r == -1:
-                passed += 1
-
-                continue
-            else:
-                passed = 0
-
-                board.play(move.r, move.c)
         
-        score = board.score_simple_endgame()
-        # TODO assuming player 2?
         if winrate:
-            value += 0 if score < 0 else 1
+            value += 0 if score > 0 else 1 # should be > or < (currentl: pos score good for white)
         else:
             value += score 
 
     return value / rollouts
+
 
 cdef class FuegoBoard(object):
     cdef int _size
