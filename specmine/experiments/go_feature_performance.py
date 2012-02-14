@@ -17,7 +17,7 @@ logger = specmine.get_logger(__name__)
     workers = ("number of condor jobs", "option", None, int),
     affinity_neighbors = ("number of neighbors used for affinity graph - controls sparsity", "option", None, int),
     interp_neighbors = ("number of neighbors to use during interpolation", "option", None, int),
-    interp_sigma = ("parameter controlling the width of gaussian neighbor weighting, if -1 flat average is used", "option", None, int),
+    interp_sigma_sq = ("parameter controlling the width of gaussian neighbor weighting, if -1 flat average is used", "option", None, int),
     num_graph_samples = ("number of samples used for graph features", "option", None, int),
     num_test_samples = ("number of samples used for testing value prediction error", "option", None, int),
     max_num_features = ("max number of features used", "option", None, int),
@@ -25,7 +25,7 @@ logger = specmine.get_logger(__name__)
     )
 def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
-    affinity_neighbors = 8, interp_neighbors = 8, interp_sigma = 8,\
+    affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = 8,\
     num_graph_samples = 10000, num_test_samples = 50000, \
     max_num_features = 500, ridge_param = 0.1):
     
@@ -37,10 +37,10 @@ def measure_feature_performance( \
 
     out_path = str.format('specmine/static/go_feature_performance.RMSE.{p}.rp={r}.ngs={g}.nts={t}.nf={f}.nan={an}.nin={inn}.is={sig}.csv', \
                 p=value_player, r = ridge_param, g=num_graph_samples, t=num_test_samples,f=max_num_features, \
-                an=affinity_neighbors,inn=interp_neighbors, sig = interp_sigma)
+                an=affinity_neighbors,inn=interp_neighbors, sig = interp_sigma_sq)
 
     logger.info('out path: %s', out_path)
-    logger.info('interpolation sigma: %f', interp_sigma)
+    logger.info('interpolation sigma: %f', interp_sigma_sq)
 
     # TODO set outpath automatically according to parameters
     

@@ -47,7 +47,7 @@ class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression. Must give either
     a ball tree or the raw affinity vectors (not both)"""
 
-    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8, sigma = -1):
+    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8, sigma_sq = -1):
         self.basis = basis
         self.sigma = sigma # parameter for neighbor weighting
        
@@ -74,14 +74,13 @@ class InterpolationFeatureMap(object):
             #print 'squared distance: ', d**2
             #print 'distance : ', d
     
-            if self.sigma != -1:
-                weighting = numpy.exp(-d**2/self.sigma)
-                weighting = weighting/sum(weighting)
-                return numpy.dot(weighting, self.basis[i, :]).flatten()
-            else:
+            if self.sigma == -1:
                 weighting = numpy.ones(self.k)/float(self.k)
                 return numpy.dot(weighting, self.basis[i, :]).flatten()
-
+            else:
+                weighting = numpy.exp(-d**2/self.sigma_sq)
+                weighting = weighting/sum(weighting)
+                return numpy.dot(weighting, self.basis[i, :]).flatten()
             
         else:
             return numpy.array([])
