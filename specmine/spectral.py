@@ -22,9 +22,6 @@ def laplacian_operator(W):
     D = scipy.sparse.spdiags(W_row_sum,0,n,n)
 
     D_invsqrt = scipy.sparse.spdiags(1./np.sqrt(W_row_sum),0,n,n)
-    print D_invsqrt.shape
-    print D.shape
-    print W.shape
     return D_invsqrt*(D-W)*D_invsqrt
 
 # funky behavior with random walk laplacian

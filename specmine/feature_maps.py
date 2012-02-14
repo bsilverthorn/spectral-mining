@@ -1,4 +1,3 @@
-import os
 import sys
 import cPickle as pickle
 import random
@@ -12,7 +11,7 @@ import specmine.go.go_loops
 
 logger = specmine.get_logger(__name__)
 
-def affinity_map(state):
+def flat_affinity_map(state):
     ''' takes a Go (Game- or Board-) State and returns the affinity map representation -- currently
     the flattened board'''
     if state.__class__ == specmine.go.BoardState:
@@ -30,9 +29,9 @@ class TabularFeatureMap(object):
     def __getitem__(self, state):
         #print 'state: ',state
         if self.basis is not None:
-            return numpy.hstack((1,state.grid.flatten(),self.basis[self.index[state], :]))
+            return self.basis[self.index[state]]
         else:
-            return numpy.hstack((1,state.grid.flatten()))
+            return numpy.array([])
 
 class RandomFeatureMap(TabularFeatureMap):
     """Map states to (fixed) random features."""
@@ -46,18 +45,22 @@ class RandomFeatureMap(TabularFeatureMap):
 
 class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression. Must give either
-    a ball tree or the raw affinity vectors"""
+    a ball tree or the raw affinity vectors (not both)"""
 
-    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8):
+    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 5, sigma = -1):
         self.basis = basis
+        self.sigma = sigma # parameter for neighbor weighting
+       
         if ball_tree is None:
             self.affinity_vectors = affinity_vectors
             self.ball_tree = sklearn.neighbors.BallTree(affinity_vectors)
-        elif affinity_vectors is None:
+        else:
+            assert affinity_vectors is None
             self.ball_tree = ball_tree
 
         self.affinity_map = affinity_map
         self.k = k
+        print str.format('using {a} neighbors for interpolation',a=k)
 
     def __getitem__(self, state):
         affinity_vector = self.affinity_map(state)
@@ -66,13 +69,34 @@ class InterpolationFeatureMap(object):
 
         # simple nearest neighbor averaging
         if self.basis is not None:
-            return numpy.hstack((1,state.grid.flatten(),numpy.dot(d / numpy.sum(d), self.basis[i, :])[0, 0, :]))
+            #logger.info('average distance: %f',numpy.mean(d))
+            #logger.info('distance variance: %f',numpy.var(d))
+            #print 'squared distance: ', d**2
+            #print 'distance : ', d
+    
+            if self.sigma != -1:
+                weighting = numpy.exp(-d**2/self.sigma)
+                weighting = weighting/sum(weighting)
+                return numpy.dot(weighting, self.basis[i, :]).flatten()
+            else:
+                weighting = numpy.ones(self.k)/float(self.k)
+                return numpy.dot(weighting, self.basis[i, :]).flatten()
+
+            
         else:
-            return numpy.hstack((1,state.grid.flatten()))
+            return numpy.array([])
+
+    def gen_map(self,B):
+        '''generate a copied feature map with fewer features'''
+        interp_map = copy.deepcopy(self)
+        interp_map.basis = interp_map.basis[:,B]
+        return interp_map
+
 
 class ClusteredFeatureMap(object):
     """Map states to features modulo clustering."""
     # TODO - add board vector and constant features?
+    # TODO - not maintained
     
     def __init__(self, affinity_map, clustering, maps):
         self._affinity_map = affinity_map
@@ -99,6 +123,7 @@ class ClusteredFeatureMap(object):
         features[self._indices[k]] = self._maps[k][state]
 
         return features
+        
 
 class TemplateFeatureMap(object):
     ''' computes mxn template features vector given a board or game state. The
@@ -106,78 +131,60 @@ class TemplateFeatureMap(object):
     dependent on the board. The feature vector also always includes a constant 
     and includes flattened board if append_board=True'''
 
-    def __init__(self, m, n, NT, append_board=True, size=9, weighted = False):
+    def __init__(self, m, n, NF = numpy.inf, size=9, weighted = False):
         
         self._weighted = weighted
 
-        if append_board:
-            path = specmine.util.static_path('features/templates.'+str(NT)+'.'+str(m)+'by'+str(n)+'.app_board.size='+str(size))
-        else:
-            path = specmine.util.static_path('features/templates.'+str(NT)+'.'+str(m)+'by'+str(n)+'size='+str(size))
-    
-        # if precomputed feature map is available, us it
-        if False:# os.path.isfile(path):
-            logger.info("using precomputed features at %s", path)
-            with specmine.openz(path) as featuremap_file:
-                self = pickle.load(featuremap_file)
+        # generate the feature map from all possible mxn templates
+        logger.info("generating %i by %i template features",m,n)
 
-        # otherwise, generate the feature map from all possible mxn templates
-        else:
-            print "generating templates %i by %i, features",m,n
+        feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
+        self.features, templates = feat.gen_features(max_num = NF)
 
-            feat = TemplateFeature(numpy.zeros((m,n)),(0,0))
-            self.features, self.templates = feat.gen_features(NT)
-            self.grids = [temp.grid for temp in self.templates]
-            self.NT = NT # number of template features
-            self.append_board = append_board
-            self.applications = []
+        assert (len(self.features) == NF) | (NF == numpy.inf)
+
+        self.NF = len(self.features) # number of features
+        self.grids = [temp.grid for temp in templates]
+        self.applications = []
         
-            # from the templates and features list, construct the applications for use in go_loops
-            self.num_features = len(self.features) # total number of possible features
-
-            logger.info("number of %iby%i features: %i",m,n, self.num_features)
-
-            for i in xrange(min(NT,self.num_features)):
-                feat = self.features[i]
+        logger.info("number of %iby%i features: %i",m,n, self.NF)
+            
+        # from the templates and features list, construct the applications for use in go_loops
+        for i in xrange(len(self.features)):
+            feat = self.features[i]
     
-                for app in feat.applications:
-                    pos = app[0]
-                    grid = app[1]
-                    assert grid.shape == (m,n)
-                    self.applications.append([pos[0], pos[1], self.templates.index(Template(grid)),self.features.index(feat)])
+            for app in feat.applications:
+                pos = app[0]
+                grid = app[1]
+                assert grid.shape == (m,n)
+                self.applications.append([pos[0], pos[1], templates.index(Template(grid)),self.features.index(feat)])
             
-            #print self.grids
-            #print type(self.grids)
-            for g in self.grids:
-                try:
-                    assert g.shape == (m,n)
-                except AssertionError:
-                    print m,n
-                    print 'not m by n grid: ', g.shape
-                    print g
-                    sys.exit()
+        # TODO for non-square feature debugging, can be removed 
+        for g in self.grids:
+            try:
+                assert g.shape == (m,n)
+            except AssertionError:
+                print m,n
+                print 'not m by n grid: ', g.shape
+                print g
+                sys.exit()
 
-            self.grids = numpy.array(self.grids, dtype=numpy.int8)
-            self.applications = numpy.array(self.applications, dtype=numpy.int32)
-            
-            #save for next time
-            #print 'saving computed feature map: ', path
-            #with specmine.util.openz(path, "wb") as out_file:
-                #pickle.dump(self, out_file)
+        self.grids = numpy.array(self.grids, dtype=numpy.int8)
+        self.applications = numpy.array(self.applications, dtype=numpy.int32)
+
 
     def __getitem__(self, state):
-        ''' computes the feature vector given a board or game state, always 
-        includes constant vector. includes flattened board if append_board=True'''
+        ''' computes the feature vector given a board or game state '''
         
         if state.__class__ == specmine.go.BoardState:
-            grid = state.grid
+            board = state.grid
         elif state.__class__ == specmine.go.GameState:
-            grid = state.board.grid
+            board = state.board.grid
         
-        if self.NT > 0:
-            #indices, counts = specmine.go.not_go_loops.applyTemplates( self.applications, self.grids, grid, self.num_features)
-            indices, counts = specmine.go.applyTemplates(self.applications,self.grids,grid,self.num_features)
-            feat_vec = numpy.zeros(self.NT)
+        if self.NF > 0:
+            indices, counts = specmine.go.applyTemplates(self.applications,self.grids,board,self.NF)
+            feat_vec = numpy.zeros(self.NF)
+
             if self._weighted:
                 feat_vec[indices] = counts # weighted by number of occurances
             else:
@@ -185,13 +192,28 @@ class TemplateFeatureMap(object):
         else:
             feat_vec = []
         
-        # always at least add the constant vector
-        if self.append_board:    
-            # append constant and board vector to features
-            return numpy.hstack((1,grid.flatten(),feat_vec)) 
+        return numpy.array(feat_vec)
+
+    def gen_map(self, NF):
+        ''' template feature maps can generate as big or smaller tfm objects using precomputed values '''
+        if NF > 0:
+            feat_nums = self.applications[:,3]
+            applications = self.applications[feat_nums<NF,:]
+            return RawTemplateFeatureMap(self.features, self.grids, applications, NF)
         else:
-            # add constant
-            return numpy.hstack((1,feat_vec)) 
+            m,n = self.grids[0].shape
+            return TemplateFeatureMap(m,n,NF)
+            
+        
+
+class RawTemplateFeatureMap(TemplateFeatureMap):
+    
+    def __init__(self, features, grids, applications, NF, weighted = False):
+        self.features = features
+        self.applications = applications
+        self.grids = grids
+        self._weighted = weighted
+        self.NF = NF
 
 class Template(object):
     ''' hashable wrapper for an mxn grid '''
@@ -316,12 +338,14 @@ class TemplateFeature(object):
 
             return list(copy.deepcopy(templates))
 
-    def gen_features(self,max_num,size=9):
+    def gen_features(self, max_num = numpy.inf, size=9):
         '''generate a list of all nxm templates in all positions on the board, 
         (taking into account symmetries) '''
 
         if max_num == 0:
             return [], []
+        
+        print str.format('generating {i} features',i=max_num)
 
         features = set()
         m,n = self.grid.shape
@@ -338,6 +362,7 @@ class TemplateFeature(object):
         feature_list = list(features)
         random.shuffle(feature_list)
         return feature_list, templates
+
 
 def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
     """Build the k-NN affinity graph from state feature vectors."""
@@ -376,9 +401,7 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
     adj2 = numpy.zeros((N,N))
     adj2[coo_is,coo_js] = 1
     adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
-    print 'adj1: ', adj1.todense()
-    print 'adj2: ', adj2
-    print 'adjacency: ', adjacency.todense()
+
     assert (adj2 == adj1.todense()).all()
     assert (adjacency.todense() == (adj1+adj1.T).todense()).all()
     test_adj = adjacency.todense()

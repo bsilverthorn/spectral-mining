@@ -55,14 +55,23 @@ def evaluate_feature_map_lstd(feature_map, games_per_eval = 1000, num_iters=10, 
 
     return evaluate_feature_map_rl(learn_lstd, feature_map, games_for_testing = games_for_testing)
 
-def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
+def score_features_predict(feature_map, values, folds = 10, alpha = 1.0, append_affinity = True,**kwargs):
     """Score a feature map on value-function prediction."""
 
     # prepare features and targets
-    states = list(values)
+    states = values.keys()
+    
+    state_values = numpy.array([values[s] for s in states]) # TODO can move this outside and pass in state values and boards
+    state_features = numpy.array([feature_map[s] for s in states])    
 
-    state_features = numpy.array([feature_map[s] for s in states])
-    state_values = numpy.array([values[s] for s in states])
+    if append_affinity: # append the affinity representation to the feature vector
+        aff_map = kwargs.get('affinity_map', specmine.feature_maps.flat_affinity_map)
+        aff_features = numpy.array(map(aff_map,states))
+
+        state_features = numpy.hstack((numpy.ones((len(states),1)),aff_features, state_features))
+    else:
+        state_features = numpy.hstack((numpy.ones((len(states),1)),state_features)) # add constant to feature vector
+
 
     # run the experiment
     ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
@@ -78,17 +87,6 @@ def score_features_predict(feature_map, values, folds = 10, alpha = 1.0):
             score_func = rmse_score
             )
 
-    #scores = sklearn.cross_validation.cross_val_score(regression,state_features,state_values,cv = k_fold_cv,score_func = sklearn.metrics.mean_square_error)
-
-    #regression.fit(state_features, state_values)
-    #my_score = rmse_score(state_values, regression.predict(state_features))
-    #print 'coefficients: ', ridge.coef_
-    #print 'scores: ',scores
-    #print 'my score: ', my_score
-
-    #from ipdb import set_trace; set_trace()
-
-    # ...
     return (numpy.mean(scores), numpy.var(scores))
 
 def score_features_regress_act(
