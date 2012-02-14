@@ -47,7 +47,7 @@ class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression. Must give either
     a ball tree or the raw affinity vectors (not both)"""
 
-    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 5, sigma = -1):
+    def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8, sigma = -1):
         self.basis = basis
         self.sigma = sigma # parameter for neighbor weighting
        
@@ -406,10 +406,6 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
     assert (adjacency.todense() == (adj1+adj1.T).todense()).all()
     test_adj = adjacency.todense()
     assert (test_adj.T == test_adj).all()
-
-    logger.info("affinity graph has %i unique edges", coo_affinities.shape[0])
-    logger.info("adjacency shape: %s", str(adjacency.shape))
-    logger.info("adj1 shape: %s", str(adj1.shape))
 
     if get_tree:
         return (adjacency, tree)
