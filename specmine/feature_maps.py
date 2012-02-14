@@ -49,7 +49,7 @@ class InterpolationFeatureMap(object):
 
     def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8, sigma_sq = -1):
         self.basis = basis
-        self.sigma = sigma # parameter for neighbor weighting
+        self.sigma = sigma_sq # parameter for neighbor weighting
        
         if ball_tree is None:
             self.affinity_vectors = affinity_vectors

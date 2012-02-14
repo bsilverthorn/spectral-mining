@@ -35,7 +35,7 @@ def measure_feature_performance( \
     elif 'alp' in values_path:
         value_player = 'alp'
 
-    out_path = str.format('specmine/static/go_feature_performance.RMSE.{p}.rp={r}.ngs={g}.nts={t}.nf={f}.nan={an}.nin={inn}.is={sig}.csv', \
+    out_path = str.format('specmine/static/experiments/go_feature_performance.RMSE.{p}.rp={r}.ngs={g}.nts={t}.nf={f}.nan={an}.nin={inn}.is={sig}.csv', \
                 p=value_player, r = ridge_param, g=num_graph_samples, t=num_test_samples,f=max_num_features, \
                 an=affinity_neighbors,inn=interp_neighbors, sig = interp_sigma_sq)
 
