@@ -18,6 +18,7 @@ def flat_affinity_map(state):
         return state.grid.flatten()
     elif state.__class__ == specmine.go.GameState:
         return state.board.grid.flatten
+ 
 
 class TabularFeatureMap(object):
     """Map states to features via simple table lookup."""
