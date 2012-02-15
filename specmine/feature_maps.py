@@ -58,8 +58,13 @@ class InterpolationFeatureMap(object):
         else:
             assert affinity_vectors is None
             self.ball_tree = ball_tree
+        
+        # if passed a feature map object, use its getitem method
+        if hasattr(affinity_map,'__class__'):        
+            self.affinity_map = affinity_map.__getitem__
+        else:
+            self.affinity_map = affinity_map
 
-        self.affinity_map = affinity_map
         self.k = k
         print str.format('using {a} neighbors for interpolation',a=k)
 

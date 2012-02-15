@@ -25,9 +25,9 @@ logger = specmine.get_logger(__name__)
     )
 def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
-    affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = 8,\
+    affinity_neighbors = 16, interp_neighbors = 8, interp_sigma_sq = 16,\
     num_graph_samples = 10000, num_test_samples = 20000, \
-    max_num_features = 500, ridge_param = 0.1, feature_boost = True):
+    max_num_features = 500, ridge_param = 0.05, feature_boost = True):
     
     value_player = ''
     if 'random' in values_path:
@@ -53,14 +53,17 @@ def measure_feature_performance( \
     # load or compute full feature maps
     full_2x2_temp_map = get_template_map(2, 2, B=numpy.inf, symmetric=True)
     if feature_boost: # use 2x2 template features as affinity map for building graph
+        aff_map = full_2x2_temp_map
         full_laplacian_map = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
-        max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = full_2x2_temp_map.__getitem__)
+                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
         laplace_map_name = 'Boosted Laplacian'
     
     else:
+        aff_map = specmine.feature_maps.flat_affinity_map
         full_laplacian_map = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
-        max_eigs = max_num_features, neighbors=affinity_neighbors)
+                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
         laplace_map_name = 'Laplacian'
+        
     
     ball_tree = full_laplacian_map.ball_tree
 
@@ -70,7 +73,6 @@ def measure_feature_performance( \
     def yield_jobs():
                 
         logger.info("number of samples being used for graph features: %i", num_graph_samples)
-        aff_map = specmine.feature_maps.flat_affinity_map
         for NF in numpy.r_[0:max_num_features:10j].round().astype(int):
             yield (run_template_features, [test_values, full_2x2_temp_map, NF], dict(ridge_param = ridge_param))
             #yield (run_template_features, [full_3x3_temp_map, NF, test_values])
@@ -178,9 +180,10 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
 
     if affinity_map == specmine.feature_maps.flat_affinity_map:
         aff = 'flat'
-    elif affinity_map.im_func == specmine.feature_maps.TemplateFeatureMap.__getitem__.im_func:
+    elif type(affinity_map) == specmine.feature_maps.TemplateFeatureMap:
         logger.info('getting laplacian map using template features as affinity')
         aff = '2x2_sym_template'
+        affinity_map = affinity_map.__getitem__
     else:
         aff= '?'
 
@@ -192,36 +195,22 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
     for f in files:
 
         match = re.search(path_front+'.nf=(\d+)'+path_end, f)
-
-        logger.info('match string: %s',path_front+'.nf=(\d+)'+path_end)
-        logger.info('file: %s', f)
         
         if match is not None:
-            
-            print 'match path: ', match.group(0)
-            print 'match feat num: ', match.group(1)
             
             path = curr_dir + match.group(0)
             num_feats = int(match.group(1))
             
-            logger.info('num feats: %i , max_eigs: %i',num_feats,max_eigs)
-
             if num_feats >= max_eigs:
-                logger.info("using precomputed features at %s", path)
                 
+                logger.info("using precomputed features at %s", path)
+                logger.info('num features used: %i , max available: %i',num_feats,max_eigs)
+
                 with specmine.openz(path) as featuremap_file:
                     full_feature_map = pickle.load(featuremap_file)
                     
                 precomp = True
                 break
-                
-
-    #if os.path.isfile(path):
-        ##if available, use precomputed feature 
-        #logger.info("using precomputed features at %s", path)
-        
-        #with specmine.openz(path) as featuremap_file:
-            #full_feature_map = pickle.load(featuremap_file)
 
 
     if not precomp:
