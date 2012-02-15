@@ -49,7 +49,7 @@ class InterpolationFeatureMap(object):
 
     def __init__(self, basis, affinity_map, ball_tree = None, affinity_vectors=None, k = 8, sigma_sq = -1):
         self.basis = basis
-        self.sigma = sigma_sq # parameter for neighbor weighting
+        self.sigma_sq = sigma_sq # parameter for neighbor weighting
        
         if ball_tree is None:
             self.affinity_vectors = affinity_vectors
@@ -74,7 +74,7 @@ class InterpolationFeatureMap(object):
             #print 'squared distance: ', d**2
             #print 'distance : ', d
     
-            if self.sigma == -1:
+            if self.sigma_sq == -1:
                 weighting = numpy.ones(self.k)/float(self.k)
                 return numpy.dot(weighting, self.basis[i, :]).flatten()
             else:
@@ -392,7 +392,7 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
             #coo_distances.append(neighbor_distances_NG[n, g])
 
     #coo_distances = numpy.array(2 * coo_distances)
-    #coo_affinities = numpy.exp(-coo_distances**2 / (2.0 * sigma))
+    #coo_affinities = numpy.exp(-coo_distances**2 / (2.0 * sigma_sq))
     
     # just uses a weight of 1 for all edges
     coo_affinities = numpy.ones(2*len(coo_is))

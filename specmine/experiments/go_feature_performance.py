@@ -26,7 +26,7 @@ logger = specmine.get_logger(__name__)
 def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
     affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = 8,\
-    num_graph_samples = 10000, num_test_samples = 50000, \
+    num_graph_samples = 10000, num_test_samples = 20000, \
     max_num_features = 500, ridge_param = 0.1):
     
     value_player = ''
@@ -41,9 +41,7 @@ def measure_feature_performance( \
 
     logger.info('out path: %s', out_path)
     logger.info('interpolation sigma: %f', interp_sigma_sq)
-
-    # TODO set outpath automatically according to parameters
-    
+ 
     values = get_value_list(games_path,values_path)
     values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
 
@@ -66,8 +64,8 @@ def measure_feature_performance( \
         for NF in numpy.r_[0:max_num_features:10j].round().astype(int):
             yield (run_template_features, [test_values, full_2x2_temp_map, NF], dict(ridge_param = ridge_param))
             #yield (run_template_features, [full_3x3_temp_map, NF, test_values])
-            yield (run_laplacian_features, [test_values, "Laplacian",full_laplacian_map, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma = interp_sigma, ridge_param = ridge_param))
-            yield (run_random_features, [test_values, NF, ball_tree, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma = interp_sigma, ridge_param = ridge_param))
+            yield (run_laplacian_features, [test_values, "Laplacian",full_laplacian_map, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
+            yield (run_random_features, [test_values, NF, ball_tree, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
 
     with open(out_path, "wb") as out_file:
         writer = csv.writer(out_file)
@@ -163,26 +161,38 @@ def get_template_map(m, n, B=numpy.inf, symmetric=True):
 
 def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8):
 
-    root,dirs,files = os.walk('.').next()
-    path_front = str.format('specmine/static/feature_maps/laplacian.ngs={s}.nan={k}',s=num_samples, k=neighbors)
+    root,dirs,files = os.walk('./specmine/static/feature_maps/').next()
+    curr_dir = 'specmine/static/feature_maps/'
+    path_front = str.format('laplacian.ngs={s}.nan={k}',s=num_samples, k=neighbors)
     path_end = '.pickle.gz'
+    
+    precomp = False
 
-    for d in dirs:
+    for f in files:
 
-        match = re.search(path_front+'.nf=(\d+)'+path_end, d)
+        match = re.search(path_front+'.nf=(\d+)'+path_end, f)
+
+        logger.info('match string: %s',path_front+'.nf=(\d+)'+path_end)
+        logger.info('file: %s', f)
+        
         if match is not None:
             
             print 'match path: ', match.group(0)
             print 'match feat num: ', match.group(1)
             
-            path = match.group(0)
+            path = curr_dir + match.group(0)
             num_feats = int(match.group(1))
-        
+            
+            logger.info('num feats: %i , max_eigs: %i',num_feats,max_eigs)
+
             if num_feats >= max_eigs:
                 logger.info("using precomputed features at %s", path)
-
+                
                 with specmine.openz(path) as featuremap_file:
                     full_feature_map = pickle.load(featuremap_file)
+                    
+                precomp = True
+                break
                 
 
     #if os.path.isfile(path):
@@ -193,9 +203,9 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8)
             #full_feature_map = pickle.load(featuremap_file)
 
 
-    else:
+    if not precomp:
 
-        path = path_front + str.format('.nf={n}', n= max_eigs) + path_end
+        path = curr_dir + path_front + str.format('.nf={n}', n= max_eigs) + path_end
         # generate and save for next time
         logger.info("generating laplacian eigenvector feature map with %i eigenvectors",max_eigs)
         
