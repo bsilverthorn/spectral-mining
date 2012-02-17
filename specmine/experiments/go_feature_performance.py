@@ -25,10 +25,10 @@ logger = specmine.get_logger(__name__)
     )
 def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
-    affinity_neighbors = 16, interp_neighbors = 8, interp_sigma_sq = 16,\
-    num_graph_samples = 10000, num_test_samples = 20000, \
-    max_num_features = 500, ridge_param = 0.05, feature_boost = True):
-    
+    affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = -1,\
+    num_graph_samples = 20000, num_test_samples = 80000, \
+    max_num_features = 500, ridge_param = 0.01, feature_boost = True):
+
     value_player = ''
     if 'random' in values_path:
         value_player = 'random'
@@ -41,42 +41,46 @@ def measure_feature_performance( \
     out_path += '.boost.csv' if feature_boost else '.csv'
 
     logger.info('out path: %s', out_path)
-    logger.info('interpolation sigma: %f', interp_sigma_sq)
- 
-    values = get_value_list(games_path,values_path)
-    values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
+    logger.info('interpolation sigma_sq: %f', interp_sigma_sq)
+
+    def yield_jobs():
+
+        values = get_value_list(games_path,values_path)
+        values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle values
 
 
-    full_value_dict = dict(values)
-    sample_boards = full_value_dict.keys()[:num_graph_samples]
+        full_value_dict = dict(values)
+        sample_boards = full_value_dict.keys()[:num_graph_samples]
 
-    # load or compute full feature maps
-    full_2x2_temp_map = get_template_map(2, 2, B=numpy.inf, symmetric=True)
-    if feature_boost: # use 2x2 template features as affinity map for building graph
-        aff_map = full_2x2_temp_map
-        full_laplacian_map = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
-                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
-        laplace_map_name = 'Boosted Laplacian'
-    
-    else:
+        # load or compute full feature maps
+        full_2x2_temp_map = get_template_map(2, 2, B=numpy.inf, symmetric=True)
+        if feature_boost: # use 2x2 template features as affinity map for building graph
+            aff_map_boost = full_2x2_temp_map
+            full_laplacian_map_boosted = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
+                    max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map_boost)
+            laplace_map_name_boosted = 'Boosted Laplacian'
+        
+        #else:
         aff_map = specmine.feature_maps.flat_affinity_map
         full_laplacian_map = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
                 max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
         laplace_map_name = 'Laplacian'
-        
-    
-    ball_tree = full_laplacian_map.ball_tree
+        full_laplacian_map_small = get_laplacian_map(sample_boards, num_samples = num_graph_samples/2., \
+                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
+        laplace_map_name_small = 'Laplacian-small'
+            
+        ball_tree = full_laplacian_map.ball_tree
 
-    values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle again before testing
-    test_values = dict(values[:num_test_samples])
-
-    def yield_jobs():
+        values = sorted(values, key = lambda _: numpy.random.rand()) # shuffle again before testing
+        test_values = dict(values[:num_test_samples])
                 
         logger.info("number of samples being used for graph features: %i", num_graph_samples)
         for NF in numpy.r_[0:max_num_features:10j].round().astype(int):
             yield (run_template_features, [test_values, full_2x2_temp_map, NF], dict(ridge_param = ridge_param))
             #yield (run_template_features, [full_3x3_temp_map, NF, test_values])
             yield (run_laplacian_features, [test_values, laplace_map_name, full_laplacian_map, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
+            yield (run_laplacian_features, [test_values, laplace_map_name_small, full_laplacian_map_small, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
+            yield (run_laplacian_features, [test_values, laplace_map_name_boosted, full_laplacian_map_boosted, NF, aff_map_boost], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
             yield (run_random_features, [test_values, NF, ball_tree, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
 
     with open(out_path, "wb") as out_file:
@@ -90,6 +94,9 @@ def measure_feature_performance( \
 
 def run_template_features(values, full_feature_map, B, symmetric=True, **kwargs):
 
+    measure_extra_perf = kwargs.get('measure_extra_performance', False)    
+    aff_map = kwargs.get('affinity_map', specmine.feature_maps.flat_affinity_map)    
+
     m,n = full_feature_map.grids[0].shape
     ridge_param = kwargs.get('ridge_param',1)
 
@@ -97,7 +104,13 @@ def run_template_features(values, full_feature_map, B, symmetric=True, **kwargs)
 
     feature_map = full_feature_map.gen_map(B)
 
-    (mean, variance) = specmine.science.score_features_predict(feature_map, values, alpha = ridge_param)
+    # if measuring performance beyond the flat vector base line
+    if measure_extra_perf:
+        baseline_map = aff_map
+    else:
+        baseline_map = specmine.feature_maps.flat_affinity_map
+    
+    (mean, variance) = specmine.science.score_features_predict(feature_map, values, alpha = ridge_param, kwargs = {'affinity_map':baseline_map})
 
     logger.info("with %i %s features, mean score is %f", B, 'template', mean)
 
@@ -106,10 +119,17 @@ def run_template_features(values, full_feature_map, B, symmetric=True, **kwargs)
 def run_graph_features(values, map_name, B, features_NF, ball_tree, aff_map, **kwargs):
     interp_neighbors = kwargs.get('interp_neighbors',8)
     ridge_param = kwargs.get('ridge_param',1)
+    measure_extra_perf = kwargs.get('measure_extra_performance', False)
 
     feature_map = specmine.feature_maps.InterpolationFeatureMap(features_NF, aff_map, ball_tree, k=interp_neighbors)
+
+    # if measuring performance beyond the affinity map (if not the flat_affinit_map)
+    if measure_extra_perf:
+        baseline_map = aff_map
+    else:
+        baseline_map = specmine.feature_maps.flat_affinity_map
     
-    (mean, variance) = specmine.science.score_features_predict(feature_map, values, alpha = ridge_param)
+    (mean, variance) = specmine.science.score_features_predict(feature_map, values, alpha = ridge_param, kwargs = {'affinity_map':baseline_map})
 
     logger.info("with %i %s features, mean score is %f", B, map_name, mean)
 
@@ -160,7 +180,7 @@ def get_template_map(m, n, B=numpy.inf, symmetric=True):
     else:
         # generate and save for next time
         logger.info("generating complete %i by %i feature map",m,n)
-
+        
         full_feature_map = specmine.feature_maps.TemplateFeatureMap(m,n)
         
         logger.info('saving computed feature map: %s', path)
@@ -187,7 +207,7 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
     else:
         aff= '?'
 
-    path_front = str.format('laplacian.ngs={s}.nan={k}.aff={a}',s=num_samples, k=neighbors, a=aff)
+    path_front = str.format('laplacian.ngs={s}.nan={k}.aff={a}',s=int(num_samples), k=neighbors, a=aff)
     path_end = '.pickle.gz'
     
     precomp = False
@@ -264,4 +284,5 @@ def get_value_list(games_path,values_path):
     return value_list
 
 if __name__ == "__main__":
+    print 'running script'
     specmine.script(measure_feature_performance)

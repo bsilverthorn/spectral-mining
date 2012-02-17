@@ -60,7 +60,7 @@ class InterpolationFeatureMap(object):
             self.ball_tree = ball_tree
         
         # if passed a feature map object, use its getitem method
-        if hasattr(affinity_map,'__class__'):        
+        if hasattr(affinity_map,'__getitem__'):        
             self.affinity_map = affinity_map.__getitem__
         else:
             self.affinity_map = affinity_map
@@ -75,10 +75,10 @@ class InterpolationFeatureMap(object):
 
         # simple nearest neighbor averaging
         if self.basis is not None:
-            #logger.info('average distance: %f',numpy.mean(d))
-            #logger.info('distance variance: %f',numpy.var(d))
-            #print 'squared distance: ', d**2
-            #print 'distance : ', d
+            logger.info('average distance: %f',numpy.mean(d))
+            logger.info('distance variance: %f',numpy.var(d))
+            print 'squared distance: ', d**2
+            print 'distance : ', d
     
             if self.sigma_sq == -1:
                 weighting = numpy.ones(self.k)/float(self.k)
@@ -402,15 +402,7 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
     
     # just uses a weight of 1 for all edges
     coo_affinities = numpy.ones(2*len(coo_is))
-    adj1 =scipy.sparse.coo_matrix((numpy.ones(len(coo_is)), (coo_is, coo_js)))
-    adj2 = numpy.zeros((N,N))
-    adj2[coo_is,coo_js] = 1
     adjacency = scipy.sparse.coo_matrix((coo_affinities, (coo_is + coo_js, coo_js + coo_is)))
-
-    assert (adj2 == adj1.todense()).all()
-    assert (adjacency.todense() == (adj1+adj1.T).todense()).all()
-    test_adj = adjacency.todense()
-    assert (test_adj.T == test_adj).all()
 
     if get_tree:
         return (adjacency, tree)

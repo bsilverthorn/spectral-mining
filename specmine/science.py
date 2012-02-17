@@ -55,27 +55,40 @@ def evaluate_feature_map_lstd(feature_map, games_per_eval = 1000, num_iters=10, 
 
     return evaluate_feature_map_rl(learn_lstd, feature_map, games_for_testing = games_for_testing)
 
-def score_features_predict(feature_map, values, folds = 10, alpha = 1.0, append_affinity = True,**kwargs):
+def score_features_predict(feature_map, values, folds = 10, alpha = 0.1, append_affinity = True,**kwargs):
     """Score a feature map on value-function prediction."""
 
     # prepare features and targets
     states = values.keys()
     
+    logger.info('getting the state values')
+    
     state_values = numpy.array([values[s] for s in states]) # TODO can move this outside and pass in state values and boards
+
+    logger.info('getting the feature values')
+
     state_features = numpy.array([feature_map[s] for s in states])    
+
+    logger.info('appending the affinity representation')
 
     if append_affinity: # append the affinity representation to the feature vector
         aff_map = kwargs.get('affinity_map', specmine.feature_maps.flat_affinity_map)
+
+        logger.info('using affinity map: %s',str(aff_map))
+
         aff_features = numpy.array(map(aff_map,states))
 
         state_features = numpy.hstack((numpy.ones((len(states),1)),aff_features, state_features))
     else:
         state_features = numpy.hstack((numpy.ones((len(states),1)),state_features)) # add constant to feature vector
 
+    logger.info('setting up experiment')
 
     # run the experiment
     ridge = sklearn.linear_model.Ridge(alpha = alpha, normalize = True)
     regression = sklearn.pipeline.Pipeline([("scaler", sklearn.preprocessing.Scaler()), ("ridge",ridge),])
+
+    logger.info('performing k fold cross val')
 
     k_fold_cv = sklearn.cross_validation.KFold(len(states), folds)
     scores = \
