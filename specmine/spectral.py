@@ -106,19 +106,31 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
         pre = solver.aspreconditioner()
         initial = scipy.rand(L.shape[0], k)
 
-        (_, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-8, largest = largest)
+        (evals, basis) = scipy.sparse.linalg.lobpcg(L, initial, M = pre, tol = 1e-10, largest = largest)
+        logger.info('amg eigen values: '+str(evals))
     elif method == "arpack":
+        logger.info('using arpack')
         if largest:
             which = "LM"
         else:
             which = "SM"
 
         if hasattr(scipy.sparse.linalg, "eigsh"): # check scipy version
-            (_, basis) = scipy.sparse.linalg.eigsh(L, k, which = which)
+            which = "LM" # use sigma=0 and ask for the large eigenvalues (shift trick, see arpack doc)
+            (evals, basis) = scipy.sparse.linalg.eigsh(L, k, which = which, tol=1e-10, sigma = 0, maxiter=15000)
+            for i in xrange(len(basis)):
+                b = basis[i]
+                residual = np.linalg.norm(np.dot(L,b)-evals[i]*b)
+                perp_test = np.linalg.norm(np.dot(basis[i],basis[1]))
+                logger.info('eigenvalue residual: %f',residual)
+                logger.info('dot of %ith eigenvector with first: %f',i,perp_test)
+
+            logger.info('arpack eigen values: '+str(evals))
         else: 
-            (_, basis) = scipy.sparse.linalg.eigen_symmetric(L, k, which = which)
+            (evals, basis) = scipy.sparse.linalg.eigen_symmetric(L, k, which = which)
+            logger.info('arpack (old) eigen values: '+str(evals))
     elif method == "dense":
-        (_, full_basis) = np.linalg.eigh(L.todense())
+        (evals, full_basis) = np.linalg.eigh(L.todense())
 
         basis = full_basis[:, :k]
     else:

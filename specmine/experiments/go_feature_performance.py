@@ -21,13 +21,15 @@ logger = specmine.get_logger(__name__)
     num_graph_samples = ("number of samples used for graph features", "option", None, int),
     num_test_samples = ("number of samples used for testing value prediction error", "option", None, int),
     max_num_features = ("max number of features used", "option", None, int),
-    ridge_param = ("ridge regularization parameter", "option", None, float)
+    ridge_param = ("ridge regularization parameter", "option", None, float),
+    feature_boost = ("boolean, whether to run form the affinity graph in template feature space", "option", None, bool),
+    eig_solver = ("eigen solver used to find the eigenvectors of the graph laplacian", "option", None, str)
     )
 def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
     affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = -1,\
     num_graph_samples = 20000, num_test_samples = 80000, \
-    max_num_features = 500, ridge_param = 0.01, feature_boost = True):
+    max_num_features = 500, ridge_param = 0.01, feature_boost = False, eig_solver='arpack'):
 
     value_player = ''
     if 'random' in values_path:
@@ -35,9 +37,9 @@ def measure_feature_performance( \
     elif 'alp' in values_path:
         value_player = 'alp'
 
-    out_path = str.format('specmine/static/experiments/go_feature_performance.RMSE.{p}.rp={r}.ngs={g}.nts={t}.nf={f}.nan={an}.nin={inn}.is={sig}', \
+    out_path = str.format('specmine/static/experiments/go_feature_performance.RMSE.{p}.rp={r}.ngs={g}.nts={t}.nf={f}.nan={an}.nin={inn}.is={sig}.{ei}', \
                 p=value_player, r = ridge_param, g=num_graph_samples, t=num_test_samples,f=max_num_features, \
-                an=affinity_neighbors,inn=interp_neighbors, sig = interp_sigma_sq)
+                an=affinity_neighbors,inn=interp_neighbors, sig = interp_sigma_sq, ei = eig_solver)
     out_path += '.boost.csv' if feature_boost else '.csv'
 
     logger.info('out path: %s', out_path)
@@ -57,16 +59,15 @@ def measure_feature_performance( \
         if feature_boost: # use 2x2 template features as affinity map for building graph
             aff_map_boost = full_2x2_temp_map
             full_laplacian_map_boosted = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
-                    max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map_boost)
+                    max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map_boost, eig_solver=eig_solver)
             laplace_map_name_boosted = 'Boosted Laplacian'
         
-        #else:
         aff_map = specmine.feature_maps.flat_affinity_map
         full_laplacian_map = get_laplacian_map(sample_boards, num_samples = num_graph_samples, \
-                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
+                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map, eig_solver=eig_solver)
         laplace_map_name = 'Laplacian'
         full_laplacian_map_small = get_laplacian_map(sample_boards, num_samples = num_graph_samples/2., \
-                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map)
+                max_eigs = max_num_features, neighbors=affinity_neighbors, affinity_map = aff_map, eig_solver=eig_solver)
         laplace_map_name_small = 'Laplacian-small'
             
         ball_tree = full_laplacian_map.ball_tree
@@ -80,7 +81,8 @@ def measure_feature_performance( \
             #yield (run_template_features, [full_3x3_temp_map, NF, test_values])
             yield (run_laplacian_features, [test_values, laplace_map_name, full_laplacian_map, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
             yield (run_laplacian_features, [test_values, laplace_map_name_small, full_laplacian_map_small, NF, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
-            yield (run_laplacian_features, [test_values, laplace_map_name_boosted, full_laplacian_map_boosted, NF, aff_map_boost], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
+            if feature_boost:
+                yield (run_laplacian_features, [test_values, laplace_map_name_boosted, full_laplacian_map_boosted, NF, aff_map_boost], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
             yield (run_random_features, [test_values, NF, ball_tree, aff_map], dict(interp_neighbors = interp_neighbors, interp_sigma_sq = interp_sigma_sq, ridge_param = ridge_param))
 
     with open(out_path, "wb") as out_file:
@@ -119,7 +121,7 @@ def run_template_features(values, full_feature_map, B, symmetric=True, **kwargs)
 def run_graph_features(values, map_name, B, features_NF, ball_tree, aff_map, **kwargs):
     interp_neighbors = kwargs.get('interp_neighbors',8)
     ridge_param = kwargs.get('ridge_param',1)
-    measure_extra_perf = kwargs.get('measure_extra_performance', False)
+    measure_extra_perf = kwargs.get('measure_extra_performance', False) # measure performance beyond 2x2 templates?
 
     feature_map = specmine.feature_maps.InterpolationFeatureMap(features_NF, aff_map, ball_tree, k=interp_neighbors)
 
@@ -164,13 +166,25 @@ def run_random_features(values, B, ball_tree, aff_map, **kwargs):
 
     return run_graph_features(values, "random", B, features_NB, ball_tree,  aff_map, **kwargs)
 
+def run_layered_laplacian_features(values, full_feature_map, B, aff_map, **kwargs):
+    logger.info("running laplacian features with %i eigenvectors", B)
+    ball_tree = full_feature_map.ball_tree
+
+    if B > 0:
+        basis_NB = full_feature_map.basis[:,:B]
+
+    else:
+        basis_NB = None
+        
+    return run_graph_features(values, "layered", B, basis_NB, ball_tree, aff_map, **kwargs)
+
 def get_template_map(m, n, B=numpy.inf, symmetric=True):
     '''loads template map from file if available or generates the feature map. 
     If B is given as inf, then max number of features are used.'''
     if symmetric:
-        path = str.format('specmine/static/feature_maps/template_feature_map.{a}x{b}.symmetric.pickle.gz',a=m,b=n)
+        path = str.format('specmine/data/feature_maps/template_feature_map.{a}x{b}.symmetric.pickle.gz',a=m,b=n)
     else:
-        path = str.format('specmine/static/feature_maps/template_feature_map.{a}x{b}.pickle.gz',a=m,b=n)
+        path = str.format('specmine/data/feature_maps/template_feature_map.{a}x{b}.pickle.gz',a=m,b=n)
 
     if os.path.isfile(path):
         #if available, use precomputed feature map
@@ -193,10 +207,10 @@ def get_template_map(m, n, B=numpy.inf, symmetric=True):
         return full_feature_map.gen_map(B)
 
 def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8, \
-                        affinity_map = specmine.feature_maps.flat_affinity_map):
+                        affinity_map = specmine.feature_maps.flat_affinity_map, eig_solver="arpack"):
 
-    root,dirs,files = os.walk('./specmine/static/feature_maps/').next()
-    curr_dir = 'specmine/static/feature_maps/'
+    root,dirs,files = os.walk('./specmine/data/feature_maps/').next()
+    curr_dir = 'specmine/data/feature_maps/'
 
     if affinity_map == specmine.feature_maps.flat_affinity_map:
         aff = 'flat'
@@ -207,7 +221,7 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
     else:
         aff= '?'
 
-    path_front = str.format('laplacian.ngs={s}.nan={k}.aff={a}',s=int(num_samples), k=neighbors, a=aff)
+    path_front = str.format('laplacian.ngs={s}.nan={k}.aff={a}.{ei}',s=int(num_samples), k=neighbors, a=aff, ei = eig_solver)
     path_end = '.pickle.gz'
     
     precomp = False
@@ -242,7 +256,7 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
         avectors_ND = numpy.array(map(affinity_map, boards))
         affinity_NN, ball_tree = specmine.feature_maps.build_affinity_graph(avectors_ND, neighbors, get_tree=True)
 
-        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, max_eigs, method = "arpack") # amg
+        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, max_eigs, method = eig_solver) # amg
 
         full_feature_map = specmine.feature_maps.InterpolationFeatureMap(basis_NB, \
                                 specmine.feature_maps.flat_affinity_map,

@@ -377,7 +377,7 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
 
     logger.info("building balltree in %i-dimensional affinity space", D)
 
-    tree = sklearn.neighbors.BallTree(vectors_ND)
+    tree = sklearn.neighbors.BallTree(vectors_ND, p=1)
 
     logger.info("retrieving %i nearest neighbors", G)
 
