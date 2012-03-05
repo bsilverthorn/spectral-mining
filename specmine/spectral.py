@@ -118,12 +118,17 @@ def laplacian_basis(W, k, largest = False, method = "arpack"):
         if hasattr(scipy.sparse.linalg, "eigsh"): # check scipy version
             which = "LM" # use sigma=0 and ask for the large eigenvalues (shift trick, see arpack doc)
             (evals, basis) = scipy.sparse.linalg.eigsh(L, k, which = which, tol=1e-10, sigma = 0, maxiter=15000)
-            for i in xrange(len(basis)):
-                b = basis[i]
-                residual = np.linalg.norm(np.dot(L,b)-evals[i]*b)
-                perp_test = np.linalg.norm(np.dot(basis[i],basis[1]))
-                logger.info('eigenvalue residual: %f',residual)
-                logger.info('dot of %ith eigenvector with first: %f',i,perp_test)
+            try:
+                for i in xrange(len(basis)):
+                    b = basis[i]
+                    print 'basis vector shape: ', b.shape
+                    residual = np.linalg.norm((np.dot(L,b)).todense()-evals[i]*b)
+                    perp_test = np.linalg.norm(np.dot(basis[i],basis[1]))
+                    logger.info('eigenvalue residual: %f',residual)
+                    logger.info('dot of %ith eigenvector with first: %f',i,perp_test)
+
+            except:
+                print 'error in eigensolver test code'
 
             logger.info('arpack eigen values: '+str(evals))
         else: 
@@ -184,7 +189,9 @@ def diffusion_basis(W,k,J=8,lam=2.5,p=1,eps_scal=10**-3):
     n = T.shape[0] # number of states in complete space
     phi_dict,psi_dict = dw_tree(T,J,lam,p,eps_scal)
 
-    return expand_wavelets(phi_dict, psi_dict, k, n) 
+    return expand_wavelets(phi_dict, psi_dict, k, n)
+
+
 
 def clustered_basis_from_affinity(avectors_ND, B, clusters = None, neighbors = 8):
     avectors_ND = np.asarray(avectors_ND, dtype = float)

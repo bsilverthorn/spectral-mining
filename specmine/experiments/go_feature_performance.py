@@ -29,7 +29,7 @@ def measure_feature_performance( \
     games_path, values_path,  workers = 0,\
     affinity_neighbors = 8, interp_neighbors = 8, interp_sigma_sq = -1,\
     num_graph_samples = 20000, num_test_samples = 80000, \
-    max_num_features = 500, ridge_param = 0.01, feature_boost = False, eig_solver='arpack'):
+    max_num_features = 500, ridge_param = 0.01, feature_boost = True, eig_solver='arpack'):
 
     value_player = ''
     if 'random' in values_path:
@@ -239,12 +239,15 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
                 
                 logger.info("using precomputed features at %s", path)
                 logger.info('num features used: %i , max available: %i',num_feats,max_eigs)
-
-                with specmine.openz(path) as featuremap_file:
-                    full_feature_map = pickle.load(featuremap_file)
+                try:
+                    with specmine.openz(path) as featuremap_file:
+                        full_feature_map = pickle.load(featuremap_file)
                     
-                precomp = True
-                break
+                    precomp = True
+                    break
+                except:
+                    print 'error loading feature map'
+                    precomp = False
 
 
     if not precomp:
@@ -256,15 +259,18 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
         avectors_ND = numpy.array(map(affinity_map, boards))
         affinity_NN, ball_tree = specmine.feature_maps.build_affinity_graph(avectors_ND, neighbors, get_tree=True)
 
-        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, max_eigs, method = eig_solver) # amg
+        basis_NB = specmine.spectral.laplacian_basis(affinity_NN, max_eigs, method = eig_solver)
 
         full_feature_map = specmine.feature_maps.InterpolationFeatureMap(basis_NB, \
                                 specmine.feature_maps.flat_affinity_map,
                                 ball_tree)
-
-        logger.info('saving computed laplacian feature map: %s', path)
-        with specmine.util.openz(path, "wb") as out_file:
-            pickle.dump(full_feature_map, out_file)
+        
+        try:
+            logger.info('saving computed laplacian feature map: %s', path)
+            with specmine.util.openz(path, "wb") as out_file:
+                pickle.dump(full_feature_map, out_file)
+        except:
+            print 'error trying to save laplacian map'
         
 
     return full_feature_map

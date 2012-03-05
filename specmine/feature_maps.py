@@ -44,6 +44,76 @@ class RandomFeatureMap(TabularFeatureMap):
             index,
             )
 
+class LayeredInterpolationFM(object):
+    ''' takes a large point cloud and paritions it randomly, build a KNN graph
+    and finding spectral features on each partition separately.'''
+
+    def __init__(self, affinity_vectors, affinity_map = flat_affinity_map, num_layers = 10, \
+            num_evs = 100, graph_neighbs = 8, interp_neighbs=8, sigma_sq = -1, num_out = numpy.inf):
+                
+        num_states = len(affinity_vectors).shape[0]
+        self.num_layers = num_layers
+        logger.info('creating a layered feature map with %i layers and %i total points',num_layers,num_states)
+        
+        self.affinity_vectors = sorted(affinity_vectors, key = lambda _: numpy.random.rand())
+        self.groups = self.trees = self.maps = [None]*num_layers
+        batch_size = (num_states/num_layers)
+
+        for i in xrange(num_layers):
+            if i != num_layers-1:
+                self.groups[i] = self.affinity_vectors[i*batch_size:(i+1)*batch_size]
+            else:
+                self.groups[i] = self.affinity_vectors[i*batch_size:]
+
+            logger.info('solving for %i eigenvectors on a subgraph %i',num_evs,i)
+            
+            A, tree = build_affinity_graph(self.groups[i], graph_neighbs , get_tree = True)
+            basis_NB = specmine.spectral.laplacian_basis(A, num_evs, method = "arpack")
+            # each layer has its own feature map
+            self.maps[i] = InterpolationFeatureMap(basis_NB, \
+                                specmine.feature_maps.flat_affinity_map,
+                            tree, k=interp_neighbs, sigma_sq=sigma_sq)
+            self.trees[i] = tree
+            
+        # if passed a feature map object, use its getitem method
+        if hasattr(affinity_map,'__getitem__'):        
+            self.affinity_map = affinity_map.__getitem__
+        else:
+            self.affinity_map = affinity_map
+
+        self.interp_k = interp_neighbs
+
+    def __getitem__(self,state, num_out = numpy.inf):
+        
+        affinity_vector = self.affinity_map(state)
+        out = None
+        for i in xrange(self.num_layers):
+            
+            if len(out) < num_out:
+            
+                (d, i) = self.trees[i].query(affinity_vector, k = self.k, return_distance = True)
+
+                # simple nearest neighbor averaging
+                if numpy.random.random() < 0.05: # sometimes print the distance
+                    logger.info('average distance: %f',numpy.mean(d))
+                    logger.info('distance variance: %f',numpy.var(d))
+
+                if self.sigma_sq == -1:
+                    weighting = numpy.ones(self.k)/float(self.k)
+                    
+                else:
+                    weighting = numpy.exp(-d**2/self.sigma_sq)
+                    weighting = weighting/sum(weighting)
+                
+                if out == None:
+                    out = numpy.dot(weighting, self.basis[i, :]).flatten() 
+                else:
+                    out = numpy.hstack((out, numpy.dot(weighting, self.basis[i, :]).flatten()))
+        if num_out > 0:
+            return out[:num_out]
+        else:
+            return numpy.array([]) 
+
 class InterpolationFeatureMap(object):
     """Map states to features via nearest-neighbor regression. Must give either
     a ball tree or the raw affinity vectors (not both)"""
@@ -75,11 +145,10 @@ class InterpolationFeatureMap(object):
 
         # simple nearest neighbor averaging
         if self.basis is not None:
-            logger.info('average distance: %f',numpy.mean(d))
-            logger.info('distance variance: %f',numpy.var(d))
-            print 'squared distance: ', d**2
-            print 'distance : ', d
-    
+            if numpy.random.random() < 0.05: # sometimes print the distance
+                logger.info('average distance: %f',numpy.mean(d))
+                logger.info('distance variance: %f',numpy.var(d))
+
             if self.sigma_sq == -1:
                 weighting = numpy.ones(self.k)/float(self.k)
                 return numpy.dot(weighting, self.basis[i, :]).flatten()
@@ -377,7 +446,7 @@ def build_affinity_graph(vectors_ND, neighbors, get_tree = False):
 
     logger.info("building balltree in %i-dimensional affinity space", D)
 
-    tree = sklearn.neighbors.BallTree(vectors_ND, p=1)
+    tree = sklearn.neighbors.BallTree(vectors_ND, p=1) # use 1-norm for distance
 
     logger.info("retrieving %i nearest neighbors", G)
 
