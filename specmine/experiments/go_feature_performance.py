@@ -275,7 +275,7 @@ def get_laplacian_map(boards=None, num_samples=10000, max_eigs=500, neighbors=8,
 
     return full_feature_map
 
-
+# TODO move to tools/util
 def get_value_list(games_path,values_path):
     ''' takes a list of games and a dictionary of values and builds a list of
     (BoardState, value) pairs '''
@@ -291,7 +291,7 @@ def get_value_list(games_path,values_path):
     for game in values.keys():
         try:
             vals = values[game]
-            boards = list(set(map(specmine.go.BoardState, games[game].grids)))
+            boards = map(specmine.go.BoardState, games[game].grids)
             value_list.extend(zip(boards,vals))
         except KeyError:
             print 'game unkown for ',game
@@ -304,5 +304,4 @@ def get_value_list(games_path,values_path):
     return value_list
 
 if __name__ == "__main__":
-    print 'running script'
     specmine.script(measure_feature_performance)
